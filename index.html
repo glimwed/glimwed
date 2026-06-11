@@ -3935,6 +3935,8 @@ let dragImgIdx = null;
 function imgDragStart(e, idx) {
   dragImgIdx = idx;
   e.dataTransfer.effectAllowed = 'move';
+  /* Safari/Firefox won't begin a drag unless some data is set. */
+  try { e.dataTransfer.setData('text/plain', String(idx)); } catch (err) {}
   e.currentTarget.classList.add('dragging');
 }
 function imgDragOver(e, idx) {
