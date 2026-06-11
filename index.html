@@ -659,9 +659,51 @@ html, body {
   display: flex; flex-direction: column; align-items: center;
   justify-content: center; position: relative; overflow: hidden;
 }
-.img-box img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.img-box img { width: 100%; height: 100%; object-fit: contain; display: block; }
 .img-box .plus { font-size: 28px; color: var(--muted); }
 .img-box .ph { font-size: 11px; color: var(--muted); margin-top: 4px; }
+.img-count {
+  position: absolute; bottom: 8px; right: 8px;
+  background: rgba(0,0,0,.6); color: #fff;
+  font-size: 11px; font-weight: 500; padding: 2px 8px;
+  border-radius: 100px; backdrop-filter: blur(4px);
+}
+/* Carousel arrows + dots for multi-image slots on the All view */
+.img-nav {
+  position: absolute; top: 50%; transform: translateY(-50%);
+  width: 28px; height: 28px; border-radius: 50%;
+  border: none; background: rgba(0,0,0,.45); color: #fff;
+  font-size: 18px; line-height: 1; cursor: pointer; z-index: 2;
+  display: flex; align-items: center; justify-content: center;
+  backdrop-filter: blur(4px); opacity: .85; transition: opacity .15s, background .15s;
+}
+.item-card:hover .img-nav { opacity: 1; background: rgba(0,0,0,.65); }
+.img-nav.prev { left: 6px; }
+.img-nav.next { right: 6px; }
+.img-dots {
+  position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
+  display: flex; gap: 5px; z-index: 2;
+}
+.img-dots span {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: rgba(255,255,255,.55); transition: background .15s;
+}
+.img-dots span.on { background: #fff; }
+/* Multi-image thumbnail strip inside the card modal */
+.img-thumbs { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.img-thumb {
+  position: relative; width: 72px; height: 72px;
+  border-radius: var(--radius-sm); overflow: hidden;
+  border: 1px solid var(--border);
+}
+.img-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.img-thumb-rm {
+  position: absolute; top: 3px; right: 3px;
+  width: 18px; height: 18px; border-radius: 50%;
+  border: none; background: rgba(0,0,0,.6); color: #fff;
+  font-size: 13px; line-height: 1; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
 
 .conf-badge {
   position: absolute; top: 8px; right: 8px;
@@ -2244,11 +2286,11 @@ html, body {
   <div class="modal">
     <h3 id="modal-title">Add item</h3>
     <div class="mf"><label>Label</label><input type="text" id="m-label" placeholder="e.g. Wedding dress"/></div>
-    <input type="file" accept="image/*" class="hidden" id="file-input"/>
+    <input type="file" accept="image/*" multiple class="hidden" id="file-input"/>
     <div class="mf">
-      <label>Image</label>
-      <button class="btn-c" id="img-btn" onclick="document.getElementById('file-input').click()" style="width:100%;border-color:var(--rose);color:var(--rose);">Choose image</button>
-      <div id="img-preview" style="display:none;margin-top:8px;"><img id="preview-img" style="width:100%;height:140px;object-fit:cover;border-radius:var(--radius);border:1px solid var(--border);"/></div>
+      <label>Images</label>
+      <button class="btn-c" id="img-btn" onclick="document.getElementById('file-input').click()" style="width:100%;border-color:var(--rose);color:var(--rose);">Add image</button>
+      <div id="img-thumbs" class="img-thumbs"></div>
     </div>
     <div class="mf"><label>Vendor / store</label><input type="text" id="m-vendor" placeholder="e.g. Vera Wang Bridal"/></div>
     <div class="mf"><label>Website</label><input type="text" id="m-web" placeholder="https://..."/></div>
@@ -2602,7 +2644,8 @@ function packImageMeta(img) {
   return { vendor, product, price: img.price || '', web };
 }
 let NOTE = '', TOTAL_BUDGET = '', activeBoardTab = 'bridal';
-let pendingBoard=null, pendingIdx=null, pendingImg=null, pendingConfirmed=false;
+let pendingBoard=null, pendingIdx=null, pendingImgs=[], pendingConfirmed=false;
+let allCarousels=[], boardCarousels=[];
 let cpColors = ['#EACACD','#E66C95','#F9F7F7','#B2C4B2','#F5ECD7','#E8C4C4'];
 
 /* ------------------------------------------------------------------ */
@@ -2682,6 +2725,12 @@ function renderPalettePanel() {
     </div>`;
   }).join('');
 }
+/* A card can now hold multiple images in `imgs`; `img` stays as the cover  */
+/* (first image) for backward compatibility. This helper reads the full     */
+/* list and tolerates older cards that only have the single `img` field.    */
+function itemImgs(it) {
+  return (it.imgs && it.imgs.length) ? it.imgs : (it.img ? [it.img] : []);
+}
 function renderBoardGrid(id) {
   if (id === 'all') return renderAllImages();
   const {items} = BOARDS[id];
@@ -2704,14 +2753,23 @@ function renderBoardGrid(id) {
       <button class="btn-ghost-rose" onclick="openCardModal('${id}',null)">+ Add your first reference</button>
     </div>`;
   }
+  boardCarousels = [];
   const cards = items.map((it, i) => {
-    const imgBox = it.img
-      ? `<div class="img-box"><img src="${it.img}" alt="${it.label}">${it.confirmed?'<div class="conf-badge"></div>':''}</div>`
-      : `<div class="img-box"><div class="plus" style="font-size:30px">+</div><div class="ph">Click to add image</div></div>`;
-    const info = (it.vendor||it.web||it.price||it.notes)
-      ? `${it.vendor?`<div class="info-row"><span class="info-lbl">Vendor</span><span class="info-val">${it.vendor}</span></div>`:''}${it.web?`<div class="info-row"><span class="info-lbl">Web</span><span class="info-val link">${it.web.replace(/^https?:\/\//,'')}</span></div>`:''}${it.price?`<div class="info-row"><span class="info-lbl">Price</span><span class="info-val">${it.price}</span></div>`:''}${it.notes?`<div class="info-row"><span class="info-lbl">Notes</span><span class="info-val">${it.notes}</span></div>`:''}`
-      : `<div class="info-empty">Click to add details</div>`;
-    return `<div class="item-card${it.confirmed?' confirmed':''}" onclick="openCardModal('${id}',${i})">${imgBox}<div class="info-panel"><div class="card-label">${it.label}</div>${info}</div></div>`;
+    const imgs = itemImgs(it);
+    let imgBox;
+    if (imgs.length) {
+      const c = boardCarousels.length;
+      boardCarousels.push({imgs, idx: 0});
+      const nav = imgs.length > 1
+        ? `<button class="img-nav prev" onclick="event.stopPropagation();boardCarouselStep(${c},-1)" aria-label="Previous image">‹</button>
+           <button class="img-nav next" onclick="event.stopPropagation();boardCarouselStep(${c},1)" aria-label="Next image">›</button>
+           <div class="img-dots" id="brd-dots-${c}">${imgs.map((_,d)=>`<span class="${d===0?'on':''}"></span>`).join('')}</div>`
+        : '';
+      imgBox = `<div class="img-box" id="brd-cb-${c}"><img src="${imgs[0]}" alt="${it.label}">${nav}${it.confirmed?'<div class="conf-badge"></div>':''}</div>`;
+    } else {
+      imgBox = `<div class="img-box"><div class="plus" style="font-size:30px">+</div><div class="ph">Click to add image</div></div>`;
+    }
+    return `<div class="item-card${it.confirmed?' confirmed':''}" onclick="openCardModal('${id}',${i})">${imgBox}<div class="info-panel"><div class="card-label">${it.label}</div></div></div>`;
   }).join('');
   return `<div class="cards-grid">${cards}<div class="add-card-btn" onclick="openCardModal('${id}',null)"><div style="font-size:28px;color:var(--muted)">+</div><div style="font-size:12px;color:var(--muted);margin-top:5px;">Add item</div></div></div>`;
 }
@@ -2721,7 +2779,10 @@ function renderBoardGrid(id) {
 function renderAllImages() {
   const sources = BOARD_TABS.filter(t => t !== 'all');
   const all = [];
-  sources.forEach(bid => BOARDS[bid].items.forEach((it, i) => { if (it.img) all.push({it, bid, i}); }));
+  sources.forEach(bid => BOARDS[bid].items.forEach((it, i) => {
+    const imgs = itemImgs(it);
+    if (imgs.length) all.push({imgs, it, bid, i});
+  }));
   if (all.length === 0) {
     return `<div class="empty-board">
       <div class="empty-board-icon">
@@ -2737,12 +2798,39 @@ function renderAllImages() {
   }
   /* Image-only cards on the All view — no labels/details, just the photo. */
   /* Still fully clickable: opens the card in its original board to edit.   */
-  const cards = all.map(({it, bid, i}) =>
-    `<div class="item-card${it.confirmed?' confirmed':''}" onclick="openCardModal('${bid}',${i})">
-      <div class="img-box"><img src="${it.img}" alt="${it.label}">${it.confirmed?'<div class="conf-badge"></div>':''}</div>
-    </div>`
-  ).join('');
+  /* Slots with several images become a mini carousel with arrows + dots.   */
+  allCarousels = all.map(a => ({imgs: a.imgs, idx: 0}));
+  const cards = all.map(({imgs, it, bid, i}, c) => {
+    const multi = imgs.length > 1;
+    const nav = multi
+      ? `<button class="img-nav prev" onclick="event.stopPropagation();allCarouselStep(${c},-1)" aria-label="Previous image">‹</button>
+         <button class="img-nav next" onclick="event.stopPropagation();allCarouselStep(${c},1)" aria-label="Next image">›</button>
+         <div class="img-dots" id="all-dots-${c}">${imgs.map((_,d)=>`<span class="${d===0?'on':''}"></span>`).join('')}</div>`
+      : '';
+    return `<div class="item-card${it.confirmed?' confirmed':''}" onclick="openCardModal('${bid}',${i})">
+      <div class="img-box" id="all-cb-${c}"><img src="${imgs[0]}" alt="${it.label}">${nav}${it.confirmed?'<div class="conf-badge"></div>':''}</div>
+    </div>`;
+  }).join('');
   return `<div class="cards-grid">${cards}</div>`;
+}
+/* Step a carousel (shared logic) to the next/previous image. */
+function stepCarousel(st, boxId, dotsId, dir) {
+  if (!st) return;
+  st.idx = (st.idx + dir + st.imgs.length) % st.imgs.length;
+  const box = document.getElementById(boxId);
+  if (!box) return;
+  const img = box.querySelector('img');
+  if (img) img.src = st.imgs[st.idx];
+  const dots = document.getElementById(dotsId);
+  if (dots) [...dots.children].forEach((d, di) => d.classList.toggle('on', di === st.idx));
+}
+/* Step a single All-view slot's carousel. */
+function allCarouselStep(c, dir) {
+  stepCarousel(allCarousels[c], 'all-cb-' + c, 'all-dots-' + c, dir);
+}
+/* Step a single category-board slot's carousel. */
+function boardCarouselStep(c, dir) {
+  stepCarousel(boardCarousels[c], 'brd-cb-' + c, 'brd-dots-' + c, dir);
 }
 function renderColors() {
   const list = PALETTES.map((p, pi) =>
@@ -3108,7 +3196,9 @@ function commitTapImport() {
       const iIdx = +iIdxStr;
       const item = BOARDS[bId].items[iIdx];
       const meta = packImageMeta(pack.images[imgIdx]);
-      item.img = packImageUrl(pack.images[imgIdx]);
+      const purl = packImageUrl(pack.images[imgIdx]);
+      item.imgs = [purl];
+      item.img = purl;
       /* Paste the product details onto the card with the image. Only     */
       /* fill fields she hasn't written herself — never overwrite notes.  */
       if (meta.vendor) item.vendor = meta.vendor;
@@ -3126,6 +3216,7 @@ function commitTapImport() {
         /* Use the curated product name as the label when we have one,    */
         /* falling back to the numbered pack label.                       */
         label: meta.product || `${packLabel} · ${n+1}`,
+        imgs: [packImageUrl(pack.images[imgIdx])],
         img: packImageUrl(pack.images[imgIdx]),
         vendor: meta.vendor, web: meta.web, price: meta.price,
         notes: '', confirmed: false
@@ -3793,8 +3884,9 @@ function generateLink() {
 /*  VISION BOARD MODAL                                                  */
 /* ------------------------------------------------------------------ */
 function openCardModal(board, idx) {
-  pendingBoard=board; pendingIdx=idx; pendingImg=null;
+  pendingBoard=board; pendingIdx=idx;
   const it = idx!==null ? BOARDS[board].items[idx] : null;
+  pendingImgs = it ? itemImgs(it).slice() : [];
   /* New Photo aesthetic slots auto-suggest the next number (Photo 6, 7…). */
   const defaultLabel = board==='photos' ? `Photo ${BOARDS[board].items.length+1}` : '';
   document.getElementById('m-label').value  = it?it.label:defaultLabel;
@@ -3805,11 +3897,18 @@ function openCardModal(board, idx) {
   document.getElementById('modal-title').textContent = idx!==null?'Edit item':'Add item';
   pendingConfirmed = it?it.confirmed:false;
   updateConfirmBtn();
-  const prev = document.getElementById('img-preview');
-  if(it&&it.img){document.getElementById('preview-img').src=it.img;prev.style.display='block';document.getElementById('img-btn').textContent='Change image';}
-  else{prev.style.display='none';document.getElementById('img-btn').textContent='Choose image';}
+  renderImgThumbs();
   showModal('card-overlay');
 }
+/* Render the editable thumbnail strip for the images on the current card.  */
+function renderImgThumbs() {
+  const wrap = document.getElementById('img-thumbs');
+  wrap.innerHTML = pendingImgs.map((src, idx) =>
+    `<div class="img-thumb"><img src="${src}" alt=""><button type="button" class="img-thumb-rm" onclick="removePendingImg(${idx})">×</button></div>`
+  ).join('');
+  document.getElementById('img-btn').textContent = pendingImgs.length ? 'Add another image' : 'Add image';
+}
+function removePendingImg(idx) { pendingImgs.splice(idx, 1); renderImgThumbs(); }
 function updateConfirmBtn() {
   const btn = document.getElementById('btn-confirm-toggle');
   btn.textContent = pendingConfirmed?'✓ Confirmed':'Mark confirmed';
@@ -3820,19 +3919,24 @@ function toggleConfirm() { pendingConfirmed=!pendingConfirmed; updateConfirmBtn(
 function saveCard() {
   const data = {
     label: document.getElementById('m-label').value.trim()||'Untitled',
-    img: pendingImg, vendor: document.getElementById('m-vendor').value.trim(),
+    imgs: pendingImgs.slice(), img: pendingImgs[0] || null,
+    vendor: document.getElementById('m-vendor').value.trim(),
     web: document.getElementById('m-web').value.trim(), price: document.getElementById('m-price').value.trim(),
     notes: document.getElementById('m-notes').value.trim(), confirmed: pendingConfirmed,
   };
-  if(pendingIdx!==null){const ex=BOARDS[pendingBoard].items[pendingIdx];data.img=pendingImg||ex.img;BOARDS[pendingBoard].items[pendingIdx]=data;}
+  if(pendingIdx!==null){BOARDS[pendingBoard].items[pendingIdx]=data;}
   else{BOARDS[pendingBoard].items.push(data);}
   closeModal('card-overlay'); render();
 }
+/* Append every selected file as its own image — supports multi-select.     */
 document.getElementById('file-input').addEventListener('change', function(e){
-  const f=e.target.files[0]; if(!f)return;
-  const r=new FileReader();
-  r.onload=ev=>{pendingImg=ev.target.result;document.getElementById('preview-img').src=pendingImg;document.getElementById('img-preview').style.display='block';document.getElementById('img-btn').textContent='Change image';};
-  r.readAsDataURL(f); e.target.value='';
+  const files=[...e.target.files]; if(!files.length)return;
+  files.forEach(f=>{
+    const r=new FileReader();
+    r.onload=ev=>{ pendingImgs.push(ev.target.result); renderImgThumbs(); };
+    r.readAsDataURL(f);
+  });
+  e.target.value='';
 });
 
 /* ------------------------------------------------------------------ */
