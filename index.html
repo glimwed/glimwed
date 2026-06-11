@@ -218,78 +218,20 @@ html, body {
   max-width: 560px; margin: 0 auto;
 }
 
-/* Featured (hero) pack — large editorial layout */
-.pack-featured {
-  display: grid; grid-template-columns: 1.1fr 1fr; gap: 0;
-  background: var(--white); border-radius: var(--radius-lg); overflow: hidden;
-  box-shadow: var(--shadow); margin-bottom: 56px;
-  cursor: pointer; transition: transform .25s ease, box-shadow .25s ease;
-}
-.pack-featured:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); }
-.pack-featured-media { position: relative; min-height: 420px; overflow: hidden; }
-.pack-featured-media img {
-  width: 100%; height: 100%; object-fit: cover;
-  transition: transform .6s ease;
-}
-.pack-featured:hover .pack-featured-media img { transform: scale(1.03); }
-.pack-featured-badge {
-  position: absolute; top: 18px; left: 18px;
-  font-size: 10.5px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase;
-  padding: 6px 12px; background: rgba(255,255,255,.95); color: var(--ink);
-  border-radius: 100px; backdrop-filter: blur(6px);
-}
-.pack-featured-body { padding: 48px 44px; display: flex; flex-direction: column; justify-content: center; }
+/* Pack eyebrow — used inside the pack detail modal */
 .pack-eyebrow {
   font-size: 11px; letter-spacing: 1.8px; text-transform: uppercase;
   color: var(--sub); font-weight: 500; margin-bottom: 14px;
 }
-.pack-featured-name {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 38px; font-weight: 400; line-height: 1.1;
-  color: var(--ink); margin-bottom: 14px; letter-spacing: -0.3px;
-}
-.pack-featured-name em { font-style: italic; color: var(--rose); font-weight: 400; }
-.pack-featured-story {
-  font-size: 14px; color: var(--sub); line-height: 1.7;
-  margin-bottom: 22px;
-}
-.pack-meta {
-  display: flex; align-items: center; gap: 6px;
-  font-size: 12.5px; color: var(--sub); margin-bottom: 28px;
-}
-.pack-meta-dot { color: var(--muted); }
-.pack-cta-row {
-  display: flex; align-items: center; justify-content: space-between;
-  padding-top: 22px; border-top: 1px solid var(--border);
-}
-.pack-cta-primary {
-  background: none; border: none; padding: 0;
-  font-size: 14px; font-weight: 600; color: var(--ink);
-  cursor: pointer; letter-spacing: .2px;
-  border-bottom: 1px solid var(--ink); padding-bottom: 2px;
-  transition: color .15s;
-}
-.pack-cta-primary:hover { color: var(--rose); border-bottom-color: var(--rose); }
-.pack-price {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 28px; font-weight: 500; color: var(--ink);
-}
-
-/* Grid header */
-.pack-grid-header { text-align: center; margin-bottom: 32px; }
-.pack-grid-title {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 28px; font-weight: 400; color: var(--ink);
-  margin-bottom: 6px;
-}
-.pack-grid-sub { font-size: 13.5px; color: var(--sub); }
 
 /* Grid */
 .pack-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 28px; margin-bottom: 56px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 28px; margin-top: 12px; margin-bottom: 56px;
 }
+@media (max-width: 860px) { .pack-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 520px) { .pack-grid { grid-template-columns: 1fr; } }
 .pack-card {
   background: var(--white); border-radius: var(--radius);
   overflow: hidden; cursor: pointer; transition: transform .25s ease, box-shadow .25s ease;
@@ -341,10 +283,6 @@ html, body {
 .pack-trust-s { font-size: 12px; color: var(--sub); line-height: 1.5; }
 
 @media (max-width: 760px) {
-  .pack-featured { grid-template-columns: 1fr; }
-  .pack-featured-media { min-height: 280px; }
-  .pack-featured-body { padding: 28px 22px; }
-  .pack-featured-name { font-size: 30px; }
   .packs-hero-title { font-size: 38px; }
   .pack-trust { grid-template-columns: 1fr; gap: 16px; }
 }
@@ -430,14 +368,17 @@ html, body {
 }
 .pack-detail-img {
   position: relative; aspect-ratio: 4/5; overflow: hidden;
-  border-radius: var(--radius-sm); cursor: pointer;
-  transition: transform .2s;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  cursor: pointer; transition: transform .2s;
 }
 .pack-detail-img img { width: 100%; height: 100%; object-fit: cover; transition: filter .2s; }
 .pack-detail-img.locked { cursor: default; }
 .pack-detail-img.locked img { filter: blur(3px) brightness(.7); }
-.pack-detail-img.selected { box-shadow: 0 0 0 3px var(--rose); }
-.pack-detail-img:not(.locked):hover { transform: scale(0.98); }
+.pack-detail-item.selected {
+  outline: 2.5px solid var(--rose); outline-offset: 0;
+  border-radius: var(--radius-sm);
+}
+.pack-detail-img:not(.locked):hover { transform: scale(0.985); }
 .pack-detail-check {
   position: absolute; top: 8px; right: 8px;
   width: 24px; height: 24px; border-radius: 50%;
@@ -454,6 +395,54 @@ html, body {
   align-items: center; justify-content: center;
   color: var(--white);
 }
+/* Shoppable product card under each image */
+.pack-detail-item { display: flex; flex-direction: column; }
+.pack-product {
+  padding: 10px 12px 12px;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-top: none;
+  border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+}
+.pack-product.locked { opacity: 0.7; }
+.pack-product.locked .pack-product-vendor,
+.pack-product.locked .pack-product-name,
+.pack-product.locked .pack-product-price {
+  filter: blur(4px);
+  user-select: none;
+  pointer-events: none;
+}
+.pack-product-vendor {
+  font-size: 9.5px; letter-spacing: 1.2px; text-transform: uppercase;
+  color: var(--rose); font-weight: 600; margin-bottom: 3px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.pack-product-name {
+  font-size: 12.5px; color: var(--ink); font-weight: 500;
+  line-height: 1.3; margin-bottom: 8px;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.pack-product-foot {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 8px;
+}
+.pack-product-price {
+  font-size: 12px; color: var(--ink); font-weight: 600;
+}
+.pack-product-link {
+  display: inline-flex; align-items: center; gap: 3px;
+  font-size: 11px; font-weight: 500; color: var(--rose);
+  text-decoration: none; padding: 4px 8px;
+  border-radius: 100px; background: #FBE9EF;
+  cursor: default;
+}
+.pack-product-link.locked {
+  color: var(--sub); background: var(--cloud); cursor: default;
+  font-style: normal;
+}
+.pack-product-link.locked:hover { background: var(--cloud); color: var(--sub); }
+
 .pack-detail-cta-row { margin-bottom: 12px; }
 .pack-detail-trust {
   text-align: center; font-size: 12px; color: var(--sub);
@@ -1846,36 +1835,8 @@ html, body {
 <div class="app-section" id="section-packs">
   <div class="packs-hero">
     <div class="packs-hero-eyebrow">Curated by wedding stylists</div>
-    <h1 class="packs-hero-title">Moodboard <em>Packs</em></h1>
-    <p class="packs-hero-sub">Hand-picked image collections, color palettes &amp; styling notes — built around the wedding you're picturing. Pick a pack, browse the looks, save your favorites to your vision board.</p>
-  </div>
-
-  <!-- Featured pack -->
-  <div class="pack-featured" onclick="openPackDetail('mountain')">
-    <div class="pack-featured-media">
-      <img src="https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=900&q=80" alt="Mountain wedding moodboard" loading="lazy">
-      <div class="pack-featured-badge">Editor's Pick</div>
-    </div>
-    <div class="pack-featured-body">
-      <div class="pack-eyebrow">Mountain · Alpine</div>
-      <h2 class="pack-featured-name">Evergreen <em>&amp;</em> Slate</h2>
-      <p class="pack-featured-story">For the bride saying "I do" where the air gets thin and the views go forever. Deep pines, weathered wood, ivory dresses against grey peaks.</p>
-      <div class="pack-meta">
-        <span>48 images</span><span class="pack-meta-dot">·</span>
-        <span>3 palettes</span><span class="pack-meta-dot">·</span>
-        <span>Stylist notes</span>
-      </div>
-      <div class="pack-cta-row">
-        <button class="pack-cta-primary" onclick="event.stopPropagation();openPackDetail('mountain')">View pack →</button>
-        <div class="pack-price">$24</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Style grid header -->
-  <div class="pack-grid-header">
-    <h2 class="pack-grid-title">Browse by setting</h2>
-    <p class="pack-grid-sub">Eight worlds, each with its own palette, textures, and feel.</p>
+    <h1 class="packs-hero-title">Wedding inspiration <em>you can actually buy</em></h1>
+    <p class="packs-hero-sub">Every image in a pack is linked to the real product or vendor behind it — bouquets, dresses, venues, table settings. Pick your favorites and the vendor, price, and website land on your board with the image. The searching is done.</p>
   </div>
 
   <!-- Pack grid -->
@@ -1892,8 +1853,8 @@ html, body {
       <div><div class="pack-trust-t">Pick what you love</div><div class="pack-trust-s">Save only the images that match your vision — skip the rest.</div></div>
     </div>
     <div class="pack-trust-item">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2a4 4 0 014 4v2a4 4 0 01-8 0V6a4 4 0 014-4z"/><path d="M5 22h14a2 2 0 002-2v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2a2 2 0 002 2z"/></svg>
-      <div><div class="pack-trust-t">Real stylists</div><div class="pack-trust-s">Every pack curated by working wedding designers.</div></div>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 7h18M3 12h18M3 17h18"/><circle cx="7" cy="7" r="1.5" fill="currentColor"/><circle cx="11" cy="12" r="1.5" fill="currentColor"/><circle cx="9" cy="17" r="1.5" fill="currentColor"/></svg>
+      <div><div class="pack-trust-t">Real products, real vendors</div><div class="pack-trust-s">Every image is linked to the actual product or stylist behind it.</div></div>
     </div>
   </div>
 </div>
@@ -2414,7 +2375,7 @@ const BOARDS = {
   flowers: {label:'Flowers',        items:[{label:'Bridal bouquet',img:null,vendor:'',web:'',price:'',notes:'',confirmed:false},{label:'Bridesmaids',img:null,vendor:'',web:'',price:'',notes:'',confirmed:false},{label:'Flower girls',img:null,vendor:'',web:'',price:'',notes:'',confirmed:false},{label:'Ceremony decor',img:null,vendor:'',web:'',price:'',notes:'',confirmed:false},{label:'Reception table',img:null,vendor:'',web:'',price:'',notes:'',confirmed:false}]},
   family:  {label:'Family looks',   items:[{label:'Flower girls',img:null,vendor:'',web:'',price:'',notes:'',confirmed:false},{label:'Mother of bride',img:null,vendor:'',web:'',price:'',notes:'',confirmed:false},{label:'Mother of groom',img:null,vendor:'',web:'',price:'',notes:'',confirmed:false},{label:'Bridesmaids',img:null,vendor:'',web:'',price:'',notes:'',confirmed:false}]},
   venues:  {label:'Venues',         items:[{label:'Ceremony',img:null,vendor:'',web:'',price:'',notes:'',confirmed:false},{label:'Reception',img:null,vendor:'',web:'',price:'',notes:'',confirmed:false},{label:'Rehearsal dinner',img:null,vendor:'',web:'',price:'',notes:'',confirmed:false},{label:'Photo backdrop',img:null,vendor:'',web:'',price:'',notes:'',confirmed:false}]},
-  photos:  {label:'Photo aesthetic', items:[]},
+  photos:  {label:'Photo aesthetic', items:[{label:'Photo 1',img:null,vendor:'',web:'',price:'',notes:'',confirmed:false},{label:'Photo 2',img:null,vendor:'',web:'',price:'',notes:'',confirmed:false},{label:'Photo 3',img:null,vendor:'',web:'',price:'',notes:'',confirmed:false},{label:'Photo 4',img:null,vendor:'',web:'',price:'',notes:'',confirmed:false},{label:'Photo 5',img:null,vendor:'',web:'',price:'',notes:'',confirmed:false}]},
   details: {label:'Details',        items:[{label:'Invitation card',img:null,vendor:'',web:'',price:'',notes:'',confirmed:false},{label:'Wedding favor',img:null,vendor:'',web:'',price:'',notes:'',confirmed:false},{label:'Cake',img:null,vendor:'',web:'',price:'',notes:'',confirmed:false},{label:'Registry inspo',img:null,vendor:'',web:'',price:'',notes:'',confirmed:false},{label:'Seating cards',img:null,vendor:'',web:'',price:'',notes:'',confirmed:false}]},
   colors:  {label:'Color palettes',items:[]},
 };
@@ -2436,7 +2397,6 @@ const BUDGET = [
 ];
 const PALETTES = [
   {name:'Dusty rose & ivory', colors:['#E8C4C4','#F5ECD7','#C9A8A8','#D4B896','#B08B8B']},
-  {name:'Sage & champagne',   colors:['#B2C4B2','#F0E6D0','#8FAF8F','#D4C4A0','#6B9B6B']},
 ];
 
 /* ------------------------------------------------------------------ */
@@ -2455,14 +2415,15 @@ const MOODBOARD_PACKS = [
     hero: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=900&q=80',
     price: 18,
     count: 42,
+    shoppable: 18,
     palette: ['#D4B896','#E8C4A0','#A8946F','#6B7B5C','#F0E6D0'],
     images: [
-      'https://images.unsplash.com/photo-1519741497674-611481863552?w=600&q=80',
-      'https://images.unsplash.com/photo-1465495976277-4387d4b0e4a6?w=600&q=80',
-      'https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=600&q=80',
-      'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=600&q=80',
-      'https://images.unsplash.com/photo-1525772764200-be829a350797?w=600&q=80',
-      'https://images.unsplash.com/photo-1606800052052-a08af7148866?w=600&q=80',
+      { url:'https://images.unsplash.com/photo-1519741497674-611481863552?w=600&q=80', vendor:'The Pollen Studio',     product:'Wildflower bridal bouquet',  price:'$285', link:'#' },
+      { url:'https://images.unsplash.com/photo-1465495976277-4387d4b0e4a6?w=600&q=80', vendor:'Linden &amp; Lace',     product:'Boho lace gown',             price:'$1,640', link:'#' },
+      { url:'https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=600&q=80', vendor:'Honey &amp; Hemp',      product:'Macrame ceremony arch',      price:'$420', link:'#' },
+      { url:'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=600&q=80', vendor:'Field Table Co.',        product:'Reclaimed wood farm table',  price:'$95/night', link:'#' },
+      { url:'https://images.unsplash.com/photo-1525772764200-be829a350797?w=600&q=80', vendor:'Wild &amp; Wed',        product:'Pampas centerpiece set',     price:'$140', link:'#' },
+      { url:'https://images.unsplash.com/photo-1606800052052-a08af7148866?w=600&q=80', vendor:'Saffron Stationers',    product:'Hand-pressed invitations',   price:'$3.20/ea', link:'#' },
     ]
   },
   {
@@ -2473,14 +2434,15 @@ const MOODBOARD_PACKS = [
     hero: 'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=900&q=80',
     price: 18,
     count: 36,
+    shoppable: 14,
     palette: ['#1C2A40','#FFFFFF','#D4D4D4','#A89F8A','#6B6B6B'],
     images: [
-      'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=600&q=80',
-      'https://images.unsplash.com/photo-1519741497674-611481863552?w=600&q=80',
-      'https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=600&q=80',
-      'https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=600&q=80',
-      'https://images.unsplash.com/photo-1465495976277-4387d4b0e4a6?w=600&q=80',
-      'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=600&q=80',
+      { url:'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=600&q=80', vendor:'Maison Volée',       product:'Crepe column gown',         price:'$1,890', link:'#' },
+      { url:'https://images.unsplash.com/photo-1519741497674-611481863552?w=600&q=80', vendor:'Knot &amp; Bloom',    product:'White peony posy',          price:'$95', link:'#' },
+      { url:'https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=600&q=80', vendor:'Court &amp; Co.',     product:'Navy peak-lapel suit',      price:'$795', link:'#' },
+      { url:'https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=600&q=80', vendor:'Type &amp; Ink',      product:'Letterpress save-the-dates',price:'$2.80/ea', link:'#' },
+      { url:'https://images.unsplash.com/photo-1465495976277-4387d4b0e4a6?w=600&q=80', vendor:'Hôtel Rosa',         product:'Reception suite (12 guests)', price:'$1,200', link:'#' },
+      { url:'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=600&q=80', vendor:'Cellar 54',          product:'Vintage champagne tower',   price:'$340', link:'#' },
     ]
   },
   {
@@ -2491,14 +2453,15 @@ const MOODBOARD_PACKS = [
     hero: 'https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=900&q=80',
     price: 18,
     count: 40,
+    shoppable: 16,
     palette: ['#C5D5DC','#F5ECD7','#8AA8B5','#D4C4A0','#1C2A40'],
     images: [
-      'https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=600&q=80',
-      'https://images.unsplash.com/photo-1519741497674-611481863552?w=600&q=80',
-      'https://images.unsplash.com/photo-1465495976277-4387d4b0e4a6?w=600&q=80',
-      'https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=600&q=80',
-      'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=600&q=80',
-      'https://images.unsplash.com/photo-1606800052052-a08af7148866?w=600&q=80',
+      { url:'https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=600&q=80', vendor:'Salt &amp; Sail',       product:'Linen ceremony canopy',     price:'$680', link:'#' },
+      { url:'https://images.unsplash.com/photo-1519741497674-611481863552?w=600&q=80', vendor:'Tidepool Florals',     product:'White &amp; sand-tone arrangement', price:'$215', link:'#' },
+      { url:'https://images.unsplash.com/photo-1465495976277-4387d4b0e4a6?w=600&q=80', vendor:'Driftwood &amp; Down',  product:'Beachside altar set',       price:'$540', link:'#' },
+      { url:'https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=600&q=80', vendor:'Atelier Côte',         product:'Silk slip bridal gown',     price:'$2,150', link:'#' },
+      { url:'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=600&q=80', vendor:'Oyster &amp; Co.',     product:'Raw bar reception package', price:'$48/guest', link:'#' },
+      { url:'https://images.unsplash.com/photo-1606800052052-a08af7148866?w=600&q=80', vendor:'Lanterne Studio',      product:'Hurricane lantern set (12)',price:'$185', link:'#' },
     ]
   },
   {
@@ -2509,14 +2472,15 @@ const MOODBOARD_PACKS = [
     hero: 'https://images.unsplash.com/photo-1465495976277-4387d4b0e4a6?w=900&q=80',
     price: 18,
     count: 38,
+    shoppable: 15,
     palette: ['#E66C95','#F5A878','#2E7D5C','#F5ECD7','#A04060'],
     images: [
-      'https://images.unsplash.com/photo-1465495976277-4387d4b0e4a6?w=600&q=80',
-      'https://images.unsplash.com/photo-1519741497674-611481863552?w=600&q=80',
-      'https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=600&q=80',
-      'https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=600&q=80',
-      'https://images.unsplash.com/photo-1525772764200-be829a350797?w=600&q=80',
-      'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=600&q=80',
+      { url:'https://images.unsplash.com/photo-1465495976277-4387d4b0e4a6?w=600&q=80', vendor:'Selva Studio',         product:'Monstera ceremony arch',    price:'$485', link:'#' },
+      { url:'https://images.unsplash.com/photo-1519741497674-611481863552?w=600&q=80', vendor:'Bougainvillea Co.',    product:'Sunset bouquet',            price:'$240', link:'#' },
+      { url:'https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=600&q=80', vendor:'Mango &amp; Mosaic',   product:'Tile-pattern table runner', price:'$78', link:'#' },
+      { url:'https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=600&q=80', vendor:'Casa Verde',           product:'Open-air reception venue',  price:'$3,800', link:'#' },
+      { url:'https://images.unsplash.com/photo-1525772764200-be829a350797?w=600&q=80', vendor:'Sol Stationers',       product:'Painted palm invitations',  price:'$3.50/ea', link:'#' },
+      { url:'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=600&q=80', vendor:'Pasión Cocktails',     product:'Hibiscus margarita bar',    price:'$14/guest', link:'#' },
     ]
   },
   {
@@ -2527,14 +2491,15 @@ const MOODBOARD_PACKS = [
     hero: 'https://images.unsplash.com/photo-1525772764200-be829a350797?w=900&q=80',
     price: 18,
     count: 38,
+    shoppable: 16,
     palette: ['#5C7361','#F0E6D0','#A8B5A0','#1C2A20','#D4C4A0'],
     images: [
-      'https://images.unsplash.com/photo-1525772764200-be829a350797?w=600&q=80',
-      'https://images.unsplash.com/photo-1606800052052-a08af7148866?w=600&q=80',
-      'https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=600&q=80',
-      'https://images.unsplash.com/photo-1519741497674-611481863552?w=600&q=80',
-      'https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=600&q=80',
-      'https://images.unsplash.com/photo-1465495976277-4387d4b0e4a6?w=600&q=80',
+      { url:'https://images.unsplash.com/photo-1525772764200-be829a350797?w=600&q=80', vendor:'Pine &amp; Birch',     product:'Lakeside ceremony chairs (50)', price:'$320', link:'#' },
+      { url:'https://images.unsplash.com/photo-1606800052052-a08af7148866?w=600&q=80', vendor:'Cedar Floral',         product:'Wild greenery bouquet',     price:'$165', link:'#' },
+      { url:'https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=600&q=80', vendor:'The Boathouse',        product:'Lake reception venue',      price:'$4,500', link:'#' },
+      { url:'https://images.unsplash.com/photo-1519741497674-611481863552?w=600&q=80', vendor:'Linden Bridal',        product:'Cap-sleeve crepe gown',     price:'$1,495', link:'#' },
+      { url:'https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=600&q=80', vendor:'Lantern &amp; Loom',   product:'Cafe-light installation',   price:'$420', link:'#' },
+      { url:'https://images.unsplash.com/photo-1465495976277-4387d4b0e4a6?w=600&q=80', vendor:'Forester Cake Co.',    product:'Naked layer cake',          price:'$8/slice', link:'#' },
     ]
   },
   {
@@ -2545,14 +2510,15 @@ const MOODBOARD_PACKS = [
     hero: 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=900&q=80',
     price: 18,
     count: 44,
+    shoppable: 19,
     palette: ['#A8946F','#F0E6D0','#6B5C4B','#D4B896','#2E1F14'],
     images: [
-      'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=600&q=80',
-      'https://images.unsplash.com/photo-1519741497674-611481863552?w=600&q=80',
-      'https://images.unsplash.com/photo-1465495976277-4387d4b0e4a6?w=600&q=80',
-      'https://images.unsplash.com/photo-1606800052052-a08af7148866?w=600&q=80',
-      'https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=600&q=80',
-      'https://images.unsplash.com/photo-1525772764200-be829a350797?w=600&q=80',
+      { url:'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=600&q=80', vendor:'Hickory Hollow Farm', product:'Restored barn venue',       price:'$5,800', link:'#' },
+      { url:'https://images.unsplash.com/photo-1519741497674-611481863552?w=600&q=80', vendor:'Dahlia Daughters',     product:'Cafe au lait dahlia bouquet', price:'$220', link:'#' },
+      { url:'https://images.unsplash.com/photo-1465495976277-4387d4b0e4a6?w=600&q=80', vendor:'Brass &amp; Beeswax',  product:'Brass taper candle set',    price:'$95', link:'#' },
+      { url:'https://images.unsplash.com/photo-1606800052052-a08af7148866?w=600&q=80', vendor:'Harvest Table Co.',    product:'8ft chestnut farm table',   price:'$110/night', link:'#' },
+      { url:'https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=600&q=80', vendor:'Goldenrod Stationers',product:'Wax-sealed invitations',    price:'$4.20/ea', link:'#' },
+      { url:'https://images.unsplash.com/photo-1525772764200-be829a350797?w=600&q=80', vendor:'Pasture Provisions',   product:'Family-style dinner',       price:'$72/guest', link:'#' },
     ]
   },
   {
@@ -2563,14 +2529,15 @@ const MOODBOARD_PACKS = [
     hero: 'https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=900&q=80',
     price: 24,
     count: 48,
+    shoppable: 22,
     palette: ['#2E3A2E','#6B6B6B','#F5ECD7','#1C1C1C','#A8946F'],
     images: [
-      'https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=600&q=80',
-      'https://images.unsplash.com/photo-1525772764200-be829a350797?w=600&q=80',
-      'https://images.unsplash.com/photo-1606800052052-a08af7148866?w=600&q=80',
-      'https://images.unsplash.com/photo-1519741497674-611481863552?w=600&q=80',
-      'https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=600&q=80',
-      'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=600&q=80',
+      { url:'https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=600&q=80', vendor:'Summit Lodge',          product:'Mountain ceremony deck',    price:'$3,200', link:'#' },
+      { url:'https://images.unsplash.com/photo-1525772764200-be829a350797?w=600&q=80', vendor:'Timber &amp; Thorn',    product:'Pine &amp; eucalyptus bouquet', price:'$185', link:'#' },
+      { url:'https://images.unsplash.com/photo-1606800052052-a08af7148866?w=600&q=80', vendor:'Alpine Atelier',        product:'Crepe long-sleeve gown',    price:'$2,650', link:'#' },
+      { url:'https://images.unsplash.com/photo-1519741497674-611481863552?w=600&q=80', vendor:'Slate &amp; Suede',     product:'Slate-grey suit',           price:'$1,150', link:'#' },
+      { url:'https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=600&q=80', vendor:'Hearth &amp; Heather',  product:'Wool throw blanket favors', price:'$22/ea', link:'#' },
+      { url:'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=600&q=80', vendor:'Cellar 8200',           product:'Wine pairing service',      price:'$28/guest', link:'#' },
     ]
   },
   {
@@ -2581,14 +2548,15 @@ const MOODBOARD_PACKS = [
     hero: 'https://images.unsplash.com/photo-1606800052052-a08af7148866?w=900&q=80',
     price: 18,
     count: 42,
+    shoppable: 17,
     palette: ['#1C1C1C','#7B2E3F','#D4B896','#5C2E40','#F5ECD7'],
     images: [
-      'https://images.unsplash.com/photo-1606800052052-a08af7148866?w=600&q=80',
-      'https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=600&q=80',
-      'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=600&q=80',
-      'https://images.unsplash.com/photo-1519741497674-611481863552?w=600&q=80',
-      'https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=600&q=80',
-      'https://images.unsplash.com/photo-1465495976277-4387d4b0e4a6?w=600&q=80',
+      { url:'https://images.unsplash.com/photo-1606800052052-a08af7148866?w=600&q=80', vendor:'Velour Bridal',         product:'Velvet long-sleeve gown',   price:'$2,890', link:'#' },
+      { url:'https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=600&q=80', vendor:'Garnet &amp; Glass',    product:'Deep berry florals',        price:'$340', link:'#' },
+      { url:'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=600&q=80', vendor:'House of Onyx',         product:'Black tie ballroom venue',  price:'$8,400', link:'#' },
+      { url:'https://images.unsplash.com/photo-1519741497674-611481863552?w=600&q=80', vendor:'Ember Tabletop',        product:'Beeswax taper sets (24)',   price:'$78', link:'#' },
+      { url:'https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=600&q=80', vendor:'Foil &amp; Wax',        product:'Foil-pressed invitations',  price:'$5.40/ea', link:'#' },
+      { url:'https://images.unsplash.com/photo-1465495976277-4387d4b0e4a6?w=600&q=80', vendor:'Maison Brut',           product:'Vintage champagne pairing', price:'$32/guest', link:'#' },
     ]
   },
 ];
@@ -2611,6 +2579,27 @@ function packDisplayName(pack) {
     .replace(/&amp;/g, '&')
     .replace(/&nbsp;/g, ' ')
     .trim();
+}
+
+/* Read a pack image's URL. Images are now structured objects with      */
+/* product metadata; this helper also tolerates the legacy string form. */
+function packImageUrl(img) {
+  return typeof img === 'string' ? img : img.url;
+}
+
+/* Extract the product metadata that travels with a pack image when it   */
+/* lands on the board. Demo links are '#', so the website is derived     */
+/* from the vendor name for the prototype; real builds use img.link.     */
+function packImageMeta(img) {
+  if (typeof img === 'string' || !img.vendor) {
+    return { vendor: '', product: '', price: '', web: '' };
+  }
+  const vendor = img.vendor.replace(/&amp;/g, '&');
+  const product = (img.product || '').replace(/&amp;/g, '&');
+  const web = (img.link && img.link.startsWith('http'))
+    ? img.link
+    : 'www.' + vendor.toLowerCase().replace(/&/g, 'and').replace(/[^a-z0-9]+/g, '') + '.com';
+  return { vendor, product, price: img.price || '', web };
 }
 let NOTE = '', TOTAL_BUDGET = '', activeBoardTab = 'bridal';
 let pendingBoard=null, pendingIdx=null, pendingImg=null, pendingConfirmed=false;
@@ -2694,13 +2683,9 @@ function renderPalettePanel() {
 function renderBoardGrid(id) {
   const {items} = BOARDS[id];
   /* Friendly empty state for categories that start with no items.       */
-  /* Helps her understand what to put here before she's added anything.  */
-  const emptyHints = {
-    photos: {
-      title: 'Pin your photo aesthetic',
-      sub: "Light & airy, moody & cinematic, candid documentary — save photographer reference shots that capture the *feel* you want for your wedding photos."
-    }
-  };
+  /* Photo aesthetic now uses predefined slots like every other category,*/
+  /* so no category needs a special empty state on first load.           */
+  const emptyHints = {};
   if (items.length === 0 && emptyHints[id]) {
     const h = emptyHints[id];
     return `<div class="empty-board">
@@ -2772,8 +2757,8 @@ function renderColorsPage() {
 function renderPacks() {
   const grid = document.getElementById('pack-grid');
   if (!grid) return;
-  /* Show all packs except the featured one (mountain) in the main grid */
-  const cards = MOODBOARD_PACKS.filter(p => p.id !== 'mountain').map(p => {
+  /* Render all packs in the grid uniformly — no separate featured slot. */
+  const cards = MOODBOARD_PACKS.map(p => {
     const owned = purchasedPacks.has(p.id);
     return `<div class="pack-card" onclick="openPackDetail('${p.id}')">
       <div class="pack-card-media">
@@ -2784,7 +2769,7 @@ function renderPacks() {
         <div class="pack-card-name">${p.name}</div>
         <div class="pack-card-story">${p.story}</div>
         <div class="pack-card-foot">
-          <span class="pack-card-images">${p.count} images · ${p.palette.length} palette</span>
+          <span class="pack-card-images">${p.count} looks · <strong>${p.shoppable || p.images.length} linked products</strong></span>
           <span class="pack-card-price">${owned ? '<span style=\"color:var(--rose);font-size:13px;font-family:Jost,sans-serif;font-weight:500;\">Owned</span>' : '$'+p.price}</span>
         </div>
       </div>
@@ -2826,16 +2811,31 @@ function renderPackDetail() {
   const swatchHtml = p.palette.map(c =>
     `<div class="pack-detail-swatch" style="background:${c};"></div>`
   ).join('');
-  const imageHtml = p.images.map((url, i) => {
+  /* Each pack image now carries product metadata: vendor, product, price, link. */
+  /* When owned: full info + Shop link visible. When locked: teaser only.        */
+  const imageHtml = p.images.map((img, i) => {
     const isSel = selectedImages.has(i);
-    return `<div class="pack-detail-img ${isSel ? 'selected' : ''} ${owned ? '' : 'locked'}"
-                 onclick="${owned ? `togglePackImage(${i})` : ''}">
-      <img src="${url}" alt="" loading="lazy">
-      ${owned ? `<div class="pack-detail-check">
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 8l3 3 7-7"/></svg>
-      </div>` : `<div class="pack-detail-lock">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="5" y="11" width="14" height="9" rx="1.5"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>
-      </div>`}
+    const url = img.url || img;  /* defensive — supports legacy string fmt */
+    return `<div class="pack-detail-item ${isSel ? 'selected' : ''}">
+      <div class="pack-detail-img ${isSel ? 'selected' : ''} ${owned ? '' : 'locked'}"
+           onclick="${owned ? `togglePackImage(${i})` : ''}">
+        <img src="${url}" alt="" loading="lazy">
+        ${owned ? `<div class="pack-detail-check">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 8l3 3 7-7"/></svg>
+        </div>` : `<div class="pack-detail-lock">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="5" y="11" width="14" height="9" rx="1.5"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>
+        </div>`}
+      </div>
+      ${img.vendor ? `<div class="pack-product ${owned ? '' : 'locked'}">
+        <div class="pack-product-vendor">${owned ? img.vendor : 'Vendor Name Studio'}</div>
+        <div class="pack-product-name">${owned ? img.product : 'Curated product pick'}</div>
+        <div class="pack-product-foot">
+          <span class="pack-product-price">${owned ? img.price : '$000'}</span>
+          ${owned
+            ? `<span class="pack-product-link" title="Vendor, price &amp; website are saved onto your board card when you import this image">Saves to board <svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3v7M5 7l3 3 3-3M3 13h10"/></svg></span>`
+            : `<span class="pack-product-link locked"><svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="7" width="8" height="6" rx="1"/><path d="M6 7V5a2 2 0 014 0v2"/></svg> Unlock details</span>`}
+        </div>
+      </div>` : ''}
     </div>`;
   }).join('');
   const ctaHtml = owned
@@ -2858,7 +2858,7 @@ function renderPackDetail() {
       </div>
       <div class="pack-detail-section-title">
         ${owned ? 'Pick your favorites' : 'In this pack'}
-        <span class="pack-detail-section-sub">${owned ? `${selectedImages.size} of ${p.images.length} selected` : `${p.count} images · ${p.palette.length} palette · Stylist notes`}</span>
+        <span class="pack-detail-section-sub">${owned ? `${selectedImages.size} of ${p.images.length} selected` : `${p.count} looks · ${p.shoppable || p.images.length} linked products · ${p.palette.length} palette`}</span>
       </div>
       <div class="pack-detail-grid">${imageHtml}</div>
       <div class="pack-detail-cta-row">${ctaHtml}</div>
@@ -2902,7 +2902,7 @@ function renderImportDestinationPicker() {
     return `<div class="tray-img ${isArmed?'armed':''} ${isAssigned?'assigned':''}"
                  onclick="armImage(${imgIdx})">
       <div class="tray-img-num">${position+1}</div>
-      <img src="${p.images[imgIdx]}" alt="" loading="lazy">
+      <img src="${packImageUrl(p.images[imgIdx])}" alt="" loading="lazy">
       ${isAssigned ? `<div class="tray-img-tag">
         <svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 8l3 3 7-7"/></svg>
         <span>${assignedLabel}</span>
@@ -2921,7 +2921,7 @@ function renderImportDestinationPicker() {
       const slotKey = `${bId}:${iIdx}`;
       const assignedImgIdx = slotAssign.get(slotKey);
       const hasAssigned = assignedImgIdx !== undefined;
-      const previewSrc = hasAssigned ? p.images[assignedImgIdx] : item.img;
+      const previewSrc = hasAssigned ? packImageUrl(p.images[assignedImgIdx]) : item.img;
       const isOriginal = !hasAssigned && item.img;
       return `<button class="slot-card ${hasAssigned?'assigned':''} ${activeImageIdx===null?'inactive':''}"
                       onclick="assignToSlot('${bId}', ${iIdx})">
@@ -2941,7 +2941,7 @@ function renderImportDestinationPicker() {
     const newPlaceholders = newInThisBoard.map((imgIdx, n) =>
       `<button class="slot-card new-item assigned" onclick="unassignImage(${imgIdx})">
         <div class="slot-thumb">
-          <img src="${p.images[imgIdx]}" alt="" loading="lazy">
+          <img src="${packImageUrl(p.images[imgIdx])}" alt="" loading="lazy">
           <div class="slot-overlay">
             <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 8l3 3 7-7"/></svg>
           </div>
@@ -3073,17 +3073,29 @@ function commitTapImport() {
     } else {
       const [bId, iIdxStr] = slotKey.split(':');
       const iIdx = +iIdxStr;
-      BOARDS[bId].items[iIdx].img = pack.images[imgIdx];
+      const item = BOARDS[bId].items[iIdx];
+      const meta = packImageMeta(pack.images[imgIdx]);
+      item.img = packImageUrl(pack.images[imgIdx]);
+      /* Paste the product details onto the card with the image. Only     */
+      /* fill fields she hasn't written herself — never overwrite notes.  */
+      if (meta.vendor) item.vendor = meta.vendor;
+      if (meta.web)    item.web    = meta.web;
+      if (meta.price)  item.price  = meta.price;
+      if (meta.product && !item.notes) item.notes = meta.product;
       filled++;
       affectedBoards.add(bId);
     }
   });
   newByBoard.forEach((imgIdxs, bId) => {
     imgIdxs.forEach((imgIdx, n) => {
+      const meta = packImageMeta(pack.images[imgIdx]);
       BOARDS[bId].items.push({
-        label: `${packLabel} · ${n+1}`,
-        img: pack.images[imgIdx],
-        vendor: '', web: '', price: '', notes: '', confirmed: false
+        /* Use the curated product name as the label when we have one,    */
+        /* falling back to the numbered pack label.                       */
+        label: meta.product || `${packLabel} · ${n+1}`,
+        img: packImageUrl(pack.images[imgIdx]),
+        vendor: meta.vendor, web: meta.web, price: meta.price,
+        notes: '', confirmed: false
       });
       added++;
     });
@@ -3105,7 +3117,7 @@ function commitTapImport() {
     : filled
       ? `${filled} placed into existing slot${filled===1?'':'s'}`
       : `${added} added as new item${added===1?'':'s'}`;
-  showToast(`${totalImported} image${totalImported===1?'':'s'} imported. ${detail}.`, 'success');
+  showToast(`${totalImported} image${totalImported===1?'':'s'} imported with vendor &amp; price details. ${detail}.`, 'success');
 }
 
 function togglePackImage(idx) {
@@ -3750,7 +3762,9 @@ function generateLink() {
 function openCardModal(board, idx) {
   pendingBoard=board; pendingIdx=idx; pendingImg=null;
   const it = idx!==null ? BOARDS[board].items[idx] : null;
-  document.getElementById('m-label').value  = it?it.label:'';
+  /* New Photo aesthetic slots auto-suggest the next number (Photo 6, 7…). */
+  const defaultLabel = board==='photos' ? `Photo ${BOARDS[board].items.length+1}` : '';
+  document.getElementById('m-label').value  = it?it.label:defaultLabel;
   document.getElementById('m-vendor').value = it?it.vendor:'';
   document.getElementById('m-web').value    = it?it.web:'';
   document.getElementById('m-price').value  = it?it.price:'';
