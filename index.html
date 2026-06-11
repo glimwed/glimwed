@@ -696,9 +696,18 @@ html, body {
 .img-thumb {
   position: relative; width: 72px; height: 72px;
   border-radius: var(--radius-sm); overflow: hidden;
-  border: 1px solid var(--border);
+  border: 1px solid var(--border); cursor: grab;
 }
-.img-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.img-thumb:active { cursor: grabbing; }
+.img-thumb.dragging { opacity: .4; }
+.img-thumb.drag-over { outline: 2px solid var(--rose); outline-offset: 1px; }
+.img-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; pointer-events: none; }
+.img-thumb-cover {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  background: rgba(0,0,0,.55); color: #fff;
+  font-size: 9px; text-align: center; padding: 2px 0;
+  letter-spacing: .04em; pointer-events: none;
+}
 .img-thumb-rm {
   position: absolute; top: 3px; right: 3px;
   width: 18px; height: 18px; border-radius: 50%;
@@ -3906,11 +3915,47 @@ function openCardModal(board, idx) {
 function renderImgThumbs() {
   const wrap = document.getElementById('img-thumbs');
   wrap.innerHTML = pendingImgs.map((src, idx) =>
-    `<div class="img-thumb"><img src="${src}" alt=""><button type="button" class="img-thumb-rm" onclick="removePendingImg(${idx})">×</button></div>`
+    `<div class="img-thumb" draggable="true"
+       ondragstart="imgDragStart(event,${idx})"
+       ondragover="imgDragOver(event,${idx})"
+       ondragleave="imgDragLeave(event)"
+       ondrop="imgDrop(event,${idx})"
+       ondragend="imgDragEnd(event)">
+       <img src="${src}" alt="">
+       <button type="button" class="img-thumb-rm" onclick="removePendingImg(${idx})">×</button>
+       ${idx===0?'<span class="img-thumb-cover">Cover</span>':''}
+     </div>`
   ).join('');
   document.getElementById('img-btn').textContent = pendingImgs.length ? 'Add another image' : 'Add image';
 }
 function removePendingImg(idx) { pendingImgs.splice(idx, 1); renderImgThumbs(); }
+/* Drag-to-reorder the pending image thumbnails. The first image is the    */
+/* slot's cover, so order matters.                                         */
+let dragImgIdx = null;
+function imgDragStart(e, idx) {
+  dragImgIdx = idx;
+  e.dataTransfer.effectAllowed = 'move';
+  e.currentTarget.classList.add('dragging');
+}
+function imgDragOver(e, idx) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  if (dragImgIdx !== null && dragImgIdx !== idx) e.currentTarget.classList.add('drag-over');
+}
+function imgDragLeave(e) { e.currentTarget.classList.remove('drag-over'); }
+function imgDrop(e, idx) {
+  e.preventDefault();
+  if (dragImgIdx === null || dragImgIdx === idx) return;
+  const [moved] = pendingImgs.splice(dragImgIdx, 1);
+  pendingImgs.splice(idx, 0, moved);
+  dragImgIdx = null;
+  renderImgThumbs();
+}
+function imgDragEnd() {
+  dragImgIdx = null;
+  document.querySelectorAll('.img-thumb.dragging, .img-thumb.drag-over')
+    .forEach(el => el.classList.remove('dragging', 'drag-over'));
+}
 function updateConfirmBtn() {
   const btn = document.getElementById('btn-confirm-toggle');
   btn.textContent = pendingConfirmed?'✓ Confirmed':'Mark confirmed';
