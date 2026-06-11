@@ -671,13 +671,15 @@ html, body {
 /* Carousel arrows + dots for multi-image slots on the All view */
 .img-nav {
   position: absolute; top: 50%; transform: translateY(-50%);
-  width: 28px; height: 28px; border-radius: 50%;
-  border: none; background: rgba(0,0,0,.45); color: #fff;
-  font-size: 18px; line-height: 1; cursor: pointer; z-index: 2;
+  width: 28px; height: 28px;
+  border: none; background: transparent; color: #bbb;
+  font-size: 26px; line-height: 1; cursor: pointer; z-index: 2;
   display: flex; align-items: center; justify-content: center;
-  backdrop-filter: blur(4px); opacity: .85; transition: opacity .15s, background .15s;
+  opacity: 0; pointer-events: none;
+  transition: opacity .15s, color .15s;
 }
-.item-card:hover .img-nav { opacity: 1; background: rgba(0,0,0,.65); }
+.item-card:hover .img-nav { opacity: 1; pointer-events: auto; }
+.img-nav:hover { color: #888; }
 .img-nav.prev { left: 6px; }
 .img-nav.next { right: 6px; }
 .img-dots {
