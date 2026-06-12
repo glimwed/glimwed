@@ -985,7 +985,14 @@ html, body {
    ============================================================ */
 .cp-grid { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 6px; }
 .cp-item { display: flex; flex-direction: column; align-items: center; gap: 4px; }
-.cp-swatch { width: 40px; height: 40px; border-radius: 8px; border: 1px solid var(--border); }
+.cp-swatch { width: 48px; height: 48px; border-radius: 50%; border: 1px solid var(--border); }
+/* Palette modal: chip preview row + picker controls row (aligned columns) */
+.cp-swatches { display: flex; flex-wrap: wrap; gap: 20px; }
+.cp-pickers { display: flex; flex-wrap: wrap; gap: 20px; margin-top: 6px; }
+.cp-pickers input[type="color"] {
+  width: 48px; height: 26px; border: none; padding: 0;
+  cursor: pointer; background: transparent;
+}
 
 /* ============================================================
    FEATURES: FORM ELEMENTS
@@ -2367,7 +2374,8 @@ html, body {
   <div class="modal">
     <h3>Add color palette</h3>
     <div class="mf"><label>Palette name</label><input type="text" id="p-name" placeholder="e.g. Dusty rose & sage"/></div>
-    <div class="mf"><label>Pick colours</label><div class="cp-grid" id="cpickers"></div></div>
+    <div class="mf"><div class="cp-swatches" id="cpswatches"></div></div>
+    <div class="mf"><label>Pick colors</label><div class="cp-pickers" id="cpickers"></div></div>
     <div class="mactions">
       <button class="btn-c" onclick="closeModal('palette-overlay')">Cancel</button>
       <button class="btn-s" onclick="savePalette()">Save</button>
@@ -4140,9 +4148,11 @@ function openPaletteModal() {
   renderCPickers(); showModal('palette-overlay');
 }
 function renderCPickers() {
+  document.getElementById('cpswatches').innerHTML = cpColors.map(c=>
+    `<div class="cp-swatch" style="background:${c};"></div>`
+  ).join('');
   document.getElementById('cpickers').innerHTML = cpColors.map((c,i)=>
-    `<div class="cp-item"><div class="cp-swatch" style="background:${c};"></div>
-    <input type="color" value="${c}" oninput="cpColors[${i}]=this.value;renderCPickers();" style="width:40px;height:20px;border:none;padding:0;cursor:pointer;background:transparent;"/></div>`
+    `<input type="color" value="${c}" oninput="cpColors[${i}]=this.value;renderCPickers();"/>`
   ).join('');
 }
 function savePalette(){
