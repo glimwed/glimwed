@@ -654,7 +654,9 @@ html, body {
 /* All view — editorial mood board (justified rows, image-only, no frames) */
 .moodboard { margin-bottom: 2rem; }
 .mb-row { display: flex; gap: 14px; margin-bottom: 14px; }
-.mb-tile { position: relative; overflow: hidden; cursor: pointer; flex: none; }
+.mb-tile { position: relative; overflow: hidden; cursor: grab; flex: none; transition: opacity .15s; }
+.mb-tile:active { cursor: grabbing; }
+.mb-tile.mb-dragging { opacity: .4; }
 .mb-tile img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .mb-tile:hover .img-nav { opacity: 1; pointer-events: auto; }
 .mb-tile .img-nav { color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,.45); }
@@ -1895,7 +1897,7 @@ html, body {
   <div class="page-header">
     <div>
       <h1 class="page-title">Vision Board</h1>
-      <p class="page-subtitle">Curate the look and feel of your perfect day</p>
+      <p class="page-subtitle">Curate the look and feel of your perfect day. On the All tab, drag images to reorder them however you like.</p>
     </div>
   </div>
   <div class="board-layout">
@@ -2702,6 +2704,9 @@ function packImageMeta(img) {
 let NOTE = '', TOTAL_BUDGET = '', activeBoardTab = 'bridal';
 let pendingBoard=null, pendingIdx=null, pendingImgs=[], pendingConfirmed=false;
 let allCarousels=[], boardCarousels=[];
+/* User-defined order for the All mood board (drag-to-reorder). Holds stable  */
+/* "bid::index" keys; tiles not listed here fall back to natural order.       */
+let allOrder = [];
 let cpColors = ['#EACACD','#E66C95','#F9F7F7','#B2C4B2','#F5ECD7','#E8C4C4'];
 
 /* ------------------------------------------------------------------ */
@@ -2835,8 +2840,17 @@ function renderAllImages() {
   const all = [];
   sources.forEach(bid => BOARDS[bid].items.forEach((it, i) => {
     const imgs = itemImgs(it);
-    if (imgs.length) all.push({imgs, it, bid, i});
+    if (imgs.length) all.push({imgs, it, bid, i, key: bid + '::' + i});
   }));
+  /* Apply the user's drag order. Stable sort keeps any unlisted (new) tiles  */
+  /* in their natural position at the end.                                    */
+  all.sort((a, b) => {
+    const ia = allOrder.indexOf(a.key), ib = allOrder.indexOf(b.key);
+    if (ia === -1 && ib === -1) return 0;
+    if (ia === -1) return 1;
+    if (ib === -1) return -1;
+    return ia - ib;
+  });
   if (all.length === 0) {
     return `<div class="empty-board">
       <div class="empty-board-icon">
@@ -2863,7 +2877,10 @@ function renderAllImages() {
          <button class="img-nav next" onclick="event.stopPropagation();allCarouselStep(${c},1)" aria-label="Next image">›</button>
          <div class="img-dots" id="all-dots-${c}">${imgs.map((_,d)=>`<span class="${d===0?'on':''}"></span>`).join('')}</div>`
       : '';
-    return `<div class="mb-tile" id="all-cb-${c}" onclick="openCardModal('${bid}',${i})"><img src="${imgs[0]}" alt="${it.label}">${nav}</div>`;
+    return `<div class="mb-tile" id="all-cb-${c}" data-key="${all[c].key}" draggable="true"
+      ondragstart="mbDragStart(event,'${all[c].key}')" ondragover="mbDragOver(event)"
+      ondragend="mbDragEnd(event)" ondrop="mbDrop(event,'${all[c].key}')"
+      onclick="openCardModal('${bid}',${i})"><img src="${imgs[0]}" alt="${it.label}" draggable="false">${nav}</div>`;
   }).join('');
   requestAnimationFrame(() => layoutMoodboard());
   return `<div class="moodboard" id="moodboard">${tiles}</div>`;
@@ -2871,7 +2888,7 @@ function renderAllImages() {
 /* Three-per-row layout for the All mood board. Each row holds 3 tiles and is  */
 /* scaled so its images fill the width while keeping their aspect ratios, so   */
 /* widths vary within the row. Runs after images load and re-runs on resize.   */
-const MB_PER_ROW = 3;
+const MB_PER_ROW = 4;
 function layoutMoodboard() {
   const mb = document.getElementById('moodboard');
   if (!mb) return;
@@ -2918,6 +2935,39 @@ window.addEventListener('resize', () => {
   clearTimeout(_mbResizeTimer);
   _mbResizeTimer = setTimeout(layoutMoodboard, 150);
 });
+
+/* ---- Drag-to-reorder for the All mood board ---- */
+let mbDragKey = null;
+function mbDragStart(e, key) {
+  mbDragKey = key;
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', key);   // required for Safari/Firefox
+  const tile = e.currentTarget;
+  if (tile) setTimeout(() => tile.classList.add('mb-dragging'), 0);
+}
+function mbDragOver(e) {
+  if (!mbDragKey) return;
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+}
+function mbDragEnd() {
+  mbDragKey = null;
+  document.querySelectorAll('.mb-tile.mb-dragging').forEach(t => t.classList.remove('mb-dragging'));
+}
+function mbDrop(e, targetKey) {
+  e.preventDefault();
+  if (!mbDragKey || mbDragKey === targetKey) { mbDragEnd(); return; }
+  // Current on-screen order of all tiles, then move the dragged one before target.
+  const seq = [...document.querySelectorAll('#moodboard .mb-tile')].map(t => t.dataset.key);
+  const from = seq.indexOf(mbDragKey), to = seq.indexOf(targetKey);
+  if (from === -1 || to === -1) { mbDragEnd(); return; }
+  seq.splice(to, 0, seq.splice(from, 1)[0]);
+  allOrder = seq;
+  mbDragKey = null;
+  // Re-render the All grid with the new order.
+  const host = document.getElementById('board-content');
+  if (host) host.innerHTML = renderBoardGrid('all');
+}
 /* Step a carousel (shared logic) to the next/previous image. */
 function stepCarousel(st, boxId, dotsId, dir) {
   if (!st) return;
