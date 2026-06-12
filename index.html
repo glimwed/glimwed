@@ -1299,84 +1299,88 @@ html, body {
 /* ============================================================
    COLOR PALETTES PAGE GRID
    ============================================================ */
+/* Palettes stacked on the page — no card/slot box around them */
 .palette-page-grid {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 40px;
 }
 
 .palette-page-card {
-  background: var(--white);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  overflow: hidden;
-  box-shadow: var(--shadow);
-  transition: box-shadow .15s, transform .15s;
-}
-.palette-page-card:not(.palette-page-add):hover {
-  box-shadow: var(--shadow-lg);
-  transform: translateY(-1px);
+  position: relative;
 }
 
-/* Five equal swatches, no gap, full card width — always square */
-.palette-page-swatches {
+/* Palette name — italic serif, top */
+.palette-page-name {
+  display: block;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 24px;
+  font-style: italic;
+  font-weight: 400;
+  color: var(--ink);
+  margin-bottom: 20px;
+}
+
+/* Round colour swatches — large, spread across the page width */
+.palette-page-circles {
   display: flex;
-  width: 100%;
+  gap: 24px;
+  margin-bottom: 16px;
 }
-.palette-page-swatch {
-  flex: 1;
+.palette-page-circle {
+  flex: 1 1 0;
+  max-width: 150px;
   aspect-ratio: 1 / 1;
-  border: none;
-  min-width: 0;
+  border-radius: 50%;
+  border: 1px solid rgba(0,0,0,.06);
 }
 
-/* Delete button — in footer row, aligned with name, shown on card hover */
+/* "N colors" meta label */
+.palette-page-meta {
+  font-size: 14px;
+  color: var(--muted);
+}
+
+/* Delete button — top-right corner, shown on hover */
 .palette-delete-btn {
+  position: absolute;
+  top: 0;
+  right: 0;
   background: none;
   border: none;
   color: var(--muted);
-  font-size: 20px;
+  font-size: 22px;
   line-height: 1;
   cursor: pointer;
   opacity: 0;
-  transition: opacity .18s ease, color .12s;
-  padding: 0;
-  flex-shrink: 0;
+  transition: opacity .18s ease, color .12s, background .12s;
+  padding: 2px 8px;
+  border-radius: 50%;
 }
 .palette-page-card:hover .palette-delete-btn {
   opacity: 1;
 }
 .palette-delete-btn:hover {
   color: var(--rose);
-}
-
-/* Name + delete row */
-.palette-page-footer {
-  padding: 10px 14px 11px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-.palette-page-name {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 17px;
-  font-style: italic;
-  font-weight: 400;
-  color: var(--ink);
-}
-
-.palette-page-add {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 114px;
-  border-style: dashed;
   background: var(--cloud);
-  cursor: pointer;
-  transition: .15s;
 }
-.palette-page-add:hover { border-color: var(--rose); background: #FBE9EF; }
+
+/* "+ Add palette" — plain button below the palettes, not a slot */
+.palette-add-below {
+  display: inline-block;
+  margin-top: 36px;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--muted);
+  font-family: 'Jost', sans-serif;
+  font-size: 15px;
+  font-weight: 400;
+  cursor: pointer;
+  padding: 10px 22px;
+  transition: border-color .15s, color .15s, background .15s;
+}
+.palette-add-below:hover { border-color: var(--muted); color: var(--sub); background: var(--cloud); }
 
 
 .avatar-btn-wrap { position: relative; }
@@ -1915,9 +1919,6 @@ html, body {
     <div>
       <h1 class="page-title">Color Palettes</h1>
       <p class="page-subtitle">Save and organise the colours of your perfect day</p>
-    </div>
-    <div class="page-actions">
-      <button class="btn-ghost-rose" onclick="openPaletteModal()">+ Add palette</button>
     </div>
   </div>
   <div id="colors-grid-content"></div>
@@ -2951,26 +2952,17 @@ function renderColorsPage() {
   const el = document.getElementById('colors-grid-content');
   if (!el) return;
   const cards = PALETTES.map((p, pi) => {
-    const swatches = [...p.colors];
-    while (swatches.length < 5) swatches.push('#F0EDE8');
-    const swatchHtml = swatches.slice(0,5).map(c =>
-      `<div class="palette-page-swatch" style="background:${c};"></div>`
+    const swatchHtml = p.colors.map(c =>
+      `<div class="palette-page-circle" style="background:${c};"></div>`
     ).join('');
     return `<div class="palette-page-card">
-      <div class="palette-page-swatches">
-        ${swatchHtml}
-      </div>
-      <div class="palette-page-footer">
-        <span class="palette-page-name">${p.name}</span>
-        <button class="palette-delete-btn" onclick="PALETTES.splice(${pi},1);renderColorsPage();renderPalettePanel();" title="Delete palette">×</button>
-      </div>
+      <button class="palette-delete-btn" onclick="PALETTES.splice(${pi},1);renderColorsPage();renderPalettePanel();" title="Delete palette" aria-label="Delete palette">×</button>
+      <span class="palette-page-name">${p.name}</span>
+      <div class="palette-page-circles">${swatchHtml}</div>
     </div>`;
   }).join('');
-  const addCard = `<div class="palette-page-card palette-page-add" onclick="openPaletteModal()">
-    <div style="font-size:26px;color:var(--muted);margin-bottom:6px;">+</div>
-    <div style="font-size:13px;color:var(--muted);">Add palette</div>
-  </div>`;
-  el.innerHTML = `<div class="palette-page-grid">${cards}${addCard}</div>`;
+  el.innerHTML = `<div class="palette-page-grid">${cards}</div>
+    <button class="palette-add-below" onclick="openPaletteModal()">+ Add palette</button>`;
 }
 
 /* ------------------------------------------------------------------ */
