@@ -648,6 +648,14 @@ html, body {
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 18px; margin-bottom: 2rem;
 }
+
+/* All view — editorial mood board (justified rows, image-only, no frames) */
+.moodboard { margin-bottom: 2rem; }
+.mb-row { display: flex; gap: 14px; margin-bottom: 14px; }
+.mb-tile { position: relative; overflow: hidden; cursor: pointer; flex: none; }
+.mb-tile img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.mb-tile:hover .img-nav { opacity: 1; pointer-events: auto; }
+.mb-tile .img-nav { color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,.45); }
 .item-card {
   background: var(--white); border: 1px solid var(--border);
   border-radius: var(--radius); overflow: hidden; cursor: pointer;
@@ -2838,23 +2846,74 @@ function renderAllImages() {
       <div class="empty-board-sub">Every image you add to any board collects here automatically. Add some images to your category boards to see them all together.</div>
     </div>`;
   }
-  /* Image-only cards on the All view — no labels/details, just the photo. */
-  /* Still fully clickable: opens the card in its original board to edit.   */
-  /* Slots with several images become a mini carousel with arrows + dots.   */
+  /* All view = an editorial mood board: images flow in justified rows of    */
+  /* varying heights — image only, no frames/labels and no confirmed badge   */
+  /* or outline. Still fully clickable (opens the card in its source board).  */
+  /* Multi-image slots stay one tile with ‹ › arrows. The actual sizing is    */
+  /* computed in layoutMoodboard() once each image's natural size is known.   */
   allCarousels = all.map(a => ({imgs: a.imgs, idx: 0}));
-  const cards = all.map(({imgs, it, bid, i}, c) => {
+  const tiles = all.map(({imgs, it, bid, i}, c) => {
     const multi = imgs.length > 1;
     const nav = multi
       ? `<button class="img-nav prev" onclick="event.stopPropagation();allCarouselStep(${c},-1)" aria-label="Previous image">‹</button>
          <button class="img-nav next" onclick="event.stopPropagation();allCarouselStep(${c},1)" aria-label="Next image">›</button>
          <div class="img-dots" id="all-dots-${c}">${imgs.map((_,d)=>`<span class="${d===0?'on':''}"></span>`).join('')}</div>`
       : '';
-    return `<div class="item-card${it.confirmed?' confirmed':''}" onclick="openCardModal('${bid}',${i})">
-      <div class="img-box" id="all-cb-${c}"><img src="${imgs[0]}" alt="${it.label}">${nav}${it.confirmed?'<div class="conf-badge"></div>':''}</div>
-    </div>`;
+    return `<div class="mb-tile" id="all-cb-${c}" onclick="openCardModal('${bid}',${i})"><img src="${imgs[0]}" alt="${it.label}">${nav}</div>`;
   }).join('');
-  return `<div class="cards-grid">${cards}</div>`;
+  requestAnimationFrame(() => layoutMoodboard());
+  return `<div class="moodboard" id="moodboard">${tiles}</div>`;
 }
+/* Justified-rows ("editorial") layout for the All mood board. Each row is    */
+/* scaled so its images fill the width; row target heights vary for size      */
+/* variety. Runs after images load and re-runs on resize.                     */
+const MB_ROW_HEIGHTS = [250, 300, 210, 285, 235];
+function layoutMoodboard() {
+  const mb = document.getElementById('moodboard');
+  if (!mb) return;
+  const tiles = [...mb.querySelectorAll('.mb-tile')];
+  if (!tiles.length) return;
+  const imgsEls = tiles.map(t => t.querySelector('img'));
+  const pending = imgsEls.filter(im => !(im.complete && im.naturalWidth));
+  if (pending.length) {
+    Promise.all(pending.map(im => new Promise(res => { im.onload = res; im.onerror = res; })))
+      .then(() => layoutMoodboard());
+    return;
+  }
+  const cw = mb.clientWidth;
+  if (!cw) return;
+  const gap = 14;
+  const aspects = imgsEls.map(im => im.naturalWidth / im.naturalHeight);
+  tiles.forEach(t => t.remove());   // keep references; rebuild row wrappers
+  mb.innerHTML = '';
+  let i = 0, rown = 0;
+  while (i < tiles.length) {
+    const targetH = MB_ROW_HEIGHTS[rown % MB_ROW_HEIGHTS.length]; rown++;
+    const row = []; let sumRatio = 0;
+    while (i < tiles.length) {
+      row.push(i); sumRatio += aspects[i]; i++;
+      if (targetH * sumRatio + gap * (row.length - 1) >= cw) break;
+    }
+    const n = row.length;
+    let h = (cw - gap * (n - 1)) / sumRatio;
+    if (i >= tiles.length && h > targetH * 1.15) h = targetH;   // tame a short final row
+    const rowEl = document.createElement('div');
+    rowEl.className = 'mb-row';
+    row.forEach(idx => {
+      const t = tiles[idx];
+      t.style.width = Math.round(h * aspects[idx]) + 'px';
+      t.style.height = Math.round(h) + 'px';
+      rowEl.appendChild(t);
+    });
+    mb.appendChild(rowEl);
+  }
+}
+let _mbResizeTimer = null;
+window.addEventListener('resize', () => {
+  if (!document.getElementById('moodboard')) return;
+  clearTimeout(_mbResizeTimer);
+  _mbResizeTimer = setTimeout(layoutMoodboard, 150);
+});
 /* Step a carousel (shared logic) to the next/previous image. */
 function stepCarousel(st, boxId, dotsId, dir) {
   if (!st) return;
