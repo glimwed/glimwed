@@ -1214,7 +1214,7 @@ html, body {
    ============================================================ */
 .board-layout {
   display: grid;
-  grid-template-columns: 1fr 260px;
+  grid-template-columns: 1fr;
   gap: 28px;
   align-items: start;
 }
@@ -1225,6 +1225,7 @@ html, body {
    PALETTE PANEL (right column)
    ============================================================ */
 .palette-panel {
+  display: none;        /* hidden on the board — palettes live on the Palettes tab */
   position: sticky;
   top: 92px; /* 68px header + 24px gap */
 }
