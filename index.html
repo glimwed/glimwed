@@ -2864,10 +2864,10 @@ function renderAllImages() {
   requestAnimationFrame(() => layoutMoodboard());
   return `<div class="moodboard" id="moodboard">${tiles}</div>`;
 }
-/* Justified-rows ("editorial") layout for the All mood board. Each row is    */
-/* scaled so its images fill the width; row target heights vary for size      */
-/* variety. Runs after images load and re-runs on resize.                     */
-const MB_ROW_HEIGHTS = [250, 300, 210, 285, 235];
+/* Three-per-row layout for the All mood board. Each row holds 3 tiles and is  */
+/* scaled so its images fill the width while keeping their aspect ratios, so   */
+/* widths vary within the row. Runs after images load and re-runs on resize.   */
+const MB_PER_ROW = 3;
 function layoutMoodboard() {
   const mb = document.getElementById('moodboard');
   if (!mb) return;
@@ -2886,17 +2886,17 @@ function layoutMoodboard() {
   const aspects = imgsEls.map(im => im.naturalWidth / im.naturalHeight);
   tiles.forEach(t => t.remove());   // keep references; rebuild row wrappers
   mb.innerHTML = '';
-  let i = 0, rown = 0;
-  while (i < tiles.length) {
-    const targetH = MB_ROW_HEIGHTS[rown % MB_ROW_HEIGHTS.length]; rown++;
-    const row = []; let sumRatio = 0;
-    while (i < tiles.length) {
-      row.push(i); sumRatio += aspects[i]; i++;
-      if (targetH * sumRatio + gap * (row.length - 1) >= cw) break;
-    }
+  for (let i = 0; i < tiles.length; i += MB_PER_ROW) {
+    const row = [];
+    for (let j = i; j < Math.min(i + MB_PER_ROW, tiles.length); j++) row.push(j);
     const n = row.length;
+    const sumRatio = row.reduce((s, idx) => s + aspects[idx], 0);
     let h = (cw - gap * (n - 1)) / sumRatio;
-    if (i >= tiles.length && h > targetH * 1.15) h = targetH;   // tame a short final row
+    // short final row (fewer than MB_PER_ROW): cap height so tiles don't balloon
+    if (n < MB_PER_ROW) {
+      const fullH = (cw - gap * (MB_PER_ROW - 1)) / (sumRatio * MB_PER_ROW / n);
+      if (h > fullH * 1.15) h = fullH;
+    }
     const rowEl = document.createElement('div');
     rowEl.className = 'mb-row';
     row.forEach(idx => {
