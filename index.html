@@ -1231,6 +1231,7 @@ html, body {
 }
 
 .palette-panel-card {
+  position: relative;
   background: var(--white);
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -1238,6 +1239,17 @@ html, body {
   margin-bottom: 10px;
   box-shadow: var(--shadow);
 }
+
+.palette-panel-rm {
+  position: absolute; top: 7px; right: 7px;
+  font-size: 16px; color: var(--muted);
+  background: none; border: none; line-height: 1;
+  padding: 2px 5px; border-radius: 50%; cursor: pointer;
+  opacity: 0; transition: opacity .12s, color .12s, background .12s;
+}
+.palette-panel-card:hover .palette-panel-rm,
+.palette-panel-rm:focus-visible { opacity: 1; }
+.palette-panel-rm:hover { color: var(--rose); background: var(--cloud); }
 
 .palette-panel-card-name {
   font-family: 'Cormorant Garamond', serif;
@@ -2748,12 +2760,10 @@ function renderPalettePanel() {
       `<div class="palette-swatch-circle" style="background:${c};"></div>`
     ).join('');
     return `<div class="palette-panel-card">
+      <button class="palette-panel-rm" onclick="PALETTES.splice(${pi},1);render()" title="Delete palette" aria-label="Delete palette">×</button>
       <span class="palette-panel-card-name">${p.name}</span>
       <div class="palette-swatches">${swatchHtml}</div>
-      <div style="display:flex;align-items:center;justify-content:space-between;">
-        <span class="palette-panel-meta">${p.colors.length} color${p.colors.length!==1?'s':''}</span>
-        <button class="rm" style="font-size:15px;" onclick="PALETTES.splice(${pi},1);render()">×</button>
-      </div>
+      <span class="palette-panel-meta">${p.colors.length} color${p.colors.length!==1?'s':''}</span>
     </div>`;
   }).join('');
 }
