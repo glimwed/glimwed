@@ -920,11 +920,21 @@ html, body {
 .modal-overlay.open { display: flex; }
 
 .modal {
+  position: relative;
   background: var(--white); border-radius: var(--radius-lg);
   padding: 28px 30px; width: 480px; max-width: 95vw;
   max-height: 90vh; overflow-y: auto;
   box-shadow: var(--shadow-xl); animation: modal-in .2s ease;
 }
+.modal-x {
+  position: absolute; top: 14px; right: 16px;
+  width: 30px; height: 30px; border-radius: 50%;
+  border: none; background: transparent; color: var(--sub);
+  font-size: 22px; line-height: 1; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: .12s;
+}
+.modal-x:hover { background: var(--cloud); color: var(--ink); }
 @keyframes modal-in { from { opacity:0; transform: translateY(12px) scale(.98); } to { opacity:1; transform: none; } }
 
 .modal h3 {
@@ -950,6 +960,13 @@ html, body {
   color: var(--rose); background: #FBE9EF; cursor: pointer; transition: .12s;
 }
 .btn-confirm:hover { background: #F5D5E2; }
+
+.btn-delete {
+  padding: 7px 16px; font-size: 13px; font-weight: 500;
+  border-radius: var(--radius-sm); border: 1.5px solid #EAD3D3;
+  color: #C0392B; background: #fff; cursor: pointer; transition: .12s;
+}
+.btn-delete:hover { background: #FDECEA; border-color: #E5A9A1; }
 
 /* ============================================================
    CP GRID (colour picker)
@@ -2298,6 +2315,7 @@ html, body {
 <!-- Card (vision board) -->
 <div class="modal-overlay" id="card-overlay">
   <div class="modal">
+    <button class="modal-x" onclick="closeModal('card-overlay')" aria-label="Close">×</button>
     <h3 id="modal-title">Add item</h3>
     <div class="mf"><label>Label</label><input type="text" id="m-label" placeholder="e.g. Wedding dress"/></div>
     <input type="file" accept="image/*" multiple class="hidden" id="file-input"/>
@@ -2312,7 +2330,7 @@ html, body {
     <div class="mf"><label>Notes</label><textarea id="m-notes" rows="3" class="note-area" placeholder="Fit, colour, availability..."></textarea></div>
     <div class="mactions">
       <button class="btn-confirm" id="btn-confirm-toggle" onclick="toggleConfirm()">Mark confirmed</button>
-      <button class="btn-c" onclick="closeModal('card-overlay')">Cancel</button>
+      <button class="btn-delete" id="btn-delete-card" onclick="deleteCard()" style="display:none;">Delete</button>
       <button class="btn-s" onclick="saveCard()">Save</button>
     </div>
   </div>
@@ -3909,6 +3927,7 @@ function openCardModal(board, idx) {
   document.getElementById('m-price').value  = it?it.price:'';
   document.getElementById('m-notes').value  = it?it.notes:'';
   document.getElementById('modal-title').textContent = idx!==null?'Edit item':'Add item';
+  document.getElementById('btn-delete-card').style.display = idx!==null ? '' : 'none';
   pendingConfirmed = it?it.confirmed:false;
   updateConfirmBtn();
   renderImgThumbs();
@@ -3968,6 +3987,13 @@ function updateConfirmBtn() {
   btn.style.color = pendingConfirmed?'#fff':'';
 }
 function toggleConfirm() { pendingConfirmed=!pendingConfirmed; updateConfirmBtn(); }
+function deleteCard() {
+  if(pendingIdx===null) return;
+  const name = BOARDS[pendingBoard].items[pendingIdx].label || 'this slot';
+  if(!confirm(`Delete "${name}"? This can't be undone.`)) return;
+  BOARDS[pendingBoard].items.splice(pendingIdx, 1);
+  closeModal('card-overlay'); render();
+}
 function saveCard() {
   const data = {
     label: document.getElementById('m-label').value.trim()||'Untitled',
