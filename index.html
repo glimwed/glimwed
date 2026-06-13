@@ -4130,15 +4130,84 @@ function saveCard() {
   else{BOARDS[pendingBoard].items.push(data);}
   closeModal('card-overlay'); render();
 }
-/* Append every selected file as its own image — supports multi-select.     */
-document.getElementById('file-input').addEventListener('change', function(e){
-  const files=[...e.target.files]; if(!files.length)return;
-  files.forEach(f=>{
-    const r=new FileReader();
-    r.onload=ev=>{ pendingImgs.push(ev.target.result); renderImgThumbs(); };
-    r.readAsDataURL(f);
+/* Core shrinker: take an image data-URL, cap its longest side to maxDim and
+   re-encode as JPEG. Returns whichever of {original, shrunk} is smaller, and
+   the original untouched on any failure.                                     */
+function compressDataUrl(dataUrl, maxDim = 1600, quality = 0.82) {
+  return new Promise(resolve => {
+    const img = new Image();
+    img.onerror = () => resolve(dataUrl);             // not decodable → keep raw
+    img.onload = () => {
+      try {
+        let { width: w, height: h } = img;
+        if (Math.max(w, h) > maxDim) {
+          const scale = maxDim / Math.max(w, h);
+          w = Math.round(w * scale); h = Math.round(h * scale);
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#fff';                        // flatten transparency to white
+        ctx.fillRect(0, 0, w, h);
+        ctx.drawImage(img, 0, 0, w, h);
+        const out = canvas.toDataURL('image/jpeg', quality);
+        resolve(out.length < dataUrl.length ? out : dataUrl);
+      } catch (err) { resolve(dataUrl); }
+    };
+    img.src = dataUrl;
   });
+}
+
+/* Shrink an uploaded photo (a File) before we store it. Keeps the saved
+   database row small so Supabase saves don't fail.                          */
+function compressImage(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = reject;
+    reader.onload = ev => compressDataUrl(ev.target.result).then(resolve);
+    reader.readAsDataURL(file);
+  });
+}
+
+/* One-time heal for accounts whose boards were saved with full-size images
+   (before compression existed). Re-compresses any stored image above the
+   threshold; already-small images are skipped so quality isn't re-degraded
+   on every load. Returns true if anything changed.                          */
+const HEAL_THRESHOLD = 450000;   // ~340KB data-URL; compressed photos fall well under
+async function optimizeStoredImages() {
+  let changed = false;
+  for (const bid of Object.keys(BOARDS)) {
+    const items = (BOARDS[bid] && BOARDS[bid].items) || [];
+    for (const it of items) {
+      const arr = Array.isArray(it.imgs) ? it.imgs
+                : (it.img ? [it.img] : []);
+      for (let i = 0; i < arr.length; i++) {
+        const src = arr[i];
+        if (typeof src === 'string' && src.startsWith('data:') && src.length > HEAL_THRESHOLD) {
+          const shrunk = await compressDataUrl(src);
+          if (shrunk.length < src.length) { arr[i] = shrunk; changed = true; }
+        }
+      }
+      if (changed) { it.imgs = arr; it.img = arr[0] || null; }
+    }
+  }
+  return changed;
+}
+
+/* Append every selected file as its own image — supports multi-select.     */
+document.getElementById('file-input').addEventListener('change', async function(e){
+  const files=[...e.target.files]; if(!files.length)return;
   e.target.value='';
+  for (const f of files){
+    try {
+      const dataUrl = await compressImage(f);
+      pendingImgs.push(dataUrl);
+      renderImgThumbs();
+    } catch(err){
+      console.error('image read failed', err);
+      showToast('Could not read that image — try another file', 'error');
+    }
+  }
 });
 
 /* ------------------------------------------------------------------ */
@@ -4298,6 +4367,9 @@ async function loadBoards() {
     lastSavedJson = JSON.stringify(data.data);
     setState(data.data);
     showToast('Your saved boards loaded', 'success');
+    // One-time heal: shrink any oversized images saved before compression existed.
+    clearTimeout(autosaveTimer);                  // cancel the autosave setState just queued
+    if (await optimizeStoredImages()) { render(); saveBoards(); }
   } else {
     lastSavedJson = JSON.stringify(getState());   // nothing saved yet
   }
@@ -4311,7 +4383,21 @@ async function saveBoards() {
   setSaveStatus('saving');
   const { error } = await sb.from('boards')
     .upsert({ user_id: currentUser.id, data: state, updated_at: new Date().toISOString() });
-  if (error) { console.error('save error', error); setSaveStatus('hide'); showToast('Save failed — check your connection', 'error'); return; }
+  if (error) {
+    console.error('save error', error);
+    setSaveStatus('hide');
+    const blob = ((error.message||'') + ' ' + (error.code||'') + ' ' + (error.status||'')).toLowerCase();
+    let msg;
+    if (/jwt|expired|401|403|not authenticated|invalid token/.test(blob)) {
+      msg = 'Your session expired — please sign in again, then save.';
+    } else if (/payload|too large|413|size|statement timeout|timeout|57014/.test(blob)) {
+      msg = 'Save failed: your boards are too large (usually big images). Try removing a few photos.';
+    } else {
+      msg = 'Save failed' + (error.message ? ': ' + error.message : ' — check your connection');
+    }
+    showToast(msg, 'error');
+    return;
+  }
   lastSavedJson = json;
   setSaveStatus('saved');
 }
