@@ -748,7 +748,9 @@ html, body {
   position: absolute; top: 8px; right: 8px;
   width: 22px; height: 22px; border-radius: 50%;
   background: var(--rose); display: flex; align-items: center; justify-content: center;
+  opacity: 0; transition: opacity .15s;
 }
+.item-card:hover .conf-badge { opacity: 1; }
 .conf-badge::after {
   content: ''; width: 11px; height: 7px;
   border-left: 2px solid #fff; border-bottom: 2px solid #fff;
