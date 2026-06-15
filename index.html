@@ -3339,6 +3339,7 @@ function commitTapImport() {
   const packLabel = packDisplayName(pack);
   let filled = 0, added = 0;
   const affectedBoards = new Set();
+  const replacedImgs = [];   // photos overwritten by a pack image → free them from Storage after commit
   /* Two passes: first replace existing slots, then push new items.     */
   /* Group new items by board so labels are numbered cleanly.           */
   const newByBoard = new Map();
@@ -3353,6 +3354,7 @@ function commitTapImport() {
       const item = BOARDS[bId].items[iIdx];
       const meta = packImageMeta(pack.images[imgIdx]);
       const purl = packImageUrl(pack.images[imgIdx]);
+      itemImgs(item).forEach(u => { if (u !== purl) replacedImgs.push(u); });
       item.imgs = [purl];
       item.img = purl;
       /* Paste the product details onto the card with the image. Only     */
@@ -3392,6 +3394,7 @@ function commitTapImport() {
     setSB('sb-board');
     render();
   }
+  if (replacedImgs.length) deleteStorageImages(replacedImgs);
   const detail = filled && added
     ? `${filled} placed · ${added} added as new`
     : filled
@@ -4113,22 +4116,34 @@ function updateConfirmBtn() {
 function toggleConfirm() { pendingConfirmed=!pendingConfirmed; updateConfirmBtn(); }
 function deleteCard() {
   if(pendingIdx===null) return;
-  const name = BOARDS[pendingBoard].items[pendingIdx].label || 'this slot';
+  const item = BOARDS[pendingBoard].items[pendingIdx];
+  const name = item.label || 'this slot';
   if(!confirm(`Delete "${name}"? This can't be undone.`)) return;
+  const removed = itemImgs(item);                 // free this slot's photos from Storage
   BOARDS[pendingBoard].items.splice(pendingIdx, 1);
   closeModal('card-overlay'); render();
+  deleteStorageImages(removed);
 }
 function saveCard() {
+  const newImgs = pendingImgs.slice();
   const data = {
     label: document.getElementById('m-label').value.trim()||'Untitled',
-    imgs: pendingImgs.slice(), img: pendingImgs[0] || null,
+    imgs: newImgs, img: newImgs[0] || null,
     vendor: document.getElementById('m-vendor').value.trim(),
     web: document.getElementById('m-web').value.trim(), price: document.getElementById('m-price').value.trim(),
     notes: document.getElementById('m-notes').value.trim(), confirmed: pendingConfirmed,
   };
-  if(pendingIdx!==null){BOARDS[pendingBoard].items[pendingIdx]=data;}
-  else{BOARDS[pendingBoard].items.push(data);}
+  /* On an edit, delete any photos that were on the slot before but aren't   */
+  /* now — but only after Save, so cancelling never removes a live photo.    */
+  let removed = [];
+  if(pendingIdx!==null){
+    removed = itemImgs(BOARDS[pendingBoard].items[pendingIdx]).filter(u => !newImgs.includes(u));
+    BOARDS[pendingBoard].items[pendingIdx]=data;
+  } else {
+    BOARDS[pendingBoard].items.push(data);
+  }
   closeModal('card-overlay'); render();
+  if(removed.length) deleteStorageImages(removed);
 }
 /* Core shrinker: take an image data-URL, cap its longest side to maxDim and
    re-encode as JPEG. Returns whichever of {original, shrunk} is smaller, and
@@ -4169,39 +4184,98 @@ function compressImage(file) {
   });
 }
 
-/* One-time heal for accounts whose boards were saved with full-size images
-   (before compression existed). Re-compresses any stored image above the
-   threshold; already-small images are skipped so quality isn't re-degraded
-   on every load. Returns true if anything changed.                          */
-const HEAL_THRESHOLD = 450000;   // ~340KB data-URL; compressed photos fall well under
-async function optimizeStoredImages() {
+/* Turn a base64 data-URL into a Blob we can hand to Supabase Storage.       */
+function dataUrlToBlob(dataUrl) {
+  const [head, b64] = dataUrl.split(',');
+  const mime = (head.match(/data:([^;]+)/) || [, 'image/jpeg'])[1];
+  const bin = atob(b64);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return new Blob([bytes], { type: mime });
+}
+
+/* Upload one image (a compressed data-URL) to Supabase Storage and return
+   its permanent public URL. Pack images / already-uploaded photos (plain
+   URLs) pass straight through. Signed-out users keep the inline data-URL so
+   the board still works as a local-only session.                           */
+async function uploadImageToStorage(dataUrl) {
+  if (typeof dataUrl !== 'string' || !dataUrl.startsWith('data:')) return dataUrl;
+  if (!currentUser) return dataUrl;
+  const blob = dataUrlToBlob(dataUrl);
+  const ext  = blob.type === 'image/png' ? 'png' : 'jpg';
+  const path = `${currentUser.id}/${crypto.randomUUID()}.${ext}`;
+  const { error } = await sb.storage.from(STORAGE_BUCKET)
+    .upload(path, blob, { contentType: blob.type, cacheControl: '31536000', upsert: false });
+  if (error) { console.error('image upload failed', error); throw error; }
+  return sb.storage.from(STORAGE_BUCKET).getPublicUrl(path).data.publicUrl;
+}
+
+/* Pull the Storage object path back out of a public URL, but ONLY for URLs
+   that point at our own bucket. Pack/Unsplash links and inline data-URLs
+   return null, so we never try to delete something we don't own.           */
+function storagePathFromUrl(url) {
+  if (typeof url !== 'string') return null;
+  const marker = `/storage/v1/object/public/${STORAGE_BUCKET}/`;
+  const i = url.indexOf(marker);
+  return i === -1 ? null : url.slice(i + marker.length).split('?')[0];
+}
+
+/* Delete photos from Storage once their removal has actually been saved.
+   Fire-and-forget: a failed delete just leaves an orphan (harmless), it
+   never blocks the edit. Only our-bucket URLs are touched.                 */
+async function deleteStorageImages(urls) {
+  if (!currentUser || !Array.isArray(urls)) return;
+  const paths = urls.map(storagePathFromUrl).filter(Boolean);
+  if (!paths.length) return;
+  const { error } = await sb.storage.from(STORAGE_BUCKET).remove(paths);
+  if (error) console.error('storage delete failed', error);
+}
+
+/* One-time migration for accounts whose boards still embed photos as base64
+   (the old storage scheme). Each embedded image is compressed, pushed to
+   Storage, and replaced in-place by its URL — so the saved row shrinks from
+   megabytes to a few hundred bytes. Plain URLs are skipped, so this is
+   idempotent and effectively a no-op once an account is migrated.          */
+async function migrateImagesToStorage() {
+  if (!currentUser) return false;
   let changed = false;
   for (const bid of Object.keys(BOARDS)) {
     const items = (BOARDS[bid] && BOARDS[bid].items) || [];
     for (const it of items) {
-      const arr = Array.isArray(it.imgs) ? it.imgs
-                : (it.img ? [it.img] : []);
+      const arr = Array.isArray(it.imgs) ? it.imgs : (it.img ? [it.img] : []);
+      let itemChanged = false;
       for (let i = 0; i < arr.length; i++) {
         const src = arr[i];
-        if (typeof src === 'string' && src.startsWith('data:') && src.length > HEAL_THRESHOLD) {
-          const shrunk = await compressDataUrl(src);
-          if (shrunk.length < src.length) { arr[i] = shrunk; changed = true; }
+        if (typeof src === 'string' && src.startsWith('data:')) {
+          try {
+            const url = await uploadImageToStorage(await compressDataUrl(src));
+            if (url && url !== src) { arr[i] = url; changed = itemChanged = true; }
+          } catch (err) { console.error('image migration failed', err); }
         }
       }
-      if (changed) { it.imgs = arr; it.img = arr[0] || null; }
+      if (itemChanged) { it.imgs = arr; it.img = arr[0] || null; }
     }
   }
   return changed;
 }
 
-/* Append every selected file as its own image — supports multi-select.     */
+/* Append every selected file as its own image — supports multi-select.
+   Each photo is compressed, uploaded to Storage, and stored as a URL so the
+   saved board row stays small no matter how many photos are added.         */
 document.getElementById('file-input').addEventListener('change', async function(e){
   const files=[...e.target.files]; if(!files.length)return;
   e.target.value='';
   for (const f of files){
     try {
       const dataUrl = await compressImage(f);
-      pendingImgs.push(dataUrl);
+      let src;
+      try {
+        src = await uploadImageToStorage(dataUrl);
+      } catch(uploadErr){
+        src = dataUrl;  // upload failed → keep inline so the photo isn't lost
+        showToast('Photo couldn’t be uploaded — kept for this session only', 'error');
+      }
+      pendingImgs.push(src);
       renderImgThumbs();
     } catch(err){
       console.error('image read failed', err);
@@ -4334,6 +4408,7 @@ function closeSidebar() {
 /* ------------------------------------------------------------------ */
 const SUPABASE_URL = 'https://utuvasyjzyhpcpvagnbh.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV0dXZhc3lqenlocGNwdmFnbmJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEyOTI0OTMsImV4cCI6MjA5Njg2ODQ5M30.id9qmG4sjZQW9LvkCSbo4PlkDtmKx0wte4ufgGMyqR0';
+const STORAGE_BUCKET = 'board-images';
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let currentUser  = null;
@@ -4367,9 +4442,10 @@ async function loadBoards() {
     lastSavedJson = JSON.stringify(data.data);
     setState(data.data);
     showToast('Your saved boards loaded', 'success');
-    // One-time heal: shrink any oversized images saved before compression existed.
+    // One-time migration: move any embedded base64 photos into Storage, then
+    // re-save the now-small row.
     clearTimeout(autosaveTimer);                  // cancel the autosave setState just queued
-    if (await optimizeStoredImages()) { render(); saveBoards(); }
+    if (await migrateImagesToStorage()) { render(); saveBoards(); }
   } else {
     lastSavedJson = JSON.stringify(getState());   // nothing saved yet
   }
