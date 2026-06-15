@@ -2099,25 +2099,26 @@ html, body {
           <div class="avatar-row">
             <div class="avatar-lg" id="profile-avatar">W</div>
             <div>
-              <button class="btn-c" style="font-size:12.5px;" onclick="showToast('Photo upload — coming in full build','info')">Upload photo</button>
+              <input type="file" id="pf-photo-input" accept="image/*" style="display:none" onchange="onProfilePhotoPick(this)"/>
+              <button class="btn-c" style="font-size:12.5px;" onclick="document.getElementById('pf-photo-input').click()">Upload photo</button>
               <div style="font-size:11.5px;color:var(--muted);margin-top:6px;">JPG or PNG, max 5MB</div>
             </div>
           </div>
           <div class="two-col">
-            <div class="form-group"><label class="form-label">First name</label><input class="form-input" placeholder="First name"/></div>
-            <div class="form-group"><label class="form-label">Last name</label><input class="form-input" placeholder="Last name"/></div>
+            <div class="form-group"><label class="form-label">First name</label><input id="pf-first" class="form-input" placeholder="First name"/></div>
+            <div class="form-group"><label class="form-label">Last name</label><input id="pf-last" class="form-input" placeholder="Last name"/></div>
           </div>
-          <div class="form-group"><label class="form-label">Email</label><input class="form-input" type="email" placeholder="you@example.com"/></div>
+          <div class="form-group"><label class="form-label">Email</label><input id="pf-email" class="form-input" type="email" placeholder="you@example.com"/></div>
           <div class="settings-divider"></div>
           <div class="settings-section-title" style="font-size:14px;margin-bottom:14px;">Wedding details</div>
           <div class="two-col">
-            <div class="form-group"><label class="form-label">Wedding date</label><input class="form-input" type="date"/></div>
-            <div class="form-group"><label class="form-label">Partner's name</label><input class="form-input" placeholder="Partner's name"/></div>
+            <div class="form-group"><label class="form-label">Wedding date</label><input id="pf-wedding" class="form-input" type="date"/></div>
+            <div class="form-group"><label class="form-label">Partner's name</label><input id="pf-partner" class="form-input" placeholder="Partner's name"/></div>
           </div>
-          <div class="form-group"><label class="form-label">Venue city</label><input class="form-input" placeholder="City"/></div>
+          <div class="form-group"><label class="form-label">Venue city</label><input id="pf-city" class="form-input" placeholder="City"/></div>
           <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:8px;">
-            <button class="btn-c">Discard</button>
-            <button class="btn-s" onclick="showToast('Profile saved!','success')">Save changes</button>
+            <button class="btn-c" onclick="discardProfile()">Discard</button>
+            <button class="btn-s" onclick="saveProfile()">Save changes</button>
           </div>
         </div>
         <!-- Security -->
@@ -2712,6 +2713,7 @@ function packImageMeta(img) {
   return { vendor, product, price: img.price || '', web };
 }
 let NOTE = '', TOTAL_BUDGET = '', activeBoardTab = 'bridal';
+let PROFILE = { firstName:'', lastName:'', email:'', weddingDate:'', partnerName:'', venueCity:'', photoUrl:'' };
 let pendingBoard=null, pendingIdx=null, pendingImgs=[], pendingConfirmed=false;
 let allCarousels=[], boardCarousels=[];
 /* User-defined order for the All mood board (drag-to-reorder). Holds stable  */
@@ -4417,7 +4419,7 @@ let autosaveTimer = null;
 
 /* Everything we persist for a couple, as one plain object. */
 function getState() {
-  return { BOARDS, PALETTES, allOrder, CHECKLIST, BUDGET };
+  return { BOARDS, PALETTES, allOrder, CHECKLIST, BUDGET, PROFILE };
 }
 /* Overwrite the in-place (const) state from a loaded object, then redraw. */
 function setState(s) {
@@ -4427,6 +4429,9 @@ function setState(s) {
   if (Array.isArray(s.CHECKLIST)) { CHECKLIST.length = 0; s.CHECKLIST.forEach(x => CHECKLIST.push(x)); }
   if (Array.isArray(s.BUDGET))    { BUDGET.length    = 0; s.BUDGET.forEach(x => BUDGET.push(x)); }
   if (Array.isArray(s.allOrder))  { allOrder = s.allOrder; }
+  if (s.PROFILE && typeof s.PROFILE === 'object') {
+    PROFILE = Object.assign({ firstName:'', lastName:'', email:'', weddingDate:'', partnerName:'', venueCity:'', photoUrl:'' }, s.PROFILE);
+  }
   render();
 }
 
@@ -4446,6 +4451,7 @@ async function loadBoards() {
     // re-save the now-small row.
     clearTimeout(autosaveTimer);                  // cancel the autosave setState just queued
     if (await migrateImagesToStorage()) { render(); saveBoards(); }
+    fillProfileForm();                            // reflect the loaded profile in the settings form
   } else {
     lastSavedJson = JSON.stringify(getState());   // nothing saved yet
   }
@@ -4504,25 +4510,97 @@ function scheduleAutosave() {
   autosaveTimer = setTimeout(saveBoards, 1500);
 }
 
+/* Paint an avatar element with either a photo (background image) or a letter. */
+function paintAvatar(el, photoUrl, letter) {
+  if (!el) return;
+  if (photoUrl) {
+    el.textContent = '';
+    el.style.backgroundImage = 'url("' + photoUrl + '")';
+    el.style.backgroundSize = 'cover';
+    el.style.backgroundPosition = 'center';
+  } else {
+    el.style.backgroundImage = '';
+    el.textContent = letter;
+  }
+}
+
+/* The single letter shown when there's no profile photo. */
+function profileLetter() {
+  const meta  = (currentUser && currentUser.user_metadata) || {};
+  const email = (currentUser && currentUser.email) || '';
+  const first = (PROFILE.firstName || meta.first_name || '');
+  return (first[0] || email[0] || 'W').toUpperCase();
+}
+
+/* Push PROFILE (with sensible fallbacks) into the settings form + avatars. */
+function fillProfileForm() {
+  const meta = (currentUser && currentUser.user_metadata) || {};
+  const letter = profileLetter();
+  paintAvatar(document.getElementById('avatar-btn'), PROFILE.photoUrl, letter);
+  paintAvatar(document.getElementById('profile-avatar'), PROFILE.photoUrl, letter);
+  const setv = (id, v) => { const el = document.getElementById(id); if (el) el.value = v || ''; };
+  setv('pf-first',   PROFILE.firstName || meta.first_name || '');
+  setv('pf-last',    PROFILE.lastName  || meta.last_name  || '');
+  setv('pf-email',   PROFILE.email     || (currentUser && currentUser.email) || '');
+  setv('pf-wedding', PROFILE.weddingDate);
+  setv('pf-partner', PROFILE.partnerName);
+  setv('pf-city',    PROFILE.venueCity);
+}
+
 /* Reflect signed-in state in the header avatar + account menu. */
 function updateAccountUI() {
   const nameEl  = document.getElementById('acct-menu-name');
   const emailEl = document.getElementById('acct-menu-email');
-  const avatar  = document.getElementById('avatar-btn');
-  const pAvatar = document.getElementById('profile-avatar');
   if (currentUser) {
     const email = currentUser.email || '';
-    const first = (currentUser.user_metadata && currentUser.user_metadata.first_name) || '';
-    const letter = (first[0] || email[0] || 'W').toUpperCase();
+    const first = PROFILE.firstName || (currentUser.user_metadata && currentUser.user_metadata.first_name) || '';
     if (nameEl)  nameEl.textContent  = first || email.split('@')[0] || 'My account';
     if (emailEl) emailEl.textContent = email;
-    if (avatar)  avatar.textContent  = letter;
-    if (pAvatar) pAvatar.textContent = letter;
   } else {
     if (nameEl)  nameEl.textContent  = 'Not signed in';
     if (emailEl) emailEl.textContent = 'Sign in to save your boards';
-    if (avatar)  avatar.textContent  = 'W';
-    if (pAvatar) pAvatar.textContent = 'W';
+  }
+  fillProfileForm();
+}
+
+/* Save the Profile settings form into PROFILE and persist it. */
+async function saveProfile() {
+  const val = id => { const el = document.getElementById(id); return el ? el.value.trim() : ''; };
+  PROFILE.firstName   = val('pf-first');
+  PROFILE.lastName    = val('pf-last');
+  PROFILE.email       = val('pf-email');
+  PROFILE.weddingDate = (document.getElementById('pf-wedding') || {}).value || '';
+  PROFILE.partnerName = val('pf-partner');
+  PROFILE.venueCity   = val('pf-city');
+  updateAccountUI();
+  if (currentUser) { await saveBoards(); showToast('Profile saved!', 'success'); }
+  else showToast('Sign in to save your profile', 'info');
+}
+
+/* Reset the form back to the last-saved PROFILE. */
+function discardProfile() { fillProfileForm(); }
+
+/* Upload a new profile photo: compress → Storage → save. */
+async function onProfilePhotoPick(input) {
+  const file = input.files && input.files[0];
+  input.value = '';
+  if (!file) return;
+  try {
+    const dataUrl = await compressImage(file);
+    const url = currentUser ? await uploadImageToStorage(dataUrl) : dataUrl;
+    const old = PROFILE.photoUrl;
+    PROFILE.photoUrl = url;
+    fillProfileForm();
+    if (currentUser) {
+      await saveBoards();
+      if (old && old !== url) deleteStorageImages([old]);
+      showToast('Photo updated!', 'success');
+    } else {
+      showToast('Photo set for this session — sign in to save it', 'info');
+    }
+  } catch (e) {
+    console.error('profile photo upload failed', e);
+    showToast('Could not upload photo — please try again', 'error');
   }
 }
 
@@ -4587,7 +4665,7 @@ sb.auth.onAuthStateChange((event, session) => {
   if (currentUser && (!prev || prev.id !== currentUser.id)) loadBoards();
   if (!currentUser) {
     lastSavedJson = null;
-    if (prev) setState(JSON.parse(JSON.stringify(DEFAULT_STATE)));  // clear the signed-out couple's data off the screen
+    if (prev) { setState(JSON.parse(JSON.stringify(DEFAULT_STATE))); fillProfileForm(); }  // clear the signed-out couple's data off the screen
   }
 });
 
