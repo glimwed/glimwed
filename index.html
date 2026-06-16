@@ -1091,7 +1091,7 @@ html, body {
 .pdf-page {
   background: var(--white); border: 1px solid var(--border);
   border-radius: var(--radius); box-shadow: var(--shadow-lg);
-  overflow: hidden; aspect-ratio: 8.5/11;
+  min-height: 0;
   display: flex; flex-direction: column; padding: 32px 36px;
 }
 .pdf-header {
@@ -2176,14 +2176,8 @@ html, body {
     </div>
   </div>
 
-  <div style="display:flex;gap:8px;margin-bottom:14px;">
-    <button class="format-btn active" id="pfmt-full" onclick="setPdfFmt('full')">Full plan</button>
-    <button class="format-btn" id="pfmt-board" onclick="setPdfFmt('board')">Vision board only</button>
-    <button class="format-btn" id="pfmt-budget" onclick="setPdfFmt('budget')">Budget only</button>
-  </div>
-
   <div class="pdf-preview-wrap">
-    <div class="pdf-page">
+    <div class="pdf-page" id="pdf-preview-page">
       <div class="pdf-header">
         <div>
           <div class="pdf-header-name">Sarah &amp; James</div>
@@ -2213,25 +2207,11 @@ html, body {
     <div class="pdf-options">
       <div class="pdf-opt-title" style="margin-bottom:14px;">Include in export</div>
       <div class="pdf-opt-row"><div><div class="pdf-opt-label">Vision board</div><div class="pdf-opt-sub">All categories with images</div></div><div class="toggle-wrap" data-opt="board" onclick="toggleOpt(this)"><div class="toggle-track on"></div><div class="toggle-thumb on"></div></div></div>
+      <div class="pdf-opt-row"><div><div class="pdf-opt-label">Color palettes</div><div class="pdf-opt-sub">Saved palette swatches</div></div><div class="toggle-wrap" data-opt="palettes" onclick="toggleOpt(this)"><div class="toggle-track on"></div><div class="toggle-thumb on"></div></div></div>
       <div class="pdf-opt-row"><div><div class="pdf-opt-label">Budget breakdown</div><div class="pdf-opt-sub">Estimated and actual costs</div></div><div class="toggle-wrap" data-opt="budget" onclick="toggleOpt(this)"><div class="toggle-track on"></div><div class="toggle-thumb on"></div></div></div>
       <div class="pdf-opt-row"><div><div class="pdf-opt-label">Checklist</div><div class="pdf-opt-sub">Tasks with completion status</div></div><div class="toggle-wrap" data-opt="checklist" onclick="toggleOpt(this)"><div class="toggle-track on"></div><div class="toggle-thumb on"></div></div></div>
-      <div class="pdf-opt-row"><div><div class="pdf-opt-label">Color palettes</div><div class="pdf-opt-sub">Saved palette swatches</div></div><div class="toggle-wrap" data-opt="palettes" onclick="toggleOpt(this)"><div class="toggle-track"></div><div class="toggle-thumb"></div></div></div>
 
-      <div class="pdf-opt-title" style="margin-top:18px;margin-bottom:8px;">Paper size</div>
-      <div class="format-row">
-        <button class="format-btn active" id="ps-a4" onclick="setFmtGroup('ps','a4')">A4</button>
-        <button class="format-btn" id="ps-letter" onclick="setFmtGroup('ps','letter')">Letter</button>
-        <button class="format-btn" id="ps-a3" onclick="setFmtGroup('ps','a3')">A3</button>
-      </div>
-
-      <div class="pdf-opt-title" style="margin-top:18px;margin-bottom:8px;">Image quality</div>
-      <div class="format-row">
-        <button class="format-btn" id="iq-web" onclick="setFmtGroup('iq','web')">Web</button>
-        <button class="format-btn active" id="iq-print" onclick="setFmtGroup('iq','print')">Print</button>
-        <button class="format-btn" id="iq-high" onclick="setFmtGroup('iq','high')">High-res</button>
-      </div>
-
-      <button class="pdf-export-btn" onclick="runExport()">
+      <button class="pdf-export-btn" style="margin-top:18px;" onclick="runExport()">
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12h8M8 2v8M5 7l3 3 3-3"/></svg>
         <span id="export-btn-lbl">Export PDF</span>
       </button>
@@ -2744,6 +2724,7 @@ function switchMain(id) {
   if (id === 'packs') renderPacks();
   if (id === 'checklist') renderChecklist();
   if (id === 'budget') renderBudget();
+  if (id === 'export') renderPdfPreview();
 }
 
 function setSB(id) {
@@ -3668,22 +3649,12 @@ function showResetSuccess() {
 /* ------------------------------------------------------------------ */
 /*  PDF EXPORT                                                          */
 /* ------------------------------------------------------------------ */
-let pdfFormat = 'full';  /* full | board | budget */
-function setPdfFmt(f) {
-  pdfFormat = f;
-  ['full','board','budget'].forEach(x=>document.getElementById('pfmt-'+x).classList.toggle('active',x===f));
-}
-function setFmtGroup(grp, val) {
-  const prefixes = grp==='ps' ? ['a4','letter','a3'] : ['web','print','high'];
-  prefixes.forEach(x=>document.getElementById(grp+'-'+x).classList.toggle('active',x===val));
-}
 /* ------------------------------------------------------------------ */
 /*  PDF EXPORT — real client-side generation via jsPDF                  */
 /* ------------------------------------------------------------------ */
-/* Generates a Letter-sized (8.5x11") PDF using jsPDF's native drawing  */
-/* primitives — crisp vector text, small file size, selectable text.    */
-/* Respects format selector (full/board/budget) and the four include    */
-/* toggles on the right panel.                                          */
+/* Generates an A4 PDF using jsPDF's native drawing primitives — crisp  */
+/* vector text, small file size, selectable text. Sections are driven   */
+/* by the four include toggles on the right panel.                      */
 const PDF = {
   /* Page geometry — Letter at 72dpi (jsPDF default unit "pt")          */
   W: 612, H: 792,
@@ -3705,7 +3676,149 @@ function getActiveExportToggles() {
   return state;
 }
 
-function runExport() {
+/* Couple's display title for the PDF, e.g. "Sarah & Alex". Falls back to the  */
+/* signed-up first name, then a generic label, so it never prints demo data.   */
+function weddingTitle() {
+  const meta = (typeof currentUser !== 'undefined' && currentUser && currentUser.user_metadata) || {};
+  const first = ((PROFILE.firstName || meta.first_name || '') + '').trim();
+  const last  = ((PROFILE.lastName  || meta.last_name  || '') + '').trim();
+  const bride = [first, last].filter(Boolean).join(' ');
+  const partner = ((PROFILE.partnerName || '') + '').trim();
+  if (bride && partner) return bride + ' & ' + partner;
+  if (bride) return bride;
+  return 'Your Wedding';
+}
+/* Wedding date formatted for print, or '' when none is set. */
+function weddingDateStr() {
+  const d = ((PROFILE.weddingDate || '') + '').trim();
+  if (!d) return '';
+  const dt = new Date(d + 'T00:00:00');
+  return isNaN(dt.getTime()) ? '' : dt.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+}
+/* The site wordmark logo element (already loaded in the header), reused for    */
+/* both the on-screen preview and the exported PDF so they stay in sync.        */
+function getLogoImg() { return document.querySelector('.logo-wrap img'); }
+function getLogoSrc() { const el = getLogoImg(); return el ? el.src : ''; }
+
+/* Safe download filename derived from the couple's names. */
+function exportFilename() {
+  const t = weddingTitle().replace(/&/g, ' ').replace(/[^a-z0-9]+/gi, '_').replace(/^_+|_+$/g, '');
+  return 'WeddingPlan' + (t ? '_' + t : '') + '.pdf';
+}
+/* Format a currency cell; blanks/zeros render as an em-dash. */
+function pdfMoney(v) {
+  const n = parseFloat((v == null ? '' : '' + v).replace(/[^\d.]/g, ''));
+  return isFinite(n) && n > 0 ? '$' + n.toLocaleString() : '—';
+}
+/* Load an image (data-URL or remote Storage/pack URL) and return it as a       */
+/* downscaled JPEG data-URL plus pixel size — ready for doc.addImage.           */
+/* Resolves null on load error or CORS taint so a broken image is just skipped. */
+function loadPdfImage(src) {
+  return new Promise(resolve => {
+    if (typeof src !== 'string' || !src) { resolve(null); return; }
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      try {
+        const maxDim = PDF.imgMaxDim || 800;
+        const scale = Math.min(1, maxDim / Math.max(img.naturalWidth, img.naturalHeight)) || 1;
+        const w = Math.max(1, Math.round(img.naturalWidth * scale));
+        const h = Math.max(1, Math.round(img.naturalHeight * scale));
+        const c = document.createElement('canvas');
+        c.width = w; c.height = h;
+        const ctx = c.getContext('2d');
+        ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h);
+        ctx.drawImage(img, 0, 0, w, h);
+        resolve({ dataUrl: c.toDataURL('image/jpeg', PDF.imgQuality || 0.82), w, h });
+      } catch (e) { resolve(null); }
+    };
+    img.onerror = () => resolve(null);
+    img.src = src;
+  });
+}
+
+/* Live, on-screen preview of the export. Rebuilds the preview card from the    */
+/* couple's real data, mirroring the include-toggles + format selector so what  */
+/* you see is what the exported PDF contains.                                   */
+function renderPdfPreview() {
+  const page = document.getElementById('pdf-preview-page');
+  if (!page) return;
+  const esc = s => (s == null ? '' : ('' + s)).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+  const opts = getActiveExportToggles();
+  const includeBoard     = opts.board;
+  const includeBudget    = opts.budget;
+  const includeChecklist = opts.checklist;
+  const includePalettes  = opts.palettes;
+
+  const ds = weddingDateStr();
+  let html = `<div class="pdf-header"><div>
+      <div class="pdf-header-name">${esc(weddingTitle())}</div>
+      <div class="pdf-header-date" style="font-size:12px;color:var(--muted);margin-top:2px;">Wedding Plan${ds ? ' · ' + esc(ds) : ''}</div>
+    </div>
+    <img src="${esc(getLogoSrc())}" alt="Wedfolio" style="height:26px;width:auto;display:block;"/>
+  </div>`;
+
+  if (!includeBoard && !includeBudget && !includeChecklist && !includePalettes) {
+    html += `<div style="padding:40px 0;text-align:center;color:var(--muted);font-size:13px;">Turn on at least one section to include it in your PDF.</div>`;
+    page.innerHTML = html;
+    return;
+  }
+
+  if (includeBoard) {
+    let any = false;
+    BOARD_TABS.filter(c => c !== 'all').forEach(catId => {
+      const board = BOARDS[catId];
+      if (!board || !Array.isArray(board.items)) return;
+      const items = board.items.filter(it => itemImgs(it).length > 0);
+      if (!items.length) return;
+      any = true;
+      html += `<div class="pdf-section-title">Vision Board — ${esc(board.label || catId)}</div><div class="pdf-mini-grid">`;
+      items.forEach(it => {
+        html += `<div class="pdf-mini-card">
+          <div class="pdf-mini-img"><img src="${esc(itemImgs(it)[0])}" style="width:100%;height:100%;object-fit:contain;" alt=""/></div>
+          <div class="pdf-mini-lbl">${esc(it.label || '')}</div>
+        </div>`;
+      });
+      html += `</div>`;
+    });
+    if (!any) html += `<div class="pdf-section-title">Vision Board</div><div style="font-size:12px;color:var(--muted);padding:6px 0 12px;">No photos added yet — upload images to your boards and they’ll appear here.</div>`;
+  }
+
+  if (includePalettes) {
+    html += `<div class="pdf-section-title" style="margin-top:14px;">Color Palettes</div>`;
+    PALETTES.forEach(p => {
+      html += `<div style="margin-bottom:10px;"><div style="font-size:11px;color:var(--ink);margin-bottom:5px;">${esc(p.name)}</div><div style="display:flex;gap:8px;">`;
+      (p.colors || []).forEach(hex => { html += `<div style="width:34px;height:34px;border-radius:6px;background:${esc(hex)};border:1px solid var(--border);"></div>`; });
+      html += `</div></div>`;
+    });
+  }
+
+  if (includeBudget) {
+    html += `<div class="pdf-section-title">Budget Summary</div>`;
+    let tot = 0;
+    BUDGET.forEach(b => {
+      const n = parseFloat(('' + (b.estimated || '')).replace(/[^\d.]/g, '')) || 0;
+      tot += n;
+      html += `<div class="pdf-budget-row"><span>${esc(b.item)}</span><span>${n > 0 ? '$' + n.toLocaleString() : '—'}</span></div>`;
+    });
+    html += `<div class="pdf-budget-row"><span style="font-weight:600;">Total estimated</span><span style="font-weight:600;">${tot > 0 ? '$' + tot.toLocaleString() : '—'}</span></div>`;
+  }
+
+  if (includeChecklist) {
+    html += `<div class="pdf-section-title" style="margin-top:14px;">Checklist</div>`;
+    CHECKLIST.forEach(c => {
+      const mark = c.done
+        ? `<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#10B981" stroke-width="2"><path d="M2 6l3 3 5-5"/></svg>`
+        : `<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#ccc" stroke-width="1.5"><rect x="1" y="1" width="10" height="10" rx="2"/></svg>`;
+      html += `<div class="pdf-check-item"${c.done ? '' : ' style="color:var(--muted);"'}>${mark} ${esc(c.text)}</div>`;
+    });
+  }
+
+  page.innerHTML = html;
+}
+
+async function runExport() {
   /* Defensive check: if the library failed to load (offline), fall back  */
   /* to a friendly message instead of a silent crash.                    */
   if (!window.jspdf || !window.jspdf.jsPDF) {
@@ -3718,51 +3831,53 @@ function runExport() {
   const pct  = document.getElementById('ep-pct');
   const step = document.getElementById('export-step');
   const btn  = document.getElementById('export-btn-lbl');
+  const setProg = (w, t) => { fill.style.width = w + '%'; pct.textContent = w + '%'; step.textContent = t; };
   prog.classList.add('show');
   btn.textContent = 'Exporting…';
+  setProg(10, 'Preparing layout…');
 
-  /* Progress narration in five short beats, then actual generation.    */
-  const steps = [
-    {w:15, t:'Preparing layout…'},
-    {w:40, t:'Adding vision board…'},
-    {w:65, t:'Adding budget &amp; checklist…'},
-    {w:85, t:'Rendering palettes…'},
-    {w:100, t:'Finalising PDF…'}
-  ];
-  let i = 0;
-  function tickProgress() {
-    if (i >= steps.length) return;
-    fill.style.width = steps[i].w + '%';
-    pct.textContent = steps[i].w + '%';
-    step.innerHTML = steps[i].t;
-    i++;
-    if (i < steps.length) setTimeout(tickProgress, 360);
+  try {
+    /* yield once so the progress UI paints before image work begins */
+    await new Promise(r => setTimeout(r, 50));
+    setProg(45, 'Adding your photos…');
+    const doc = await buildWedfolioPdf();
+    setProg(100, 'Finalising PDF…');
+    doc.save(exportFilename());
+    showToast('PDF exported!', 'success');
+  } catch (err) {
+    console.error('PDF generation failed:', err);
+    showToast('Something went wrong exporting the PDF.', 'error');
+  } finally {
+    btn.textContent = 'Export PDF';
+    setTimeout(() => prog.classList.remove('show'), 1200);
   }
-  tickProgress();
-
-  /* Run the actual generation after the progress narration has had time */
-  /* to play through, so the user sees the full sequence.                */
-  setTimeout(() => {
-    try {
-      const blob = buildWedfolioPdf();
-      blob.save('WeddingPlan_Sarah_James.pdf');
-      showToast('PDF exported!', 'success');
-    } catch (err) {
-      console.error('PDF generation failed:', err);
-      showToast('Something went wrong exporting the PDF.', 'error');
-    } finally {
-      btn.textContent = 'Export PDF';
-      setTimeout(() => prog.classList.remove('show'), 1200);
-    }
-  }, steps.length * 360 + 100);
 }
 
 /* Build the PDF document and return the jsPDF instance.                */
-function buildWedfolioPdf() {
+/* Which button is active within a format-button group (paper size / quality). */
+function activeFmt(grp) {
+  const ids = grp === 'ps' ? ['a4', 'letter', 'a3'] : ['web', 'print', 'high'];
+  for (const x of ids) {
+    const el = document.getElementById(grp + '-' + x);
+    if (el && el.classList.contains('active')) return x;
+  }
+  return grp === 'ps' ? 'a4' : 'print';
+}
+/* Page dimensions in points for each paper size. */
+const PAGE_SIZES = { a4: [595.28, 841.89], letter: [612, 792], a3: [841.89, 1190.55] };
+
+async function buildWedfolioPdf() {
   const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({ unit: 'pt', format: 'letter', orientation: 'portrait' });
+  /* Apply the selected paper size to both jsPDF and our page geometry. */
+  const paper = activeFmt('ps');
+  const [pw, ph] = PAGE_SIZES[paper] || PAGE_SIZES.letter;
+  PDF.W = pw; PDF.H = ph;
+  /* Apply the selected image quality (resolution + JPEG compression). */
+  const q = activeFmt('iq');
+  PDF.imgMaxDim  = q === 'web' ? 520 : q === 'high' ? 1400 : 800;
+  PDF.imgQuality = q === 'web' ? 0.7 : q === 'high' ? 0.92 : 0.82;
+  const doc = new jsPDF({ unit: 'pt', format: paper, orientation: 'portrait' });
   const opts = getActiveExportToggles();
-  const fmt = pdfFormat;
 
   /* Page state — tracks current Y position; pdfNewPage resets it.      */
   const state = { y: PDF.MARGIN };
@@ -3770,11 +3885,11 @@ function buildWedfolioPdf() {
   /* Top banner — wedding name + date, present on every section header  */
   drawHeader(doc, state);
 
-  /* Decide which sections to include based on format + toggles         */
-  const includeBoard     = (fmt === 'full' || fmt === 'board')  && opts.board;
-  const includeBudget    = (fmt === 'full' || fmt === 'budget') && opts.budget;
-  const includeChecklist =  fmt === 'full' && opts.checklist;
-  const includePalettes  =  fmt === 'full' && opts.palettes;
+  /* Decide which sections to include based on the toggles              */
+  const includeBoard     = opts.board;
+  const includeBudget    = opts.budget;
+  const includeChecklist = opts.checklist;
+  const includePalettes  = opts.palettes;
 
   /* If literally nothing is selected, surface that to the user.        */
   if (!includeBoard && !includeBudget && !includeChecklist && !includePalettes) {
@@ -3783,10 +3898,10 @@ function buildWedfolioPdf() {
     return doc;
   }
 
-  if (includeBoard) drawVisionBoard(doc, state);
+  if (includeBoard) await drawVisionBoard(doc, state);
+  if (includePalettes) drawPalettes(doc, state);
   if (includeBudget) drawBudget(doc, state);
   if (includeChecklist) drawChecklist(doc, state);
-  if (includePalettes) drawPalettes(doc, state);
 
   /* Footer on the final page */
   drawFooter(doc);
@@ -3808,7 +3923,7 @@ function drawHeader(doc, state) {
   /* Display title in serif-like style using Helvetica */
   doc.setTextColor(...PDF.ink);
   doc.setFontSize(28);
-  doc.text('Sarah & James', PDF.MARGIN, state.y + 14);
+  doc.text(weddingTitle(), PDF.MARGIN, state.y + 14);
   /* Rose accent line */
   doc.setDrawColor(...PDF.rose);
   doc.setLineWidth(1.2);
@@ -3816,11 +3931,22 @@ function drawHeader(doc, state) {
   /* Subtitle */
   doc.setFontSize(10);
   doc.setTextColor(...PDF.sub);
-  doc.text('Wedding Plan · September 20, 2025', PDF.MARGIN, state.y + 36);
-  /* Right-aligned brand name */
-  doc.setFontSize(9);
-  doc.setTextColor(...PDF.rose);
-  doc.text('WEDFOLIO', PDF.W - PDF.MARGIN, state.y + 36, { align: 'right' });
+  const ds = weddingDateStr();
+  doc.text('Wedding Plan' + (ds ? ' · ' + ds : ''), PDF.MARGIN, state.y + 36);
+  /* Top-right wordmark logo (falls back to text if the image isn't available) */
+  const logo = getLogoImg();
+  if (logo && logo.naturalWidth && logo.naturalHeight) {
+    const lh = 22;
+    const lw = lh * (logo.naturalWidth / logo.naturalHeight);
+    try { doc.addImage(logo.src, 'PNG', PDF.W - PDF.MARGIN - lw, state.y - 2, lw, lh); }
+    catch (e) {
+      doc.setFontSize(9); doc.setTextColor(...PDF.rose);
+      doc.text('WEDFOLIO', PDF.W - PDF.MARGIN, state.y + 36, { align: 'right' });
+    }
+  } else {
+    doc.setFontSize(9); doc.setTextColor(...PDF.rose);
+    doc.text('WEDFOLIO', PDF.W - PDF.MARGIN, state.y + 36, { align: 'right' });
+  }
   state.y += 60;
 }
 function drawSectionTitle(doc, state, title) {
@@ -3864,49 +3990,85 @@ function drawFooter(doc) {
 }
 
 /* ----- Section: Vision Board ----- */
-function drawVisionBoard(doc, state) {
+/* Renders the couple's actual board photos in a 3-column grid, grouped by      */
+/* category, with the slot label + vendor as a caption under each image.        */
+async function drawVisionBoard(doc, state) {
   drawSectionTitle(doc, state, 'Vision Board');
-  /* Group items by category. Loop categories in BOARD_TABS order.       */
-  BOARD_TABS.forEach(catId => {
+
+  /* Collect categories that have at least one image (skip synthetic 'all'). */
+  const groups = [];
+  BOARD_TABS.filter(c => c !== 'all').forEach(catId => {
     const board = BOARDS[catId];
-    if (!board || board.items.length === 0) return;
-    ensureSpace(doc, state, 20);
-    /* Sub-heading per category */
+    if (!board || !Array.isArray(board.items)) return;
+    const items = board.items.filter(it => itemImgs(it).length > 0);
+    if (items.length) groups.push({ label: board.label || catId, items });
+  });
+
+  if (!groups.length) {
+    drawText(doc, state, 'No vision board photos yet — add images to your boards and they’ll appear here.', { size: 11, color: PDF.sub });
+    return;
+  }
+
+  /* Pre-load every cover image once, in parallel, as JPEG data-URLs. */
+  const cache = new Map();
+  const srcs = [];
+  groups.forEach(g => g.items.forEach(it => { const s = itemImgs(it)[0]; if (s) srcs.push(s); }));
+  await Promise.all([...new Set(srcs)].map(async s => {
+    const j = await loadPdfImage(s);
+    if (j) cache.set(s, j);
+  }));
+
+  /* Grid geometry */
+  const cols = 3, gap = 12;
+  const contentW = PDF.W - PDF.MARGIN * 2;
+  const cellW = (contentW - gap * (cols - 1)) / cols;
+  const imgH = cellW * 0.75;
+  const rowH = imgH + 24 + 10;   /* image + 2-line caption + spacing */
+
+  groups.forEach(g => {
+    ensureSpace(doc, state, 18 + rowH);
+    /* Category sub-heading */
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(11);
     doc.setTextColor(...PDF.rose);
-    doc.text(board.label.toUpperCase(), PDF.MARGIN, state.y);
+    doc.text((g.label + '').toUpperCase(), PDF.MARGIN, state.y);
     state.y += 14;
-    /* Two-column list of items */
-    const colW = (PDF.W - PDF.MARGIN * 2 - 10) / 2;
+
     let col = 0;
-    let rowY = state.y;
-    board.items.forEach((it, idx) => {
-      const x = PDF.MARGIN + (col * (colW + 10));
-      const labelLines = doc.splitTextToSize(it.label, colW);
-      const rowH = 14 + (labelLines.length - 1) * 12 + (it.vendor ? 12 : 0);
-      if (col === 0) ensureSpace(doc, state, rowH + 8);
-      /* Dot + label */
-      doc.setFillColor(it.img ? 230 : 220, it.img ? 108 : 220, it.img ? 149 : 220);
-      doc.circle(x + 3, rowY - 3, 2.5, 'F');
+    g.items.forEach(it => {
+      if (col === 0) ensureSpace(doc, state, rowH);
+      const x = PDF.MARGIN + col * (cellW + gap);
+      /* Image cell background */
+      doc.setFillColor(...PDF.cloud);
+      doc.rect(x, state.y, cellW, imgH, 'F');
+      const j = cache.get(itemImgs(it)[0]);
+      if (j) {
+        /* Contain-fit, centered (matches the app's object-fit: contain) */
+        const ar = j.w / j.h, boxAr = cellW / imgH;
+        let dw, dh;
+        if (ar > boxAr) { dw = cellW; dh = cellW / ar; }
+        else { dh = imgH; dw = imgH * ar; }
+        try { doc.addImage(j.dataUrl, 'JPEG', x + (cellW - dw) / 2, state.y + (imgH - dh) / 2, dw, dh); } catch (e) {}
+      }
+      doc.setDrawColor(...PDF.border);
+      doc.setLineWidth(0.6);
+      doc.rect(x, state.y, cellW, imgH, 'S');
+      /* Caption: label + optional vendor */
+      const cy = state.y + imgH + 11;
       doc.setFont('helvetica', 'normal');
-      doc.setFontSize(10);
+      doc.setFontSize(8.5);
       doc.setTextColor(...PDF.ink);
-      labelLines.forEach((ln, i) => doc.text(ln, x + 12, rowY + i * 12));
+      doc.text(doc.splitTextToSize(it.label || '', cellW)[0] || '', x, cy);
       if (it.vendor) {
-        doc.setFontSize(8);
+        doc.setFontSize(7);
         doc.setTextColor(...PDF.sub);
-        doc.text(it.vendor, x + 12, rowY + labelLines.length * 12);
+        doc.text(doc.splitTextToSize(it.vendor, cellW)[0] || '', x, cy + 9);
       }
-      col = (col + 1) % 2;
-      if (col === 0) {
-        rowY += rowH + 4;
-        state.y = rowY;
-      }
+      col++;
+      if (col === cols) { col = 0; state.y += rowH; }
     });
-    /* If we ended mid-row, advance Y */
-    if (col === 1) state.y = rowY + 18;
-    state.y += 10;
+    if (col !== 0) state.y += rowH;   /* close a partial final row */
+    state.y += 6;
   });
 }
 
@@ -3936,11 +4098,11 @@ function drawBudget(doc, state) {
     doc.setFontSize(11);
     doc.setTextColor(...PDF.ink);
     doc.text(b.item, colItem, state.y);
-    const est = b.estimated ? `$${b.estimated}` : '—';
-    const act = b.actual ? `$${b.actual}` : '—';
-    doc.setTextColor(...(b.estimated ? PDF.ink : PDF.sub));
+    const est = pdfMoney(b.estimated);
+    const act = pdfMoney(b.actual);
+    doc.setTextColor(...(est !== '—' ? PDF.ink : PDF.sub));
     doc.text(est, colEst, state.y, { align: 'right' });
-    doc.setTextColor(...(b.actual ? PDF.ink : PDF.sub));
+    doc.setTextColor(...(act !== '—' ? PDF.ink : PDF.sub));
     doc.text(act, PDF.W - PDF.MARGIN, state.y, { align: 'right' });
     totEst += parseFloat((b.estimated || '0').toString().replace(/[^\d.]/g, '')) || 0;
     totAct += parseFloat((b.actual || '0').toString().replace(/[^\d.]/g, '')) || 0;
@@ -3956,7 +4118,18 @@ function drawBudget(doc, state) {
   doc.text('Total', colItem, state.y);
   doc.text(totEst > 0 ? `$${totEst.toLocaleString()}` : '—', colEst, state.y, { align: 'right' });
   doc.text(totAct > 0 ? `$${totAct.toLocaleString()}` : '—', PDF.W - PDF.MARGIN, state.y, { align: 'right' });
-  state.y += 26;
+  state.y += 18;
+  /* Optional target budget the user set on the budget page. */
+  const target = pdfMoney(typeof TOTAL_BUDGET !== 'undefined' ? TOTAL_BUDGET : '');
+  if (target !== '—') {
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.setTextColor(...PDF.sub);
+    doc.text('Target budget', colItem, state.y);
+    doc.text(target, PDF.W - PDF.MARGIN, state.y, { align: 'right' });
+    state.y += 16;
+  }
+  state.y += 10;
 }
 
 /* ----- Section: Checklist ----- */
@@ -4011,13 +4184,8 @@ function drawPalettes(doc, state) {
       const rgb = hexToRgb(hex);
       doc.setFillColor(...rgb);
       doc.roundedRect(x, state.y, swatchW, swatchH, 3, 3, 'F');
-      /* Hex label below */
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(7);
-      doc.setTextColor(...PDF.sub);
-      doc.text(hex.toUpperCase(), x + swatchW / 2, state.y + swatchH + 9, { align: 'center' });
     });
-    state.y += swatchH + 24;
+    state.y += swatchH + 38;
   });
 }
 
@@ -4316,6 +4484,8 @@ function toggleOpt(wrap){
   const t=wrap.querySelector('.toggle-track'), th=wrap.querySelector('.toggle-thumb');
   const on=t.classList.contains('on');
   t.classList.toggle('on',!on); th.classList.toggle('on',!on);
+  /* Export include-toggles drive the live preview; settings toggles don't. */
+  if (wrap.dataset.opt) renderPdfPreview();
 }
 
 /* ------------------------------------------------------------------ */
