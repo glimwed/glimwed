@@ -1192,6 +1192,24 @@ html, body {
 .collab-role.editor { background: #EBF1FB; color: #3B72C4; }
 .collab-role.viewer { background: var(--cloud); color: var(--sub); }
 
+/* Public read-only share viewer */
+.share-viewer { display: none; max-width: 1100px; margin: 0 auto; padding: 48px 24px 90px; }
+body.share-mode { background: var(--cream, #FBF8F5); }
+.sv-head { text-align: center; margin-bottom: 44px; }
+.sv-logo { height: 44px; width: auto; margin-bottom: 22px; }
+.sv-title { font-family: 'Cormorant Garamond', serif; font-size: 42px; font-weight: 400; color: var(--ink); margin: 0 0 8px; }
+.sv-sub { font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+.sv-badge { display: inline-block; margin-top: 16px; font-size: 11.5px; color: var(--sub); background: var(--white); border: 1px solid var(--border); padding: 5px 14px; border-radius: 20px; box-shadow: var(--shadow); }
+.sv-section { margin-bottom: 50px; }
+.sv-cat { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 27px; font-weight: 400; color: var(--ink); margin: 0 0 18px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+.sv-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+.sv-tile { background: var(--cloud); border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden; aspect-ratio: 4 / 5; }
+.sv-tile img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.sv-empty, .sv-loading { text-align: center; color: var(--muted); padding: 70px 20px; font-size: 14px; }
+.sv-foot { text-align: center; margin-top: 30px; font-size: 12px; color: var(--muted); }
+.sv-foot a { color: var(--rose); text-decoration: none; }
+@media (max-width: 720px) { .sv-grid { grid-template-columns: repeat(2, 1fr); } .sv-title { font-size: 32px; } .share-viewer { padding: 32px 16px 70px; } }
+
 /* ============================================================
    INVITE / SIGN OUT MODALS
    ============================================================ */
@@ -1850,6 +1868,9 @@ html, body {
   </div>
 </header>
 
+<!-- Public read-only share viewer (shown only when the URL has ?share=<token>) -->
+<div class="share-viewer" id="share-viewer"></div>
+
 <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
 
 <!-- ================================================================
@@ -2246,13 +2267,13 @@ html, body {
       <div class="form-group"><label class="form-label">Share name</label><input class="form-input" id="share-name" placeholder="e.g. Florist inspiration"/></div>
       <div class="form-group">
         <label class="form-label">What to include</label>
-        <div style="display:flex;flex-direction:column;gap:7px;margin-top:4px;">
-          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;"><input type="checkbox" checked style="accent-color:var(--rose);"/>Bridal looks</label>
-          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;"><input type="checkbox" style="accent-color:var(--rose);"/>Flowers</label>
-          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;"><input type="checkbox" style="accent-color:var(--rose);"/>Family looks</label>
-          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;"><input type="checkbox" style="accent-color:var(--rose);"/>Venues</label>
-          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;"><input type="checkbox" style="accent-color:var(--rose);"/>Photo aesthetic</label>
-          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;"><input type="checkbox" style="accent-color:var(--rose);"/>Details</label>
+        <div style="display:flex;flex-direction:column;gap:7px;margin-top:4px;" id="share-include">
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;"><input type="checkbox" data-cat="bridal" checked style="accent-color:var(--rose);"/>Bridal looks</label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;"><input type="checkbox" data-cat="flowers" style="accent-color:var(--rose);"/>Flowers</label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;"><input type="checkbox" data-cat="family" style="accent-color:var(--rose);"/>Family looks</label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;"><input type="checkbox" data-cat="venues" style="accent-color:var(--rose);"/>Venues</label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;"><input type="checkbox" data-cat="photos" style="accent-color:var(--rose);"/>Photo aesthetic</label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;"><input type="checkbox" data-cat="details" style="accent-color:var(--rose);"/>Details</label>
         </div>
       </div>
       <div class="form-group"><label class="form-label">Permissions</label><div style="font-size:13px;color:var(--ink);margin-top:2px;">View only</div></div>
@@ -2696,6 +2717,7 @@ function switchMain(id) {
   if (id === 'checklist') renderChecklist();
   if (id === 'budget') renderBudget();
   if (id === 'export') renderPdfPreview();
+  if (id === 'share') loadShares();
 }
 
 function setSB(id) {
@@ -4166,9 +4188,22 @@ function hexToRgb(hex) {
 }
 
 /* ------------------------------------------------------------------ */
-/*  SHARE                                                               */
+/*  SHARE  (real backend: a `shares` table + `get_share` RPC)           */
 /* ------------------------------------------------------------------ */
-/* Copy a link row's URL to the clipboard for real.                     */
+const SHARE_EMPTY = '<div class="billing-empty" id="active-links-empty">No active links yet. Generate one to share your vision board.</div>';
+
+/* Small HTML escaper for values injected into the active-links list. */
+function shEsc(s){ return (s==null?'':(''+s)).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+/* The full link a recipient opens (no protocol — copyLink adds https://). */
+function shareUrl(token){ return location.host + location.pathname + '?share=' + encodeURIComponent(token); }
+
+/* Categories ticked in "What to include". */
+function getShareCategories(){
+  return [].map.call(document.querySelectorAll('#share-include input[type=checkbox]:checked'), cb => cb.getAttribute('data-cat'));
+}
+
+/* Copy a link row's URL to the clipboard for real. */
 function copyLink(btn) {
   const input = btn.parentElement.querySelector('.link-input');
   const url = input ? 'https://' + input.value : '';
@@ -4183,38 +4218,104 @@ function copyLink(btn) {
   } else { fallback(); }
 }
 
-/* Generate a shareable link for the current vision board (session-only:  */
-/* the URL is real and copyable, but there's no live viewer page yet).     */
-let shareLinkSeq = 0;
-function generateLink() {
+/* One active-link row for the owner's list. */
+function shareRowHtml(s){
+  const url = shareUrl(s.token);
+  return '<div class="active-link-row">'
+    + '<div class="al-top"><span class="al-name">'+shEsc(s.name||'Vision board')+'</span><span class="al-badge active">Active</span></div>'
+    + '<div class="link-input-row"><input class="link-input" readonly value="'+shEsc(url)+'"/>'
+    + '<button class="copy-btn" onclick="copyLink(this)">Copy</button></div>'
+    + '<div class="al-meta"><span>📋 View only</span><span>⏱ No expiry</span>'
+    + '<span class="al-deactivate" onclick="deactivateShare(\''+shEsc(s.token)+'\')">Deactivate</span></div>'
+    + '</div>';
+}
+
+/* Load the signed-in owner's saved share links into the Active links card. */
+async function loadShares(){
+  const list = document.getElementById('active-links');
+  if (!list) return;
+  if (!currentUser){ list.innerHTML = '<div class="billing-empty">Sign in to create and manage share links.</div>'; return; }
+  const { data, error } = await sb.from('shares').select('token,name,created_at').eq('user_id', currentUser.id).order('created_at',{ascending:false});
+  if (error){ console.error('load shares', error); list.innerHTML = SHARE_EMPTY; return; }
+  list.innerHTML = (data && data.length) ? data.map(shareRowHtml).join('') : SHARE_EMPTY;
+}
+
+/* Create a real, persisted share link for the current board. */
+async function generateLink() {
+  if (!currentUser){ showToast('Sign in to create a share link','info'); switchMain('accounts'); setAccTab('signin'); return; }
   const nameInput = document.getElementById('share-name');
   const name = ((nameInput && nameInput.value) || '').trim() || 'Vision board';
+  const cats = getShareCategories();
+  if (!cats.length){ showToast('Pick at least one board to include','error'); return; }
   const slug = name.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,12) || 'share';
-  const token = Math.random().toString(36).substr(2,6);
-  const url = 'wed-folio.com/s/' + slug + '-' + token;
-  const list = document.getElementById('active-links');
-  const empty = document.getElementById('active-links-empty');
-  if (empty) empty.remove();
-  const row = document.createElement('div');
-  row.className = 'active-link-row';
-  row.innerHTML =
-    '<div class="al-top"><span class="al-name"></span><span class="al-badge active">Active</span></div>'
-    + '<div class="link-input-row"><input class="link-input" readonly/>'
-    + '<button class="copy-btn" onclick="copyLink(this)">Copy</button></div>'
-    + '<div class="al-meta"><span>👁 0 views</span><span>📋 View only</span><span>⏱ No expiry</span>'
-    + '<span class="al-deactivate">Deactivate</span></div>';
-  row.querySelector('.al-name').textContent = name;
-  row.querySelector('.link-input').value = url;
-  row.querySelector('.al-deactivate').onclick = () => {
-    row.remove();
-    if (!list.querySelector('.active-link-row')) {
-      list.innerHTML = '<div class="billing-empty" id="active-links-empty">No active links yet. Generate one to share your vision board.</div>';
-    }
-    showToast('Link deactivated','success');
-  };
-  list.prepend(row);
+  const token = slug + '-' + Math.random().toString(36).slice(2,8);
+  const btn = document.querySelector('#section-share .btn-full');
+  if (btn) btn.disabled = true;
+  const { error } = await sb.from('shares').insert({ token, user_id: currentUser.id, name, categories: cats });
+  if (btn) btn.disabled = false;
+  if (error){ console.error('create share', error); showToast('Could not create link'+(error.message?': '+error.message:''),'error'); return; }
   if (nameInput) nameInput.value = '';
-  showToast('Link generated','success');
+  showToast('Share link created','success');
+  loadShares();
+}
+
+/* Delete a share link (owner only). */
+async function deactivateShare(token){
+  if (!currentUser) return;
+  const { error } = await sb.from('shares').delete().eq('token', token).eq('user_id', currentUser.id);
+  if (error){ console.error('deactivate share', error); showToast('Could not deactivate link','error'); return; }
+  showToast('Link deactivated','success');
+  loadShares();
+}
+
+/* ---- Public read-only viewer (anonymous recipients) ---------------- */
+/* Enter view-only mode for ?share=<token>: hide the app, fetch the      */
+/* shared snapshot via the get_share RPC, render a clean gallery.        */
+async function enterShareViewer(token){
+  document.body.classList.add('share-mode');
+  const header = document.querySelector('.site-header');
+  const layout = document.querySelector('.layout');
+  if (header) header.style.display = 'none';
+  if (layout) layout.style.display = 'none';
+  const viewer = document.getElementById('share-viewer');
+  viewer.style.display = 'block';
+  viewer.innerHTML = '<div class="sv-loading">Loading shared board…</div>';
+  const { data, error } = await sb.rpc('get_share', { p_token: token });
+  if (error){ console.error('get_share', error); viewer.innerHTML = '<div class="sv-empty">Sorry — this link could not be opened. It may have been deactivated.</div>'; return; }
+  if (!data){ viewer.innerHTML = '<div class="sv-empty">This share link is no longer active.</div>'; return; }
+  renderSharedView(data);
+}
+
+function renderSharedView(d){
+  const viewer = document.getElementById('share-viewer');
+  const owner = (d.ownerName || '').trim();
+  const partner = (d.partnerName || '').trim();
+  let couple = owner; if (owner && partner) couple = owner + ' & ' + partner;
+  const title = couple ? couple + '&rsquo;s Vision Board' : 'Wedding Vision Board';
+  const logo = (typeof getLogoSrc === 'function') ? getLogoSrc() : '';
+  const boards = d.boards || {};
+  const tabs = (d.tabs && d.tabs.length) ? d.tabs : Object.keys(boards);
+  let sections = '';
+  tabs.forEach(bid => {
+    const b = boards[bid];
+    if (!b) return;
+    const imgs = [];
+    (b.items || []).forEach(it => itemImgs(it).forEach(u => { if (u) imgs.push(u); }));
+    if (!imgs.length) return;
+    sections += '<section class="sv-section"><h2 class="sv-cat">'+shEsc(b.label||bid)+'</h2><div class="sv-grid">'
+      + imgs.map(u => '<div class="sv-tile"><img src="'+shEsc(u)+'" alt="" loading="lazy"></div>').join('')
+      + '</div></section>';
+  });
+  if (!sections) sections = '<div class="sv-empty">This board doesn&rsquo;t have any photos to show yet.</div>';
+  viewer.innerHTML =
+    '<div class="sv-head">'
+    + (logo ? '<img class="sv-logo" src="'+shEsc(logo)+'" alt="Wedfolio">' : '')
+    + '<h1 class="sv-title">'+title+'</h1>'
+    + (d.name ? '<div class="sv-sub">'+shEsc(d.name)+'</div>' : '')
+    + '<div class="sv-badge">View only &middot; shared via Wedfolio</div>'
+    + '</div>'
+    + sections
+    + '<div class="sv-foot">Made with <a href="'+location.origin+location.pathname+'">Wedfolio</a></div>';
 }
 
 /* ------------------------------------------------------------------ */
@@ -4594,6 +4695,7 @@ const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 let currentUser  = null;
 let lastSavedJson = null;
 let autosaveTimer = null;
+let SHARE_VIEWER = false;   // true when the page is opened as a read-only ?share= link
 
 /* Everything we persist for a couple, as one plain object. */
 function getState() {
@@ -4636,7 +4738,7 @@ async function loadBoards() {
 }
 
 async function saveBoards() {
-  if (!currentUser) return;
+  if (!currentUser || SHARE_VIEWER) return;
   const state = getState();
   const json  = JSON.stringify(state);
   if (json === lastSavedJson) return;             // nothing changed
@@ -4683,7 +4785,7 @@ function setSaveStatus(state) {
 }
 
 function scheduleAutosave() {
-  if (!currentUser) return;
+  if (!currentUser || SHARE_VIEWER) return;
   clearTimeout(autosaveTimer);
   autosaveTimer = setTimeout(saveBoards, 1500);
 }
@@ -4836,6 +4938,7 @@ async function doSignOut() {
 
 /* Fires on load (restores a saved session) and on every login/logout. */
 sb.auth.onAuthStateChange((event, session) => {
+  if (SHARE_VIEWER) return;   // read-only public view: ignore any signed-in session
   const prev = currentUser;
   currentUser = (session && session.user) || null;
   updateAccountUI();
@@ -4857,8 +4960,14 @@ document.addEventListener('visibilitychange', () => { if (document.hidden) saveB
 /* ------------------------------------------------------------------ */
 /*  INIT                                                                */
 /* ------------------------------------------------------------------ */
-render();
-syncProUI();
+const _shareToken = new URLSearchParams(location.search).get('share');
+if (_shareToken) {
+  SHARE_VIEWER = true;
+  enterShareViewer(_shareToken);
+} else {
+  render();
+  syncProUI();
+}
 </script>
 </body>
 </html>
