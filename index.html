@@ -2243,65 +2243,36 @@ html, body {
     <div class="share-card">
       <div class="share-card-title">Create a share link</div>
       <div class="share-card-sub">Generate a unique link with custom permissions</div>
-      <div class="form-group"><label class="form-label">Share name</label><input class="form-input" value="Florist inspiration"/></div>
+      <div class="form-group"><label class="form-label">Share name</label><input class="form-input" id="share-name" placeholder="e.g. Florist inspiration"/></div>
       <div class="form-group">
         <label class="form-label">What to include</label>
         <div style="display:flex;flex-direction:column;gap:7px;margin-top:4px;">
-          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;"><input type="checkbox" checked style="accent-color:var(--rose);"/>Vision Board — Flowers</label>
-          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;"><input type="checkbox" style="accent-color:var(--rose);"/>Vision Board — Venues</label>
-          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;"><input type="checkbox" style="accent-color:var(--rose);"/>Color Palettes</label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;"><input type="checkbox" checked style="accent-color:var(--rose);"/>Bridal looks</label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;"><input type="checkbox" style="accent-color:var(--rose);"/>Flowers</label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;"><input type="checkbox" style="accent-color:var(--rose);"/>Family looks</label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;"><input type="checkbox" style="accent-color:var(--rose);"/>Venues</label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;"><input type="checkbox" style="accent-color:var(--rose);"/>Photo aesthetic</label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;"><input type="checkbox" style="accent-color:var(--rose);"/>Details</label>
         </div>
       </div>
-      <div class="form-group"><label class="form-label">Permissions</label><select class="form-input" style="cursor:pointer;"><option>View only</option><option>Can comment</option></select></div>
-      <div class="form-group"><label class="form-label">Link expires</label><select class="form-input" style="cursor:pointer;"><option>Never</option><option>7 days</option><option>30 days</option><option>90 days</option></select></div>
+      <div class="form-group"><label class="form-label">Permissions</label><div style="font-size:13px;color:var(--ink);margin-top:2px;">View only</div></div>
       <button class="btn-full" onclick="generateLink()">Generate link</button>
     </div>
 
     <!-- Active links + collaborators -->
     <div>
       <div class="share-card" style="margin-bottom:20px;">
-        <div class="share-card-title">Active links <span style="font-size:12px;color:var(--muted);font-weight:400;">(2)</span></div>
+        <div class="share-card-title">Active links</div>
         <div class="share-card-sub">Currently active share links</div>
-        <div class="active-link-row">
-          <div class="al-top"><span class="al-name">Florist inspiration</span><span class="al-badge active">Active</span></div>
-          <div class="link-input-row">
-            <input class="link-input" value="wed-folio.com/s/flr-abc123" readonly/>
-            <button class="copy-btn" id="cp1" onclick="copyLink('cp1')">Copy</button>
-          </div>
-          <div class="al-meta"><span>👁 14 views</span><span>📋 View only</span><span>⏱ Expires 30 Jun</span><span class="al-deactivate" onclick="showToast('Link deactivated','success')">Deactivate</span></div>
-        </div>
-        <div class="active-link-row">
-          <div class="al-top"><span class="al-name">Mum's preview</span><span class="al-badge active">Active</span></div>
-          <div class="link-input-row">
-            <input class="link-input" value="wed-folio.com/s/mum-xyz789" readonly/>
-            <button class="copy-btn" id="cp2" onclick="copyLink('cp2')">Copy</button>
-          </div>
-          <div class="al-meta"><span>👁 3 views</span><span>📋 View only</span><span>⏱ No expiry</span><span class="al-deactivate" onclick="showToast('Link deactivated','success')">Deactivate</span></div>
-        </div>
-        <div class="active-link-row" style="opacity:.6;">
-          <div class="al-top"><span class="al-name">Venue shortlist</span><span class="al-badge expired">Expired</span></div>
-          <div style="font-size:12px;color:var(--muted);">Expired May 1, 2025 · 6 views</div>
+        <div id="active-links">
+          <div class="billing-empty" id="active-links-empty">No active links yet. Generate one to share your vision board.</div>
         </div>
       </div>
 
       <div class="share-card">
         <div class="share-card-title">Collaborators</div>
         <div class="share-card-sub">People with direct access to your board</div>
-        <div class="collab-row">
-          <div class="collab-avatar" style="background:linear-gradient(135deg,var(--rose),var(--petal));">S</div>
-          <div><div class="collab-name">Sarah Mitchell</div><div class="collab-email">sarah@example.com</div></div>
-          <span class="collab-role owner">Owner</span>
-        </div>
-        <div class="collab-row">
-          <div class="collab-avatar" style="background:linear-gradient(135deg,#3B72C4,#89AEE0);">J</div>
-          <div><div class="collab-name">James Chen</div><div class="collab-email">james@example.com</div></div>
-          <span class="collab-role editor">Editor</span>
-        </div>
-        <div class="collab-row">
-          <div class="collab-avatar" style="background:linear-gradient(135deg,#B2C4B2,#8FAF8F);">M</div>
-          <div><div class="collab-name">Mum</div><div class="collab-email">mum@example.com</div></div>
-          <span class="collab-role viewer">Viewer</span>
-        </div>
+        <div class="billing-empty" style="margin-bottom:14px;">No collaborators yet. Invite your partner, planner, or family to edit alongside you.</div>
         <button class="add-row-btn" onclick="showModal('invite-modal')">+ Invite someone</button>
       </div>
     </div>
@@ -4197,16 +4168,53 @@ function hexToRgb(hex) {
 /* ------------------------------------------------------------------ */
 /*  SHARE                                                               */
 /* ------------------------------------------------------------------ */
-function copyLink(id) {
-  const btn = document.getElementById(id);
-  btn.textContent='Copied!'; btn.classList.add('copied');
-  showToast('Link copied to clipboard','success');
-  setTimeout(()=>{btn.textContent='Copy';btn.classList.remove('copied');},2200);
+/* Copy a link row's URL to the clipboard for real.                     */
+function copyLink(btn) {
+  const input = btn.parentElement.querySelector('.link-input');
+  const url = input ? 'https://' + input.value : '';
+  const flash = () => {
+    btn.textContent='Copied!'; btn.classList.add('copied');
+    showToast('Link copied to clipboard','success');
+    setTimeout(()=>{btn.textContent='Copy';btn.classList.remove('copied');},2200);
+  };
+  const fallback = () => { if (input) { input.focus(); input.select(); try{document.execCommand('copy');}catch(e){} } flash(); };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(url).then(flash).catch(fallback);
+  } else { fallback(); }
 }
 
-/* Generate a shareable link for the current vision board.              */
+/* Generate a shareable link for the current vision board (session-only:  */
+/* the URL is real and copyable, but there's no live viewer page yet).     */
+let shareLinkSeq = 0;
 function generateLink() {
-  showToast('Link generated: wed-folio.com/s/flr-'+Math.random().toString(36).substr(2,6),'success');
+  const nameInput = document.getElementById('share-name');
+  const name = ((nameInput && nameInput.value) || '').trim() || 'Vision board';
+  const slug = name.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,12) || 'share';
+  const token = Math.random().toString(36).substr(2,6);
+  const url = 'wed-folio.com/s/' + slug + '-' + token;
+  const list = document.getElementById('active-links');
+  const empty = document.getElementById('active-links-empty');
+  if (empty) empty.remove();
+  const row = document.createElement('div');
+  row.className = 'active-link-row';
+  row.innerHTML =
+    '<div class="al-top"><span class="al-name"></span><span class="al-badge active">Active</span></div>'
+    + '<div class="link-input-row"><input class="link-input" readonly/>'
+    + '<button class="copy-btn" onclick="copyLink(this)">Copy</button></div>'
+    + '<div class="al-meta"><span>👁 0 views</span><span>📋 View only</span><span>⏱ No expiry</span>'
+    + '<span class="al-deactivate">Deactivate</span></div>';
+  row.querySelector('.al-name').textContent = name;
+  row.querySelector('.link-input').value = url;
+  row.querySelector('.al-deactivate').onclick = () => {
+    row.remove();
+    if (!list.querySelector('.active-link-row')) {
+      list.innerHTML = '<div class="billing-empty" id="active-links-empty">No active links yet. Generate one to share your vision board.</div>';
+    }
+    showToast('Link deactivated','success');
+  };
+  list.prepend(row);
+  if (nameInput) nameInput.value = '';
+  showToast('Link generated','success');
 }
 
 /* ------------------------------------------------------------------ */
