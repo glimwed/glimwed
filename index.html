@@ -1208,6 +1208,8 @@ body.share-mode { background: var(--cream, #FBF8F5); }
 .sv-foot { text-align: center; margin-top: 44px; padding-top: 24px; border-top: 1px solid var(--border); font-size: 12px; color: var(--muted); }
 .sv-meta { letter-spacing: .12em; text-transform: uppercase; margin-bottom: 8px; }
 .sv-foot a { color: var(--rose); text-decoration: none; }
+.sv-madewith { display: inline-flex; align-items: center; gap: 5px; }
+.sv-foot-logo { height: 15px; width: auto; vertical-align: middle; }
 @media (max-width: 720px) { .sv-grid { grid-template-columns: repeat(2, 1fr); } .sv-title { font-size: 32px; } .share-viewer { padding: 32px 16px 70px; } }
 
 /* ============================================================
@@ -4317,8 +4319,10 @@ function renderSharedView(d){
     + '</div>'
     + sections
     + '<div class="sv-foot">'
-    + '<div class="sv-meta">View only &middot; shared via Wedfolio</div>'
-    + '<div>Made with <a href="'+location.origin+location.pathname+'">Wedfolio</a></div>'
+    + '<div class="sv-meta">View only</div>'
+    + '<div class="sv-madewith">Made with <a href="'+location.origin+location.pathname+'">'
+    + (logo ? '<img class="sv-foot-logo" src="'+shEsc(logo)+'" alt="Wedfolio">' : 'Wedfolio')
+    + '</a></div>'
     + '</div>';
 }
 
