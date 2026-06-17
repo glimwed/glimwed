@@ -1198,7 +1198,7 @@ body.share-mode { background: var(--cream, #FBF8F5); }
 .sv-head { text-align: center; margin-bottom: 44px; }
 .sv-logo { height: 44px; width: auto; margin-bottom: 22px; }
 .sv-title { font-family: 'Cormorant Garamond', serif; font-size: 42px; font-weight: 400; color: var(--ink); margin: 0 0 8px; }
-.sv-couple { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 19px; font-weight: 400; color: var(--sub); margin-top: 2px; }
+.sv-couple { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 22px; font-weight: 400; color: var(--ink); margin-top: 2px; }
 .sv-section { margin-bottom: 50px; }
 .sv-cat { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 22px; font-weight: 400; color: var(--ink); margin: 0 0 18px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
 .sv-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
@@ -4290,8 +4290,9 @@ async function enterShareViewer(token){
 
 function renderSharedView(d){
   const viewer = document.getElementById('share-viewer');
-  const owner = (d.ownerName || '').trim();
-  const partner = (d.partnerName || '').trim();
+  const firstName = s => (s || '').trim().split(/\s+/)[0] || '';
+  const owner = firstName(d.ownerName);
+  const partner = firstName(d.partnerName);
   let couple = owner; if (owner && partner) couple = owner + ' & ' + partner;
   const coupleTitle = couple ? couple + '&rsquo;s Vision Board' : '';
   const mainTitle = d.name ? shEsc(d.name) : (coupleTitle || 'Wedding Vision Board');
