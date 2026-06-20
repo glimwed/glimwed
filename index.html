@@ -4012,15 +4012,16 @@ function drawHeader(doc, state) {
 }
 function drawSectionTitle(doc, state, title) {
   ensureSpace(doc, state, 36);
-  doc.setFont(PDF.fontHead, 'bold');
-  doc.setFontSize(17);
+  /* Section titles in Montserrat (body font), smaller than before */
+  doc.setFont(PDF.fontBody, 'bold');
+  doc.setFontSize(13);
   doc.setTextColor(...PDF.ink);
   doc.text(title, PDF.MARGIN, state.y);
   /* Underline */
   doc.setDrawColor(...PDF.border);
   doc.setLineWidth(0.6);
   doc.line(PDF.MARGIN, state.y + 6, PDF.W - PDF.MARGIN, state.y + 6);
-  state.y += 22;
+  state.y += 20;
 }
 function drawText(doc, state, text, o = {}) {
   const size = o.size || 11;
