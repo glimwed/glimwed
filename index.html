@@ -3664,7 +3664,48 @@ const PDF = {
   sub: [107, 107, 107],
   border: [238, 232, 232],
   cloud: [249, 247, 247],
+  /* Fonts — default to jsPDF's built-in Helvetica; swapped to the embedded   */
+  /* Cormorant Garamond (headings) + Montserrat (body) once they're loaded.   */
+  fontHead: 'helvetica',
+  fontBody: 'helvetica',
 };
+
+/* Embeddable TTFs (variable fonts) served with permissive CORS by jsDelivr.   */
+const PDF_FONT_URLS = {
+  cormorant:  'https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/cormorantgaramond/CormorantGaramond%5Bwght%5D.ttf',
+  montserrat: 'https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/montserrat/Montserrat%5Bwght%5D.ttf',
+};
+let _pdfFontCache = null;
+/* Fetch both font files once and cache them as base64 strings. */
+async function loadPdfFonts() {
+  if (_pdfFontCache) return _pdfFontCache;
+  async function fetchB64(url) {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('font fetch failed: ' + url);
+    const bytes = new Uint8Array(await res.arrayBuffer());
+    let binary = '';
+    const chunk = 0x8000;
+    for (let i = 0; i < bytes.length; i += chunk) {
+      binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
+    }
+    return btoa(binary);
+  }
+  const [cormorant, montserrat] = await Promise.all([
+    fetchB64(PDF_FONT_URLS.cormorant),
+    fetchB64(PDF_FONT_URLS.montserrat),
+  ]);
+  _pdfFontCache = { cormorant, montserrat };
+  return _pdfFontCache;
+}
+/* Register the loaded fonts into a jsPDF instance under family names we use. */
+function registerPdfFonts(doc, fonts) {
+  doc.addFileToVFS('Cormorant.ttf', fonts.cormorant);
+  doc.addFont('Cormorant.ttf', 'Cormorant', 'normal');
+  doc.addFont('Cormorant.ttf', 'Cormorant', 'bold');
+  doc.addFileToVFS('Montserrat.ttf', fonts.montserrat);
+  doc.addFont('Montserrat.ttf', 'Montserrat', 'normal');
+  doc.addFont('Montserrat.ttf', 'Montserrat', 'bold');
+}
 
 function getActiveExportToggles() {
   const toggles = document.querySelectorAll('#section-export .toggle-wrap[data-opt]');
@@ -3876,6 +3917,18 @@ async function buildGlimwedPdf() {
   PDF.imgMaxDim  = q === 'web' ? 520 : q === 'high' ? 1400 : 800;
   PDF.imgQuality = q === 'web' ? 0.7 : q === 'high' ? 0.92 : 0.82;
   const doc = new jsPDF({ unit: 'pt', format: paper, orientation: 'portrait' });
+  /* Embed Cormorant Garamond + Montserrat so the PDF matches the on-screen   */
+  /* design. If the fonts can't be fetched (offline), fall back to Helvetica. */
+  try {
+    const fonts = await loadPdfFonts();
+    registerPdfFonts(doc, fonts);
+    PDF.fontHead = 'Cormorant';
+    PDF.fontBody = 'Montserrat';
+  } catch (e) {
+    console.warn('Custom PDF fonts unavailable, using Helvetica:', e);
+    PDF.fontHead = 'helvetica';
+    PDF.fontBody = 'helvetica';
+  }
   const opts = getActiveExportToggles();
 
   /* Page state — tracks current Y position; pdfNewPage resets it.      */
@@ -3918,8 +3971,8 @@ function ensureSpace(doc, state, needed) {
   if (state.y + needed > PDF.H - PDF.MARGIN - 30) pdfNewPage(doc, state);
 }
 function drawHeader(doc, state) {
-  doc.setFont('helvetica', 'normal');
-  /* Display title in serif-like style using Helvetica */
+  /* Display title in the serif heading font (Cormorant Garamond) */
+  doc.setFont(PDF.fontHead, 'normal');
   doc.setTextColor(...PDF.ink);
   doc.setFontSize(28);
   doc.text(weddingTitle(), PDF.MARGIN, state.y + 14);
@@ -3927,7 +3980,8 @@ function drawHeader(doc, state) {
   doc.setDrawColor(...PDF.rose);
   doc.setLineWidth(1.2);
   doc.line(PDF.MARGIN, state.y + 22, PDF.MARGIN + 40, state.y + 22);
-  /* Subtitle */
+  /* Subtitle (body font) */
+  doc.setFont(PDF.fontBody, 'normal');
   doc.setFontSize(10);
   doc.setTextColor(...PDF.sub);
   const ds = weddingDateStr();
@@ -3950,8 +4004,8 @@ function drawHeader(doc, state) {
 }
 function drawSectionTitle(doc, state, title) {
   ensureSpace(doc, state, 36);
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(15);
+  doc.setFont(PDF.fontHead, 'bold');
+  doc.setFontSize(17);
   doc.setTextColor(...PDF.ink);
   doc.text(title, PDF.MARGIN, state.y);
   /* Underline */
@@ -3966,7 +4020,7 @@ function drawText(doc, state, text, o = {}) {
   const x = o.x || PDF.MARGIN;
   const lineHeight = size + 3;
   ensureSpace(doc, state, lineHeight);
-  doc.setFont('helvetica', o.bold ? 'bold' : 'normal');
+  doc.setFont(PDF.fontBody, o.bold ? 'bold' : 'normal');
   doc.setFontSize(size);
   doc.setTextColor(...color);
   /* Word-wrap to page width */
@@ -3981,7 +4035,7 @@ function drawText(doc, state, text, o = {}) {
 function drawFooter(doc) {
   const pageNum = doc.internal.getNumberOfPages();
   doc.setPage(pageNum);
-  doc.setFont('helvetica', 'normal');
+  doc.setFont(PDF.fontBody, 'normal');
   doc.setFontSize(8);
   doc.setTextColor(...PDF.sub);
   doc.text(`Page ${pageNum}`, PDF.W / 2, PDF.H - 30, { align: 'center' });
@@ -4027,7 +4081,7 @@ async function drawVisionBoard(doc, state) {
   groups.forEach(g => {
     ensureSpace(doc, state, 18 + rowH);
     /* Category sub-heading */
-    doc.setFont('helvetica', 'bold');
+    doc.setFont(PDF.fontBody, 'bold');
     doc.setFontSize(11);
     doc.setTextColor(...PDF.rose);
     doc.text((g.label + '').toUpperCase(), PDF.MARGIN, state.y);
@@ -4054,7 +4108,7 @@ async function drawVisionBoard(doc, state) {
       doc.rect(x, state.y, cellW, imgH, 'S');
       /* Caption: label + optional vendor */
       const cy = state.y + imgH + 11;
-      doc.setFont('helvetica', 'normal');
+      doc.setFont(PDF.fontBody, 'normal');
       doc.setFontSize(8.5);
       doc.setTextColor(...PDF.ink);
       doc.text(doc.splitTextToSize(it.label || '', cellW)[0] || '', x, cy);
@@ -4079,7 +4133,7 @@ function drawBudget(doc, state) {
   const colAct = PDF.W - PDF.MARGIN - 60;
   /* Table header */
   ensureSpace(doc, state, 24);
-  doc.setFont('helvetica', 'bold');
+  doc.setFont(PDF.fontBody, 'bold');
   doc.setFontSize(9);
   doc.setTextColor(...PDF.sub);
   doc.text('CATEGORY', colItem, state.y);
@@ -4093,7 +4147,7 @@ function drawBudget(doc, state) {
   let totEst = 0, totAct = 0;
   BUDGET.forEach(b => {
     ensureSpace(doc, state, 18);
-    doc.setFont('helvetica', 'normal');
+    doc.setFont(PDF.fontBody, 'normal');
     doc.setFontSize(11);
     doc.setTextColor(...PDF.ink);
     doc.text(b.item, colItem, state.y);
@@ -4112,7 +4166,7 @@ function drawBudget(doc, state) {
   doc.setDrawColor(...PDF.ink);
   doc.line(PDF.MARGIN, state.y, PDF.W - PDF.MARGIN, state.y);
   state.y += 14;
-  doc.setFont('helvetica', 'bold');
+  doc.setFont(PDF.fontBody, 'bold');
   doc.setTextColor(...PDF.ink);
   doc.text('Total', colItem, state.y);
   doc.text(totEst > 0 ? `$${totEst.toLocaleString()}` : '—', colEst, state.y, { align: 'right' });
@@ -4121,7 +4175,7 @@ function drawBudget(doc, state) {
   /* Optional target budget the user set on the budget page. */
   const target = pdfMoney(typeof TOTAL_BUDGET !== 'undefined' ? TOTAL_BUDGET : '');
   if (target !== '—') {
-    doc.setFont('helvetica', 'normal');
+    doc.setFont(PDF.fontBody, 'normal');
     doc.setFontSize(10);
     doc.setTextColor(...PDF.sub);
     doc.text('Target budget', colItem, state.y);
@@ -4135,7 +4189,7 @@ function drawBudget(doc, state) {
 function drawChecklist(doc, state) {
   drawSectionTitle(doc, state, 'Checklist');
   const done = CHECKLIST.filter(c => c.done).length;
-  doc.setFont('helvetica', 'normal');
+  doc.setFont(PDF.fontBody, 'normal');
   doc.setFontSize(10);
   doc.setTextColor(...PDF.sub);
   doc.text(`${done} of ${CHECKLIST.length} complete`, PDF.MARGIN, state.y);
@@ -4156,7 +4210,7 @@ function drawChecklist(doc, state) {
       doc.roundedRect(PDF.MARGIN, state.y - 9, 11, 11, 2, 2, 'S');
     }
     /* Label */
-    doc.setFont('helvetica', 'normal');
+    doc.setFont(PDF.fontBody, 'normal');
     doc.setFontSize(11);
     doc.setTextColor(c.done ? 150 : PDF.ink[0], c.done ? 150 : PDF.ink[1], c.done ? 150 : PDF.ink[2]);
     doc.text(c.text, PDF.MARGIN + 20, state.y);
@@ -4171,7 +4225,7 @@ function drawPalettes(doc, state) {
   PALETTES.forEach(p => {
     ensureSpace(doc, state, 56);
     /* Name */
-    doc.setFont('helvetica', 'bold');
+    doc.setFont(PDF.fontBody, 'bold');
     doc.setFontSize(11);
     doc.setTextColor(...PDF.ink);
     doc.text(p.name, PDF.MARGIN, state.y);
