@@ -643,6 +643,7 @@ button, input, select, textarea { font-family: inherit; }
   white-space: nowrap;
 }
 .save-indicator.show { display: flex; }
+.save-indicator.notes-save { position: static; padding: 0; background: none; font-size: 11px; }
 .save-indicator.fade { opacity: 0; transition: opacity .4s ease; }
 .save-indicator svg { width: 14px; height: 14px; flex-shrink: 0; }
 .save-indicator .spin { animation: spin .7s linear infinite; }
@@ -3452,8 +3453,11 @@ function renderChecklist() {
       <div class="checklist">${ciHtml}</div>
       <button class="add-row-btn" onclick="addCI()">+ Add task</button>
       <div style="margin-top:24px;">
-        <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--sub);margin-bottom:6px;">Notes</div>
-        <textarea class="note-area" rows="5" placeholder="Jot anything down..." oninput="NOTE=this.value">${NOTE}</textarea>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+          <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--sub);">Notes</div>
+          <div class="save-indicator notes-save" id="notes-save-indicator"></div>
+        </div>
+        <textarea class="note-area" rows="5" placeholder="Jot anything down..." oninput="NOTE=this.value;scheduleAutosave()">${NOTE}</textarea>
       </div>
     </div>`;
 }
@@ -4769,7 +4773,7 @@ let SHARE_VIEWER = false;   // true when the page is opened as a read-only ?shar
 
 /* Everything we persist for a couple, as one plain object. */
 function getState() {
-  return { BOARDS, PALETTES, allOrder, CHECKLIST, BUDGET, PROFILE };
+  return { BOARDS, PALETTES, allOrder, CHECKLIST, BUDGET, PROFILE, NOTE };
 }
 /* Overwrite the in-place (const) state from a loaded object, then redraw. */
 function setState(s) {
@@ -4779,6 +4783,7 @@ function setState(s) {
   if (Array.isArray(s.CHECKLIST)) { CHECKLIST.length = 0; s.CHECKLIST.forEach(x => CHECKLIST.push(x)); }
   if (Array.isArray(s.BUDGET))    { BUDGET.length    = 0; s.BUDGET.forEach(x => BUDGET.push(x)); }
   if (Array.isArray(s.allOrder))  { allOrder = s.allOrder; }
+  if (typeof s.NOTE === 'string') { NOTE = s.NOTE; }
   if (s.PROFILE && typeof s.PROFILE === 'object') {
     PROFILE = Object.assign({ firstName:'', lastName:'', email:'', weddingDate:'', partnerName:'', venueCity:'', photoUrl:'' }, s.PROFILE);
   }
@@ -4836,21 +4841,21 @@ async function saveBoards() {
 
 let saveStatusTimer = null;
 function setSaveStatus(state) {
-  const el = document.getElementById('save-indicator');
-  if (!el) return;
+  const els = document.querySelectorAll('.save-indicator');
+  if (!els.length) return;
   clearTimeout(saveStatusTimer);
+  const savingHtml = '<svg class="spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-6.2-8.5"/></svg>Saving…';
+  const savedHtml  = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Saved';
   if (state === 'saving') {
-    el.innerHTML = '<svg class="spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-6.2-8.5"/></svg>Saving…';
-    el.className = 'save-indicator show';
+    els.forEach(el => { el.innerHTML = savingHtml; el.classList.remove('fade'); el.classList.add('show'); });
   } else if (state === 'saved') {
-    el.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Saved';
-    el.className = 'save-indicator show';
+    els.forEach(el => { el.innerHTML = savedHtml; el.classList.remove('fade'); el.classList.add('show'); });
     saveStatusTimer = setTimeout(() => {
-      el.className = 'save-indicator show fade';
-      saveStatusTimer = setTimeout(() => { el.className = 'save-indicator'; }, 450);
+      els.forEach(el => el.classList.add('fade'));
+      saveStatusTimer = setTimeout(() => { els.forEach(el => el.classList.remove('show', 'fade')); }, 450);
     }, 1200);
   } else {
-    el.className = 'save-indicator';
+    els.forEach(el => el.classList.remove('show', 'fade'));
   }
 }
 
