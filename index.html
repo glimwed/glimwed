@@ -4088,12 +4088,13 @@ async function drawVisionBoard(doc, state) {
 
   groups.forEach(g => {
     ensureSpace(doc, state, 18 + rowH);
-    /* Category sub-heading */
+    /* Category sub-heading — matches preview .pdf-section-title:
+       small, bold, uppercase, rose, with letter-spacing */
     doc.setFont(PDF.fontBody, 'bold');
-    doc.setFontSize(11);
+    doc.setFontSize(9);
     doc.setTextColor(...PDF.rose);
-    doc.text((g.label + '').toUpperCase(), PDF.MARGIN, state.y);
-    state.y += 14;
+    doc.text((g.label + '').toUpperCase(), PDF.MARGIN, state.y, { charSpace: 0.8 });
+    state.y += 12;
 
     let col = 0;
     g.items.forEach(it => {
