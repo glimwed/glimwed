@@ -68,7 +68,7 @@ CTA_TXT = "Start your free board"
 CTA_PADX, CTA_PADY = 34, 17
 _asc, _desc = f_cta.getmetrics()
 PILL_H = _asc + _desc + 2 * CTA_PADY
-PILL_W = round(d.textlength(CTA_TXT, font=f_cta)) + 2 * CTA_PADX + 26  # room for arrow
+PILL_W = round(d.textlength(CTA_TXT, font=f_cta)) + 2 * CTA_PADX
 
 GAP_LOGO = 56   # logo -> label (air below the wordmark)
 
@@ -98,13 +98,6 @@ for i, (kind, h) in enumerate(blocks):
         d.rounded_rectangle([LEFT, y, LEFT + PILL_W, y + PILL_H],
                             radius=PILL_H // 2, fill=ROSE)
         d.text((LEFT + CTA_PADX, y + CTA_PADY), CTA_TXT, font=f_cta, fill=(255, 255, 255))
-        # arrow ›
-        ax = LEFT + CTA_PADX + d.textlength(CTA_TXT, font=f_cta) + 16
-        ay = y + PILL_H // 2
-        d.polygon([(ax, ay - 7), (ax, ay + 7), (ax + 11, ay)], fill=(255, 255, 255))
-        # glimwed.com beside the pill, vertically centered
-        gy = y + (PILL_H - f_url.getbbox("glimwed.com")[3]) // 2 - 2
-        draw_tracked((LEFT + PILL_W + 28, gy), "glimwed.com", f_url, URL_GREY, tracking=3)
     y += h + (gaps[i] if i < len(gaps) else 0)
 
 img.save("og-image.png", "PNG")
