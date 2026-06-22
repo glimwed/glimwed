@@ -3687,6 +3687,8 @@ const PDF_FONT_URLS = {
   /* read too heavy for the small titles); Cormorant keeps 700.                  */
   cormorantBold:  'https://cdn.jsdelivr.net/npm/@expo-google-fonts/cormorant-garamond/CormorantGaramond_700Bold.ttf',
   montserratBold: 'https://cdn.jsdelivr.net/npm/@expo-google-fonts/montserrat/Montserrat_600SemiBold.ttf',
+  /* Cormorant italic — used for the board sub-headers. */
+  cormorantItalic: 'https://cdn.jsdelivr.net/npm/@expo-google-fonts/cormorant-garamond/CormorantGaramond_500Medium_Italic.ttf',
 };
 let _pdfFontCache = null;
 /* Fetch both font files once and cache them as base64 strings. */
@@ -3703,13 +3705,14 @@ async function loadPdfFonts() {
     }
     return btoa(binary);
   }
-  const [cormorant, montserrat, cormorantBold, montserratBold] = await Promise.all([
+  const [cormorant, montserrat, cormorantBold, montserratBold, cormorantItalic] = await Promise.all([
     fetchB64(PDF_FONT_URLS.cormorant),
     fetchB64(PDF_FONT_URLS.montserrat),
     fetchB64(PDF_FONT_URLS.cormorantBold),
     fetchB64(PDF_FONT_URLS.montserratBold),
+    fetchB64(PDF_FONT_URLS.cormorantItalic),
   ]);
-  _pdfFontCache = { cormorant, montserrat, cormorantBold, montserratBold };
+  _pdfFontCache = { cormorant, montserrat, cormorantBold, montserratBold, cormorantItalic };
   return _pdfFontCache;
 }
 /* Register the loaded fonts into a jsPDF instance under family names we use. */
@@ -3718,6 +3721,8 @@ function registerPdfFonts(doc, fonts) {
   doc.addFont('Cormorant.ttf', 'Cormorant', 'normal');
   doc.addFileToVFS('Cormorant-Bold.ttf', fonts.cormorantBold);
   doc.addFont('Cormorant-Bold.ttf', 'Cormorant', 'bold');
+  doc.addFileToVFS('Cormorant-Italic.ttf', fonts.cormorantItalic);
+  doc.addFont('Cormorant-Italic.ttf', 'Cormorant', 'italic');
   doc.addFileToVFS('Montserrat.ttf', fonts.montserrat);
   doc.addFont('Montserrat.ttf', 'Montserrat', 'normal');
   doc.addFileToVFS('Montserrat-Bold.ttf', fonts.montserratBold);
@@ -4018,16 +4023,17 @@ function drawHeader(doc, state) {
 }
 function drawSectionTitle(doc, state, title) {
   ensureSpace(doc, state, 36);
-  /* Section titles in Montserrat (body font) — same size as the sub-headers */
-  doc.setFont(PDF.fontBody, 'bold');
-  doc.setFontSize(9);
+  /* Section titles in Cormorant Garamond (heading font) — sized up vs. the
+     body font since Cormorant reads smaller at the same point size. */
+  doc.setFont(PDF.fontHead, 'bold');
+  doc.setFontSize(14);
   doc.setTextColor(...PDF.ink);
   doc.text((title + '').toUpperCase(), PDF.MARGIN, state.y, { charSpace: 0.8 });
   /* Underline */
   doc.setDrawColor(...PDF.border);
   doc.setLineWidth(0.6);
   doc.line(PDF.MARGIN, state.y + 6, PDF.W - PDF.MARGIN, state.y + 6);
-  state.y += 20;
+  state.y += 22;
 }
 function drawText(doc, state, text, o = {}) {
   const size = o.size || 11;
@@ -4095,13 +4101,13 @@ async function drawVisionBoard(doc, state) {
 
   groups.forEach(g => {
     ensureSpace(doc, state, 18 + rowH);
-    /* Category sub-heading — matches preview .pdf-section-title:
-       small, bold, uppercase, rose, with letter-spacing */
-    doc.setFont(PDF.fontBody, 'bold');
-    doc.setFontSize(9);
+    /* Category sub-heading — Cormorant Garamond italic, rose. Kept in the
+       label's natural case since italic serif reads better than all-caps. */
+    doc.setFont(PDF.fontHead, 'italic');
+    doc.setFontSize(12);
     doc.setTextColor(...PDF.rose);
-    doc.text((g.label + '').toUpperCase(), PDF.MARGIN, state.y, { charSpace: 0.8 });
-    state.y += 12;
+    doc.text(g.label + '', PDF.MARGIN, state.y);
+    state.y += 14;
 
     let col = 0;
     g.items.forEach(it => {
