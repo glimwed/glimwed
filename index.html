@@ -3687,8 +3687,8 @@ const PDF_FONT_URLS = {
   /* read too heavy for the small titles); Cormorant keeps 700.                  */
   cormorantBold:  'https://cdn.jsdelivr.net/npm/@expo-google-fonts/cormorant-garamond/CormorantGaramond_700Bold.ttf',
   montserratBold: 'https://cdn.jsdelivr.net/npm/@expo-google-fonts/montserrat/Montserrat_600SemiBold.ttf',
-  /* Cormorant italic — used for the board sub-headers. */
-  cormorantItalic: 'https://cdn.jsdelivr.net/npm/@expo-google-fonts/cormorant-garamond/CormorantGaramond_500Medium_Italic.ttf',
+  /* Cormorant italic — used for the board sub-headers (regular weight). */
+  cormorantItalic: 'https://cdn.jsdelivr.net/npm/@expo-google-fonts/cormorant-garamond/CormorantGaramond_400Regular_Italic.ttf',
 };
 let _pdfFontCache = null;
 /* Fetch both font files once and cache them as base64 strings. */
@@ -4013,19 +4013,19 @@ function drawHeader(doc, state) {
   doc.setTextColor(...PDF.ink);
   doc.setFontSize(28);
   doc.text(weddingTitle(), PDF.MARGIN, y + 20);
-  /* Subtitle (body font) — smaller, with extra gap below the name title */
+  /* Subtitle (body font) — smaller, sits just below the name title */
   doc.setFont(PDF.fontBody, 'normal');
   doc.setFontSize(8);
-  doc.setTextColor(...PDF.sub);
+  doc.setTextColor(70, 70, 70);
   const ds = weddingDateStr();
-  doc.text('Wedding Plan' + (ds ? ' · ' + ds : ''), PDF.MARGIN, y + 54);
+  doc.text('Wedding Plan' + (ds ? ' · ' + ds : ''), PDF.MARGIN, y + 46);
   state.y = y + 76;
 }
 function drawSectionTitle(doc, state, title) {
   ensureSpace(doc, state, 36);
-  /* Section titles in Cormorant Garamond (heading font) — sized up vs. the
-     body font since Cormorant reads smaller at the same point size. */
-  doc.setFont(PDF.fontHead, 'bold');
+  /* Section titles in Cormorant Garamond (heading font) — same weight as the
+     name title; sized up since Cormorant reads small at a given point size. */
+  doc.setFont(PDF.fontHead, 'normal');
   doc.setFontSize(14);
   doc.setTextColor(...PDF.ink);
   doc.text((title + '').toUpperCase(), PDF.MARGIN, state.y, { charSpace: 0.8 });
