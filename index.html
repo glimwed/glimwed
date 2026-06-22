@@ -4039,7 +4039,7 @@ function drawSectionTitle(doc, state, title) {
   state.y += 22;
 }
 function drawText(doc, state, text, o = {}) {
-  const size = o.size || 11;
+  const size = o.size || 10;
   const color = o.color || PDF.ink;
   const x = o.x || PDF.MARGIN;
   const lineHeight = size + 3;
@@ -4173,7 +4173,7 @@ function drawBudget(doc, state) {
   BUDGET.forEach(b => {
     ensureSpace(doc, state, 18);
     doc.setFont(PDF.fontBody, 'normal');
-    doc.setFontSize(11);
+    doc.setFontSize(10);
     doc.setTextColor(...PDF.ink);
     doc.text(b.item, colItem, state.y);
     const est = pdfMoney(b.estimated);
@@ -4236,7 +4236,7 @@ function drawChecklist(doc, state) {
     }
     /* Label */
     doc.setFont(PDF.fontBody, 'normal');
-    doc.setFontSize(11);
+    doc.setFontSize(10);
     doc.setTextColor(c.done ? 150 : PDF.ink[0], c.done ? 150 : PDF.ink[1], c.done ? 150 : PDF.ink[2]);
     doc.text(c.text, PDF.MARGIN + 20, state.y);
     state.y += 18;
