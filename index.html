@@ -4162,7 +4162,7 @@ function drawBudget(doc, state) {
   ensureSpace(doc, state, 24);
   doc.setFont(PDF.fontBody, 'normal');
   doc.setFontSize(9);
-  doc.setTextColor(...PDF.sub);
+  doc.setTextColor(...PDF.ink);
   doc.text('CATEGORY', colItem, state.y);
   doc.text('ESTIMATED', colEst, state.y, { align: 'right' });
   doc.text('ACTUAL', PDF.W - PDF.MARGIN, state.y, { align: 'right' });
