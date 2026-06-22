@@ -3997,11 +3997,11 @@ function drawHeader(doc, state) {
   /* Couple's display name (top-left) in the serif heading font (Cormorant) */
   doc.setFont(PDF.fontHead, 'normal');
   doc.setTextColor(...PDF.ink);
-  doc.setFontSize(28);
+  doc.setFontSize(24);
   doc.text(weddingTitle(), PDF.MARGIN, y + 20);
   /* Subtitle just below the name — black, to match the title */
   doc.setFont(PDF.fontBody, 'normal');
-  doc.setFontSize(8);
+  doc.setFontSize(9);
   doc.setTextColor(...PDF.ink);
   const ds = weddingDateStr();
   doc.text('Wedding Plan' + (ds ? ' · ' + ds : ''), PDF.MARGIN, y + 44);
@@ -4188,7 +4188,7 @@ function drawBudget(doc, state) {
   doc.setDrawColor(...PDF.ink);
   doc.line(PDF.MARGIN, state.y, PDF.W - PDF.MARGIN, state.y);
   state.y += 14;
-  doc.setFont(PDF.fontBody, 'bold');
+  doc.setFont(PDF.fontBody, 'normal');
   doc.setTextColor(...PDF.ink);
   doc.text('Total', colItem, state.y);
   doc.text(totEst > 0 ? `$${totEst.toLocaleString()}` : '—', colEst, state.y, { align: 'right' });
@@ -4246,9 +4246,9 @@ function drawPalettes(doc, state) {
   drawSectionTitle(doc, state, 'Color Palettes');
   PALETTES.forEach(p => {
     ensureSpace(doc, state, 56);
-    /* Name */
-    doc.setFont(PDF.fontBody, 'bold');
-    doc.setFontSize(11);
+    /* Name — Cormorant Garamond italic, same weight as the board sub-headers */
+    doc.setFont(PDF.fontHead, 'italic');
+    doc.setFontSize(12);
     doc.setTextColor(...PDF.ink);
     doc.text(p.name, PDF.MARGIN, state.y);
     state.y += 12;
