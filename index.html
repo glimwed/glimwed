@@ -3984,10 +3984,6 @@ function drawHeader(doc, state) {
   doc.setTextColor(...PDF.ink);
   doc.setFontSize(28);
   doc.text(weddingTitle(), PDF.MARGIN, state.y + 14);
-  /* Rose accent line */
-  doc.setDrawColor(...PDF.rose);
-  doc.setLineWidth(1.2);
-  doc.line(PDF.MARGIN, state.y + 22, PDF.MARGIN + 40, state.y + 22);
   /* Subtitle (body font) */
   doc.setFont(PDF.fontBody, 'normal');
   doc.setFontSize(10);
@@ -3997,7 +3993,7 @@ function drawHeader(doc, state) {
   /* Top-right wordmark logo (falls back to text if the image isn't available) */
   const logo = getLogoImg();
   if (logo && logo.naturalWidth && logo.naturalHeight) {
-    const lh = 22;
+    const lh = 30;
     const lw = lh * (logo.naturalWidth / logo.naturalHeight);
     try { doc.addImage(logo.src, 'PNG', PDF.W - PDF.MARGIN - lw, state.y - 2, lw, lh); }
     catch (e) {
@@ -4016,7 +4012,7 @@ function drawSectionTitle(doc, state, title) {
   doc.setFont(PDF.fontBody, 'bold');
   doc.setFontSize(13);
   doc.setTextColor(...PDF.ink);
-  doc.text(title, PDF.MARGIN, state.y);
+  doc.text((title + '').toUpperCase(), PDF.MARGIN, state.y);
   /* Underline */
   doc.setDrawColor(...PDF.border);
   doc.setLineWidth(0.6);
