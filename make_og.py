@@ -56,25 +56,30 @@ f_eye.set_variation_by_axes([600])           # SemiBold on the weight axis
 f_tag = ImageFont.truetype("Cormorant.ttf", 42)
 f_tag.set_variation_by_axes([500])           # Medium on the weight axis
 f_url = ImageFont.truetype(MONT, 23)
+f_cta = ImageFont.truetype(MONT, 24)
 
 eye_txt = "YOUR VISUAL WEDDING PLANNER"
 tag_txt = "Plan every detail by vision boards, and see it all come together."
 tag_lines = wrap(tag_txt, f_tag, USABLE)
 tag_lh = 50
 
-GAP_LOGO = 62   # logo -> label (extra air below the wordmark)
-GAP_EYE  = 22   # label -> headline sentence (close together)
-GAP_TAG  = 30
-GAP_RULE = 24
+# CTA pill metrics
+CTA_TXT = "Start your free board"
+CTA_PADX, CTA_PADY = 34, 17
+_asc, _desc = f_cta.getmetrics()
+PILL_H = _asc + _desc + 2 * CTA_PADY
+PILL_W = round(d.textlength(CTA_TXT, font=f_cta)) + 2 * CTA_PADX + 26  # room for arrow
+
+GAP_LOGO = 56   # logo -> label (air below the wordmark)
 
 blocks = [
     ("logo", LOGO_H),
     ("eye",  30),
     ("tag",  tag_lh * len(tag_lines)),
-    ("url",  24),
+    ("cta",  PILL_H),
 ]
-#       logo->eye   eye->tag   tag->url
-gaps = [GAP_LOGO,   22,        82]
+#       logo->eye   eye->tag   tag->cta
+gaps = [GAP_LOGO,   22,        50]
 total = sum(h for _, h in blocks) + sum(gaps)
 y = (H - total) // 2
 
@@ -88,10 +93,18 @@ for i, (kind, h) in enumerate(blocks):
         for line in tag_lines:
             d.text((LEFT, ly), line, font=f_tag, fill=INK)
             ly += tag_lh
-    elif kind == "rule":
-        d.rectangle([LEFT, y, LEFT + round(tracked_width(eye_txt, f_eye, 6)), y + 1], fill=ROSE)
-    elif kind == "url":
-        draw_tracked((LEFT, y), "glimwed.com", f_url, URL_GREY, tracking=3)
+    elif kind == "cta":
+        # rose pill button
+        d.rounded_rectangle([LEFT, y, LEFT + PILL_W, y + PILL_H],
+                            radius=PILL_H // 2, fill=ROSE)
+        d.text((LEFT + CTA_PADX, y + CTA_PADY), CTA_TXT, font=f_cta, fill=(255, 255, 255))
+        # arrow ›
+        ax = LEFT + CTA_PADX + d.textlength(CTA_TXT, font=f_cta) + 16
+        ay = y + PILL_H // 2
+        d.polygon([(ax, ay - 7), (ax, ay + 7), (ax + 11, ay)], fill=(255, 255, 255))
+        # glimwed.com beside the pill, vertically centered
+        gy = y + (PILL_H - f_url.getbbox("glimwed.com")[3]) // 2 - 2
+        draw_tracked((LEFT + PILL_W + 28, gy), "glimwed.com", f_url, URL_GREY, tracking=3)
     y += h + (gaps[i] if i < len(gaps) else 0)
 
 img.save("og-image.png", "PNG")
