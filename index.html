@@ -4160,7 +4160,7 @@ function drawBudget(doc, state) {
   const colAct = PDF.W - PDF.MARGIN - 60;
   /* Table header */
   ensureSpace(doc, state, 24);
-  doc.setFont(PDF.fontBody, 'bold');
+  doc.setFont(PDF.fontBody, 'normal');
   doc.setFontSize(9);
   doc.setTextColor(...PDF.sub);
   doc.text('CATEGORY', colItem, state.y);
