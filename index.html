@@ -2299,7 +2299,7 @@ body.share-mode { background: var(--cream, #FBF8F5); }
       <button class="btn-full" onclick="generateLink()">Generate link</button>
     </div>
 
-    <!-- Active links + collaborators -->
+    <!-- Active links -->
     <div>
       <div class="share-card" style="margin-bottom:20px;">
         <div class="share-card-title">Active links</div>
@@ -2307,13 +2307,6 @@ body.share-mode { background: var(--cream, #FBF8F5); }
         <div id="active-links">
           <div class="billing-empty" id="active-links-empty">No active links yet. Generate one to share your vision board.</div>
         </div>
-      </div>
-
-      <div class="share-card">
-        <div class="share-card-title">Collaborators</div>
-        <div class="share-card-sub">People with direct access to your board</div>
-        <div class="billing-empty" style="margin-bottom:14px;">No collaborators yet. Invite your partner, planner, or family to edit alongside you.</div>
-        <button class="add-row-btn" onclick="showModal('invite-modal')">+ Invite someone</button>
       </div>
     </div>
   </div>
@@ -2360,19 +2353,6 @@ body.share-mode { background: var(--cream, #FBF8F5); }
     <div class="mactions">
       <button class="btn-c" onclick="closeModal('palette-overlay')">Cancel</button>
       <button class="btn-s" onclick="savePalette()">Save</button>
-    </div>
-  </div>
-</div>
-
-<!-- Invite -->
-<div class="modal-overlay" id="invite-modal">
-  <div class="modal modal-sm">
-    <h3>Invite a collaborator</h3>
-    <div class="mf"><label>Email address</label><input type="email" class="form-input" placeholder="friend@example.com"/></div>
-    <div class="mf"><label>Role</label><select class="form-input" style="cursor:pointer;"><option>Editor — can view and edit</option><option>Viewer — view only</option></select></div>
-    <div class="modal-actions">
-      <button class="btn-c" onclick="closeModal('invite-modal')">Cancel</button>
-      <button class="btn-s" onclick="closeModal('invite-modal');showToast('Invitation sent!','success')">Send invite</button>
     </div>
   </div>
 </div>
