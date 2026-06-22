@@ -3682,6 +3682,10 @@ const PDF = {
 const PDF_FONT_URLS = {
   cormorant:  'https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/cormorantgaramond/CormorantGaramond%5Bwght%5D.ttf',
   montserrat: 'https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/montserrat/Montserrat%5Bwght%5D.ttf',
+  /* Static bold instances — the variable fonts above always embed at regular  */
+  /* weight in jsPDF, so we load real 700-weight TTFs for the 'bold' style.     */
+  cormorantBold:  'https://cdn.jsdelivr.net/npm/@expo-google-fonts/cormorant-garamond/CormorantGaramond_700Bold.ttf',
+  montserratBold: 'https://cdn.jsdelivr.net/npm/@expo-google-fonts/montserrat/Montserrat_700Bold.ttf',
 };
 let _pdfFontCache = null;
 /* Fetch both font files once and cache them as base64 strings. */
@@ -3698,21 +3702,25 @@ async function loadPdfFonts() {
     }
     return btoa(binary);
   }
-  const [cormorant, montserrat] = await Promise.all([
+  const [cormorant, montserrat, cormorantBold, montserratBold] = await Promise.all([
     fetchB64(PDF_FONT_URLS.cormorant),
     fetchB64(PDF_FONT_URLS.montserrat),
+    fetchB64(PDF_FONT_URLS.cormorantBold),
+    fetchB64(PDF_FONT_URLS.montserratBold),
   ]);
-  _pdfFontCache = { cormorant, montserrat };
+  _pdfFontCache = { cormorant, montserrat, cormorantBold, montserratBold };
   return _pdfFontCache;
 }
 /* Register the loaded fonts into a jsPDF instance under family names we use. */
 function registerPdfFonts(doc, fonts) {
   doc.addFileToVFS('Cormorant.ttf', fonts.cormorant);
   doc.addFont('Cormorant.ttf', 'Cormorant', 'normal');
-  doc.addFont('Cormorant.ttf', 'Cormorant', 'bold');
+  doc.addFileToVFS('Cormorant-Bold.ttf', fonts.cormorantBold);
+  doc.addFont('Cormorant-Bold.ttf', 'Cormorant', 'bold');
   doc.addFileToVFS('Montserrat.ttf', fonts.montserrat);
   doc.addFont('Montserrat.ttf', 'Montserrat', 'normal');
-  doc.addFont('Montserrat.ttf', 'Montserrat', 'bold');
+  doc.addFileToVFS('Montserrat-Bold.ttf', fonts.montserratBold);
+  doc.addFont('Montserrat-Bold.ttf', 'Montserrat', 'bold');
 }
 
 function getActiveExportToggles() {
@@ -3984,12 +3992,12 @@ function drawHeader(doc, state) {
   doc.setTextColor(...PDF.ink);
   doc.setFontSize(28);
   doc.text(weddingTitle(), PDF.MARGIN, state.y + 14);
-  /* Subtitle (body font) */
+  /* Subtitle (body font) — smaller, with extra gap below the name title */
   doc.setFont(PDF.fontBody, 'normal');
-  doc.setFontSize(10);
+  doc.setFontSize(8);
   doc.setTextColor(...PDF.sub);
   const ds = weddingDateStr();
-  doc.text('Wedding Plan' + (ds ? ' · ' + ds : ''), PDF.MARGIN, state.y + 36);
+  doc.text('Wedding Plan' + (ds ? ' · ' + ds : ''), PDF.MARGIN, state.y + 48);
   /* Top-right wordmark logo (falls back to text if the image isn't available) */
   const logo = getLogoImg();
   if (logo && logo.naturalWidth && logo.naturalHeight) {
@@ -3998,21 +4006,21 @@ function drawHeader(doc, state) {
     try { doc.addImage(logo.src, 'PNG', PDF.W - PDF.MARGIN - lw, state.y - 2, lw, lh); }
     catch (e) {
       doc.setFontSize(9); doc.setTextColor(...PDF.rose);
-      doc.text('GLIMWED', PDF.W - PDF.MARGIN, state.y + 36, { align: 'right' });
+      doc.text('GLIMWED', PDF.W - PDF.MARGIN, state.y + 48, { align: 'right' });
     }
   } else {
     doc.setFontSize(9); doc.setTextColor(...PDF.rose);
-    doc.text('GLIMWED', PDF.W - PDF.MARGIN, state.y + 36, { align: 'right' });
+    doc.text('GLIMWED', PDF.W - PDF.MARGIN, state.y + 48, { align: 'right' });
   }
-  state.y += 60;
+  state.y += 66;
 }
 function drawSectionTitle(doc, state, title) {
   ensureSpace(doc, state, 36);
-  /* Section titles in Montserrat (body font), smaller than before */
+  /* Section titles in Montserrat (body font) — same size as the sub-headers */
   doc.setFont(PDF.fontBody, 'bold');
-  doc.setFontSize(13);
+  doc.setFontSize(9);
   doc.setTextColor(...PDF.ink);
-  doc.text((title + '').toUpperCase(), PDF.MARGIN, state.y);
+  doc.text((title + '').toUpperCase(), PDF.MARGIN, state.y, { charSpace: 0.8 });
   /* Underline */
   doc.setDrawColor(...PDF.border);
   doc.setLineWidth(0.6);
