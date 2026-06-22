@@ -3682,10 +3682,11 @@ const PDF = {
 const PDF_FONT_URLS = {
   cormorant:  'https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/cormorantgaramond/CormorantGaramond%5Bwght%5D.ttf',
   montserrat: 'https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/montserrat/Montserrat%5Bwght%5D.ttf',
-  /* Static bold instances — the variable fonts above always embed at regular  */
-  /* weight in jsPDF, so we load real 700-weight TTFs for the 'bold' style.     */
+  /* Static weights for the 'bold' style — the variable fonts above always      */
+  /* embed at regular weight in jsPDF. Montserrat uses 600 SemiBold (700 Bold    */
+  /* read too heavy for the small titles); Cormorant keeps 700.                  */
   cormorantBold:  'https://cdn.jsdelivr.net/npm/@expo-google-fonts/cormorant-garamond/CormorantGaramond_700Bold.ttf',
-  montserratBold: 'https://cdn.jsdelivr.net/npm/@expo-google-fonts/montserrat/Montserrat_700Bold.ttf',
+  montserratBold: 'https://cdn.jsdelivr.net/npm/@expo-google-fonts/montserrat/Montserrat_600SemiBold.ttf',
 };
 let _pdfFontCache = null;
 /* Fetch both font files once and cache them as base64 strings. */
@@ -3987,32 +3988,33 @@ function ensureSpace(doc, state, needed) {
   if (state.y + needed > PDF.H - PDF.MARGIN - 30) pdfNewPage(doc, state);
 }
 function drawHeader(doc, state) {
-  /* Display title in the serif heading font (Cormorant Garamond) */
+  let y = state.y;
+  /* Wordmark logo at the top, left-aligned (falls back to text if unavailable) */
+  const logo = getLogoImg();
+  if (logo && logo.naturalWidth && logo.naturalHeight) {
+    const lh = 30;
+    const lw = lh * (logo.naturalWidth / logo.naturalHeight);
+    try { doc.addImage(logo.src, 'PNG', PDF.MARGIN, y, lw, lh); y += lh + 22; }
+    catch (e) {
+      doc.setFont(PDF.fontBody, 'bold'); doc.setFontSize(11); doc.setTextColor(...PDF.rose);
+      doc.text('GLIMWED', PDF.MARGIN, y + 11); y += 34;
+    }
+  } else {
+    doc.setFont(PDF.fontBody, 'bold'); doc.setFontSize(11); doc.setTextColor(...PDF.rose);
+    doc.text('GLIMWED', PDF.MARGIN, y + 11); y += 34;
+  }
+  /* Couple's display name in the serif heading font (Cormorant Garamond) */
   doc.setFont(PDF.fontHead, 'normal');
   doc.setTextColor(...PDF.ink);
   doc.setFontSize(28);
-  doc.text(weddingTitle(), PDF.MARGIN, state.y + 14);
+  doc.text(weddingTitle(), PDF.MARGIN, y + 20);
   /* Subtitle (body font) — smaller, with extra gap below the name title */
   doc.setFont(PDF.fontBody, 'normal');
   doc.setFontSize(8);
   doc.setTextColor(...PDF.sub);
   const ds = weddingDateStr();
-  doc.text('Wedding Plan' + (ds ? ' · ' + ds : ''), PDF.MARGIN, state.y + 48);
-  /* Top-right wordmark logo (falls back to text if the image isn't available) */
-  const logo = getLogoImg();
-  if (logo && logo.naturalWidth && logo.naturalHeight) {
-    const lh = 30;
-    const lw = lh * (logo.naturalWidth / logo.naturalHeight);
-    try { doc.addImage(logo.src, 'PNG', PDF.W - PDF.MARGIN - lw, state.y - 2, lw, lh); }
-    catch (e) {
-      doc.setFontSize(9); doc.setTextColor(...PDF.rose);
-      doc.text('GLIMWED', PDF.W - PDF.MARGIN, state.y + 48, { align: 'right' });
-    }
-  } else {
-    doc.setFontSize(9); doc.setTextColor(...PDF.rose);
-    doc.text('GLIMWED', PDF.W - PDF.MARGIN, state.y + 48, { align: 'right' });
-  }
-  state.y += 66;
+  doc.text('Wedding Plan' + (ds ? ' · ' + ds : ''), PDF.MARGIN, y + 54);
+  state.y = y + 76;
 }
 function drawSectionTitle(doc, state, title) {
   ensureSpace(doc, state, 36);
