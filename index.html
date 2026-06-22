@@ -3993,40 +3993,40 @@ function ensureSpace(doc, state, needed) {
   if (state.y + needed > PDF.H - PDF.MARGIN - 30) pdfNewPage(doc, state);
 }
 function drawHeader(doc, state) {
-  let y = state.y;
-  /* Wordmark logo at the top, left-aligned (falls back to text if unavailable) */
-  const logo = getLogoImg();
-  if (logo && logo.naturalWidth && logo.naturalHeight) {
-    const lh = 30;
-    const lw = lh * (logo.naturalWidth / logo.naturalHeight);
-    try { doc.addImage(logo.src, 'PNG', PDF.MARGIN, y, lw, lh); y += lh + 22; }
-    catch (e) {
-      doc.setFont(PDF.fontBody, 'bold'); doc.setFontSize(11); doc.setTextColor(...PDF.rose);
-      doc.text('GLIMWED', PDF.MARGIN, y + 11); y += 34;
-    }
-  } else {
-    doc.setFont(PDF.fontBody, 'bold'); doc.setFontSize(11); doc.setTextColor(...PDF.rose);
-    doc.text('GLIMWED', PDF.MARGIN, y + 11); y += 34;
-  }
-  /* Couple's display name in the serif heading font (Cormorant Garamond) */
+  const y = state.y;
+  /* Couple's display name (top-left) in the serif heading font (Cormorant) */
   doc.setFont(PDF.fontHead, 'normal');
   doc.setTextColor(...PDF.ink);
   doc.setFontSize(28);
   doc.text(weddingTitle(), PDF.MARGIN, y + 20);
-  /* Subtitle (body font) — smaller, sits just below the name title */
+  /* Subtitle just below the name — black, to match the title */
   doc.setFont(PDF.fontBody, 'normal');
   doc.setFontSize(8);
-  doc.setTextColor(70, 70, 70);
+  doc.setTextColor(...PDF.ink);
   const ds = weddingDateStr();
-  doc.text('Wedding Plan' + (ds ? ' · ' + ds : ''), PDF.MARGIN, y + 46);
-  state.y = y + 76;
+  doc.text('Wedding Plan' + (ds ? ' · ' + ds : ''), PDF.MARGIN, y + 44);
+  /* Wordmark logo, top-right (falls back to text if unavailable) */
+  const logo = getLogoImg();
+  if (logo && logo.naturalWidth && logo.naturalHeight) {
+    const lh = 30;
+    const lw = lh * (logo.naturalWidth / logo.naturalHeight);
+    try { doc.addImage(logo.src, 'PNG', PDF.W - PDF.MARGIN - lw, y, lw, lh); }
+    catch (e) {
+      doc.setFont(PDF.fontBody, 'normal'); doc.setFontSize(11); doc.setTextColor(...PDF.rose);
+      doc.text('GLIMWED', PDF.W - PDF.MARGIN, y + 18, { align: 'right' });
+    }
+  } else {
+    doc.setFont(PDF.fontBody, 'normal'); doc.setFontSize(11); doc.setTextColor(...PDF.rose);
+    doc.text('GLIMWED', PDF.W - PDF.MARGIN, y + 18, { align: 'right' });
+  }
+  state.y = y + 68;
 }
 function drawSectionTitle(doc, state, title) {
   ensureSpace(doc, state, 36);
   /* Section titles in Cormorant Garamond (heading font) — same weight as the
      name title; sized up since Cormorant reads small at a given point size. */
   doc.setFont(PDF.fontHead, 'normal');
-  doc.setFontSize(14);
+  doc.setFontSize(13);
   doc.setTextColor(...PDF.ink);
   doc.text((title + '').toUpperCase(), PDF.MARGIN, state.y, { charSpace: 0.8 });
   /* Underline */
@@ -4105,7 +4105,7 @@ async function drawVisionBoard(doc, state) {
        label's natural case since italic serif reads better than all-caps. */
     doc.setFont(PDF.fontHead, 'italic');
     doc.setFontSize(12);
-    doc.setTextColor(...PDF.rose);
+    doc.setTextColor(232, 160, 184);   /* lighter rose */
     doc.text(g.label + '', PDF.MARGIN, state.y);
     state.y += 14;
 
