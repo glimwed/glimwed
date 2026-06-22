@@ -58,7 +58,7 @@ f_tag.set_variation_by_axes([500])           # Medium on the weight axis
 f_url = ImageFont.truetype(MONT, 23)
 
 eye_txt = "YOUR VISUAL WEDDING PLANNER"
-tag_txt = "For brides who want to plan every detail by vision boards, and see it all come together."
+tag_txt = "Plan every detail by vision boards, and see it all come together."
 tag_lines = wrap(tag_txt, f_tag, USABLE)
 tag_lh = 50
 
