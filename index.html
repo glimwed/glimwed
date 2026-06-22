@@ -3688,7 +3688,9 @@ const PDF_FONT_URLS = {
   /* Static weights for the 'bold' style — the variable fonts above always      */
   /* embed at regular weight in jsPDF. Montserrat uses 600 SemiBold (700 Bold    */
   /* read too heavy for the small titles); Cormorant keeps 700.                  */
-  cormorantBold:  'https://cdn.jsdelivr.net/npm/@expo-google-fonts/cormorant-garamond/CormorantGaramond_700Bold.ttf',
+  /* Cormorant 'bold' slot holds 500 Medium — used to make section titles
+     slightly thicker than the regular-weight name title (700 reads too heavy). */
+  cormorantBold:  'https://cdn.jsdelivr.net/npm/@expo-google-fonts/cormorant-garamond/CormorantGaramond_500Medium.ttf',
   montserratBold: 'https://cdn.jsdelivr.net/npm/@expo-google-fonts/montserrat/Montserrat_600SemiBold.ttf',
   /* Cormorant italic — used for the board sub-headers (regular weight). */
   cormorantItalic: 'https://cdn.jsdelivr.net/npm/@expo-google-fonts/cormorant-garamond/CormorantGaramond_400Regular_Italic.ttf',
@@ -4026,9 +4028,9 @@ function drawHeader(doc, state) {
 }
 function drawSectionTitle(doc, state, title) {
   ensureSpace(doc, state, 36);
-  /* Section titles in Cormorant Garamond (heading font) — same weight as the
-     name title; sized up since Cormorant reads small at a given point size. */
-  doc.setFont(PDF.fontHead, 'normal');
+  /* Section titles in Cormorant Garamond (heading font) — 500 Medium ('bold'
+     slot) for a touch more weight; sized up since Cormorant reads small. */
+  doc.setFont(PDF.fontHead, 'bold');
   doc.setFontSize(13);
   doc.setTextColor(...PDF.ink);
   doc.text((title + '').toUpperCase(), PDF.MARGIN, state.y, { charSpace: 0.8 });
@@ -4061,7 +4063,7 @@ function drawFooter(doc) {
   doc.setPage(pageNum);
   doc.setFont(PDF.fontBody, 'normal');
   doc.setFontSize(8);
-  doc.setTextColor(...PDF.sub);
+  doc.setTextColor(170, 170, 170);   /* lighter than body text */
   doc.text(`Page ${pageNum}`, PDF.W / 2, PDF.H - 30, { align: 'center' });
   doc.text('Made with Glimwed · glimwed.com', PDF.MARGIN, PDF.H - 30);
 }
