@@ -2347,7 +2347,7 @@ body.share-mode { background: var(--cream, #FBF8F5); }
     <input type="file" accept="image/*" multiple class="hidden" id="file-input"/>
     <div class="mf">
       <label>Images</label>
-      <button class="btn-c" id="img-btn" onclick="document.getElementById('file-input').click()" style="width:100%;border-color:var(--rose);color:var(--rose);">Add image</button>
+      <button class="btn-c" id="img-btn" onclick="if(requireAccount())document.getElementById('file-input').click()" style="width:100%;border-color:var(--rose);color:var(--rose);">Add image</button>
       <div id="img-thumbs" class="img-thumbs"></div>
     </div>
     <div class="mf"><label>Vendor / store</label><input type="text" id="m-vendor" placeholder="e.g. Vera Wang Bridal"/></div>
@@ -2358,6 +2358,24 @@ body.share-mode { background: var(--cream, #FBF8F5); }
       <button class="btn-confirm" id="btn-confirm-toggle" onclick="toggleConfirm()">Mark confirmed</button>
       <button class="btn-delete" id="btn-delete-card" onclick="deleteCard()" style="display:none;">Delete</button>
       <button class="btn-s" onclick="saveCard()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Sign-up gate (guests must create an account before adding photos) -->
+<div class="modal-overlay" id="gate-modal" onclick="if(event.target===this)closeModal('gate-modal')">
+  <div class="modal" style="text-align:center;max-width:420px;">
+    <button class="modal-x" onclick="closeModal('gate-modal')" aria-label="Close">×</button>
+    <div style="font-size:34px;line-height:1;margin:6px 0 14px;">💍</div>
+    <h3 style="margin-bottom:8px;">Create your free account first</h3>
+    <p style="color:var(--sub);font-size:14px;line-height:1.5;margin:0 auto 22px;max-width:320px;">
+      Make a free Glimwed account so every photo and idea you add is saved — and waiting for you next time.
+    </p>
+    <button class="btn-full" onclick="closeModal('gate-modal');switchMain('accounts');setAccTab('signup');">Create my free account</button>
+    <div style="font-size:13px;color:var(--sub);margin-top:14px;">
+      Already have one?
+      <a href="#" style="color:var(--rose);font-weight:500;text-decoration:none;"
+         onclick="closeModal('gate-modal');switchMain('accounts');setAccTab('signin');return false;">Sign in</a>
     </div>
   </div>
 </div>
@@ -3326,6 +3344,7 @@ function nextUnassignedImage() {
 /* Commit the placements: write assigned images into BOARDS and append   */
 /* new items where she chose.                                            */
 function commitTapImport() {
+  if (!requireAccount()) return;
   if (!activePack || assignments.size === 0) return;
   const pack = activePack;
   /* Strip HTML tags and decode common entities so new-item labels look   */
@@ -3421,6 +3440,7 @@ function buyPack(packId) {
 /* Step 2: drop selected images into that category — fill empty slots   */
 /*         first, then append remaining as new auto-labeled items.      */
 function importSelected() {
+  if (!requireAccount()) return;
   if (!activePack || selectedImages.size === 0) return;
   importMode = true;
   assignments = new Map();
@@ -4644,6 +4664,7 @@ async function migrateImagesToStorage() {
 document.getElementById('file-input').addEventListener('change', async function(e){
   const files=[...e.target.files]; if(!files.length)return;
   e.target.value='';
+  if(!requireAccount())return;
   for (const f of files){
     try {
       const dataUrl = await compressImage(f);
@@ -4700,6 +4721,13 @@ function toggleOpt(wrap){
 /* ------------------------------------------------------------------ */
 /*  MODALS                                                              */
 /* ------------------------------------------------------------------ */
+/* Guests must create an account before adding photos. Returns true if the
+   action may proceed, otherwise shows the sign-up gate and returns false.   */
+function requireAccount(){
+  if (currentUser || SHARE_VIEWER) return true;
+  showModal('gate-modal');
+  return false;
+}
 function showModal(id){document.getElementById(id).classList.add('open');}
 function closeModal(id){document.getElementById(id).classList.remove('open');}
 document.querySelectorAll('.modal-overlay').forEach(el=>{
