@@ -2370,11 +2370,11 @@ body.share-mode { background: var(--cream, #FBF8F5); }
     <p style="color:var(--sub);font-size:14px;line-height:1.5;margin:0 auto 22px;max-width:320px;">
       Make a free Glimwed account so every photo and idea you add is saved and waiting for you next time.
     </p>
-    <button class="btn-full" onclick="closeModal('gate-modal');switchMain('accounts');setAccTab('signup');">Create my account</button>
+    <button class="btn-full" onclick="gateToAccount('signup')">Create my account</button>
     <div style="font-size:13px;color:var(--sub);margin-top:14px;">
       Already have one?
       <a href="#" style="color:var(--rose);font-weight:500;text-decoration:none;"
-         onclick="closeModal('gate-modal');switchMain('accounts');setAccTab('signin');return false;">Sign in</a>
+         onclick="gateToAccount('signin');return false;">Sign in</a>
     </div>
   </div>
 </div>
@@ -4726,6 +4726,13 @@ function requireAccount(){
   if (currentUser || SHARE_VIEWER) return true;
   showModal('gate-modal');
   return false;
+}
+/* From the sign-up gate, jump to the accounts page. Close every open modal
+   first — otherwise the Add-item / import modal sits on top and hides it.   */
+function gateToAccount(tab){
+  document.querySelectorAll('.modal-overlay.open').forEach(el => el.classList.remove('open'));
+  switchMain('accounts');
+  setAccTab(tab);
 }
 function showModal(id){document.getElementById(id).classList.add('open');}
 function closeModal(id){document.getElementById(id).classList.remove('open');}
