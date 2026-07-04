@@ -1876,7 +1876,7 @@ body.share-mode { background: var(--cream, #FBF8F5); }
           <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="5" r="3"/><path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg>
           Account settings
         </button>
-        <button class="account-menu-item" onclick="closeAccountMenu();switchMain('accounts');setAccTab('signin')">
+        <button class="account-menu-item" id="acct-menu-signin" onclick="closeAccountMenu();switchMain('accounts');setAccTab('signin')">
           <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="5" r="3"/><path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg>
           Sign in / Sign up
         </button>
@@ -1897,8 +1897,8 @@ body.share-mode { background: var(--cream, #FBF8F5); }
           Shareable Links
           <span style="margin-left:auto;font-size:10px;font-weight:600;padding:2px 6px;background:#EBF7EE;color:#2E8A4A;border-radius:8px;">New</span>
         </button>
-        <div class="account-menu-divider"></div>
-        <button class="account-menu-item" style="color:#C03030;" onclick="closeAccountMenu();showModal('signout-modal')">
+        <div class="account-menu-divider" id="acct-menu-signout-divider"></div>
+        <button class="account-menu-item" id="acct-menu-signout" style="color:#C03030;" onclick="closeAccountMenu();showModal('signout-modal')">
           <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 3H3a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h3M10 11l3-3-3-3M13 8H6"/></svg>
           Sign out
         </button>
@@ -4967,14 +4967,25 @@ function fillProfileForm() {
 function updateAccountUI() {
   const nameEl  = document.getElementById('acct-menu-name');
   const emailEl = document.getElementById('acct-menu-email');
+  const signinBtn      = document.getElementById('acct-menu-signin');
+  const signoutBtn     = document.getElementById('acct-menu-signout');
+  const signoutDivider = document.getElementById('acct-menu-signout-divider');
   if (currentUser) {
     const email = currentUser.email || '';
     const first = PROFILE.firstName || (currentUser.user_metadata && currentUser.user_metadata.first_name) || '';
     if (nameEl)  nameEl.textContent  = first || email.split('@')[0] || 'My account';
     if (emailEl) emailEl.textContent = email;
+    // Signed in: hide "Sign in / Sign up", show "Sign out".
+    if (signinBtn)      signinBtn.style.display      = 'none';
+    if (signoutBtn)     signoutBtn.style.display     = '';
+    if (signoutDivider) signoutDivider.style.display = '';
   } else {
     if (nameEl)  nameEl.textContent  = 'Not signed in';
     if (emailEl) emailEl.textContent = 'Sign in to save your boards';
+    // Signed out: show "Sign in / Sign up", hide "Sign out".
+    if (signinBtn)      signinBtn.style.display      = '';
+    if (signoutBtn)     signoutBtn.style.display     = 'none';
+    if (signoutDivider) signoutDivider.style.display = 'none';
   }
   fillProfileForm();
 }
