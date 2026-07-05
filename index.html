@@ -1250,6 +1250,9 @@ body.share-mode { background: var(--cream, #FBF8F5); }
 .sv-tile img { width: 100%; height: 100%; object-fit: contain; display: block; }
 .sv-empty, .sv-loading { text-align: center; color: var(--muted); padding: 70px 20px; font-size: 14px; }
 .sv-foot { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 44px; padding-top: 24px; border-top: 1px solid var(--border); font-size: 12px; color: #999999; }
+.site-foot { text-align: center; margin-top: 48px; padding: 24px 20px 40px; border-top: 1px solid var(--border); font-size: 12px; color: #999999; }
+.site-foot a { color: inherit; text-decoration: none; }
+.site-foot a:hover { text-decoration: underline; }
 .sv-meta { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 16px; color: #999999; }
 .sv-sep { color: #999999; }
 .sv-foot a { color: inherit; text-decoration: none; }
@@ -2111,6 +2114,7 @@ body.share-mode { background: var(--cream, #FBF8F5); }
         </div>
         <button class="btn-full" onclick="doSignIn()">Sign in</button>
         <div class="auth-link">New here? <a href="#" onclick="setAccTab('signup');return false;">Create account</a></div>
+        <div class="auth-terms"><a href="/privacy.html" target="_blank">Privacy Policy</a> · <a href="/terms.html" target="_blank">Terms</a></div>
       </div>
     </div>
   </div>
@@ -2351,6 +2355,11 @@ body.share-mode { background: var(--cream, #FBF8F5); }
     </div>
   </div>
 </div>
+
+<!-- Site footer: always visible, legal links -->
+<footer class="site-foot">
+  © 2026 Glimwed · <a href="/privacy.html" target="_blank">Privacy Policy</a> · <a href="/terms.html" target="_blank">Terms</a>
+</footer>
 
 </main>
 </div>
