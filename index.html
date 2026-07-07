@@ -328,6 +328,30 @@ button, input, select, textarea { font-family: inherit; }
   .pack-trust { grid-template-columns: 1fr; gap: 16px; }
 }
 
+/* Coming-soon waitlist (Moodboard Packs) */
+.packs-soon { max-width: 560px; margin: 8px auto 48px; text-align: center; }
+.packs-soon .packs-hero-title { line-height: 1.22; font-size: 46px; font-style: italic; }
+@media (max-width: 760px) { .packs-soon .packs-hero-title { font-size: 34px; } }
+.packs-soon .packs-hero-title i { font-style: italic; color: var(--ink); }
+.packs-soon-badges { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 20px; margin: 22px 0 4px; }
+.packs-soon-badge { display: flex; align-items: center; gap: 7px; font-size: 12.5px; color: var(--sub); }
+.packs-soon-badge svg { color: var(--rose); flex-shrink: 0; }
+.waitlist-form { display: flex; gap: 10px; margin: 26px auto 12px; max-width: 420px; }
+.waitlist-form input {
+  flex: 1; padding: 13px 16px; font-size: 14px; font-family: inherit;
+  border: 1px solid #E7E0DA; border-radius: 10px; color: var(--ink); background: #fff;
+}
+.waitlist-form input:focus { outline: none; border-color: var(--rose); }
+.waitlist-btn {
+  padding: 13px 22px; font-size: 14px; font-weight: 600; font-family: inherit;
+  color: #fff; background: var(--rose); border: none; border-radius: 10px; cursor: pointer;
+  white-space: nowrap; transition: opacity .15s;
+}
+.waitlist-btn:hover { opacity: .9; }
+.waitlist-btn:disabled { opacity: .55; cursor: default; }
+.waitlist-note { font-size: 11.5px; color: var(--sub); }
+@media (max-width: 520px) { .waitlist-form { flex-direction: column; } }
+
 /* Sidebar "New" pill */
 .sb-new-pill {
   margin-left: auto;
@@ -2026,28 +2050,48 @@ body.share-mode { background: var(--cream, #FBF8F5); }
      [1c] MOODBOARD PACKS
      ================================================================ -->
 <div class="app-section" id="section-packs">
-  <div class="packs-hero">
-    <div class="packs-hero-eyebrow">Curated by wedding stylists</div>
-    <h1 class="packs-hero-title">Wedding inspiration <em>you can actually buy</em></h1>
-    <p class="packs-hero-sub">Every image in a pack is linked to the real product or vendor behind it — bouquets, dresses, venues, table settings. Pick your favorites and the vendor, price, and website land on your board with the image. The searching is done.</p>
+  <!-- COMING SOON — waitlist teaser. The purchasable store below is hidden until packs launch. -->
+  <div class="packs-hero packs-soon">
+    <div class="packs-hero-eyebrow">Coming soon</div>
+    <h1 class="packs-hero-title">Carefully Curated<br>Wedding Moodboards<br>By Themes</h1>
+    <p class="packs-hero-sub">Beautifully curated wedding moodboards — every image linked to the real product or vendor behind it. We're building them right now. Join the list and you'll be first to know the day they drop.</p>
+    <form class="waitlist-form" onsubmit="submitWaitlist(event)">
+      <input type="email" id="waitlist-email" placeholder="you@email.com" autocomplete="email" required>
+      <button type="submit" class="waitlist-btn" id="waitlist-btn">Notify me</button>
+    </form>
+    <p class="waitlist-note">No spam — just one email when the moodboards are ready.</p>
+    <div class="packs-soon-badges">
+      <div class="packs-soon-badge"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 12l3 3 7-7"/><path d="M14 12l3 3 4-4"/></svg>Yours forever</div>
+      <div class="packs-soon-badge"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M3 9h18M9 3v18"/></svg>Pick what you love</div>
+      <div class="packs-soon-badge"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 7h18M3 12h18M3 17h18"/><circle cx="7" cy="7" r="1.5" fill="currentColor"/><circle cx="11" cy="12" r="1.5" fill="currentColor"/><circle cx="9" cy="17" r="1.5" fill="currentColor"/></svg>Real products &amp; vendors</div>
+    </div>
   </div>
 
-  <!-- Pack grid -->
-  <div class="pack-grid" id="pack-grid"></div>
+  <!-- ORIGINAL STORE — hidden until Moodboard Packs launch. To re-enable: remove display:none below. -->
+  <div id="packs-store-hidden" style="display:none;">
+    <div class="packs-hero">
+      <div class="packs-hero-eyebrow">Curated by wedding stylists</div>
+      <h1 class="packs-hero-title">Wedding inspiration <em>you can actually buy</em></h1>
+      <p class="packs-hero-sub">Every image in a pack is linked to the real product or vendor behind it — bouquets, dresses, venues, table settings. Pick your favorites and the vendor, price, and website land on your board with the image. The searching is done.</p>
+    </div>
 
-  <!-- Trust footer -->
-  <div class="pack-trust">
-    <div class="pack-trust-item">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 12l3 3 7-7"/><path d="M14 12l3 3 4-4"/></svg>
-      <div><div class="pack-trust-t">Yours forever</div><div class="pack-trust-s">Once you buy a pack, it lives in your board permanently.</div></div>
-    </div>
-    <div class="pack-trust-item">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M3 9h18M9 3v18"/></svg>
-      <div><div class="pack-trust-t">Pick what you love</div><div class="pack-trust-s">Save only the images that match your vision — skip the rest.</div></div>
-    </div>
-    <div class="pack-trust-item">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 7h18M3 12h18M3 17h18"/><circle cx="7" cy="7" r="1.5" fill="currentColor"/><circle cx="11" cy="12" r="1.5" fill="currentColor"/><circle cx="9" cy="17" r="1.5" fill="currentColor"/></svg>
-      <div><div class="pack-trust-t">Real products, real vendors</div><div class="pack-trust-s">Every image is linked to the actual product or stylist behind it.</div></div>
+    <!-- Pack grid -->
+    <div class="pack-grid" id="pack-grid"></div>
+
+    <!-- Trust footer -->
+    <div class="pack-trust">
+      <div class="pack-trust-item">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 12l3 3 7-7"/><path d="M14 12l3 3 4-4"/></svg>
+        <div><div class="pack-trust-t">Yours forever</div><div class="pack-trust-s">Once you buy a pack, it lives in your board permanently.</div></div>
+      </div>
+      <div class="pack-trust-item">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M3 9h18M9 3v18"/></svg>
+        <div><div class="pack-trust-t">Pick what you love</div><div class="pack-trust-s">Save only the images that match your vision — skip the rest.</div></div>
+      </div>
+      <div class="pack-trust-item">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 7h18M3 12h18M3 17h18"/><circle cx="7" cy="7" r="1.5" fill="currentColor"/><circle cx="11" cy="12" r="1.5" fill="currentColor"/><circle cx="9" cy="17" r="1.5" fill="currentColor"/></svg>
+        <div><div class="pack-trust-t">Real products, real vendors</div><div class="pack-trust-s">Every image is linked to the actual product or stylist behind it.</div></div>
+      </div>
     </div>
   </div>
 </div>
@@ -4787,6 +4831,37 @@ function showToast(msg, type=''){
   t.className='toast '+(type||'');
   t.innerHTML=(type==='success'?'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 8l4 4 8-8"/></svg>':'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="8" cy="8" r="6"/><path d="M8 5v4M8 11v.5"/></svg>')+msg;
   wrap.appendChild(t); setTimeout(()=>t.remove(),3200);
+}
+
+/* ------------------------------------------------------------------ */
+/*  MOODBOARD PACKS — WAITLIST                                          */
+/* ------------------------------------------------------------------ */
+async function submitWaitlist(e){
+  e.preventDefault();
+  const input = document.getElementById('waitlist-email');
+  const btn   = document.getElementById('waitlist-btn');
+  const email = (input.value || '').trim().toLowerCase();
+  if (!email) return;
+  btn.disabled = true; const label = btn.textContent; btn.textContent = 'Adding…';
+  const { error } = await sb.from('waitlist').insert({
+    email,
+    source: 'moodboard-packs',
+    user_id: (typeof currentUser !== 'undefined' && currentUser) ? currentUser.id : null
+  });
+  if (error) {
+    // 23505 = unique_violation → they're already signed up
+    if (error.code === '23505') {
+      showToast("You're already on the list — we'll be in touch!", 'success');
+      input.value = '';
+    } else {
+      showToast('Something went wrong — please try again.', '');
+      console.error('waitlist insert failed:', error);
+    }
+  } else {
+    showToast("You're on the list! We'll email you the day the moodboards drop.", 'success');
+    input.value = '';
+  }
+  btn.disabled = false; btn.textContent = label;
 }
 
 /* ------------------------------------------------------------------ */
