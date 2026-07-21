@@ -1170,7 +1170,7 @@ button, input, select, textarea { font-family: inherit; }
 .pdf-header-date { font-size: 12px; color: var(--muted); }
 .pdf-section-title { font-family: 'Cormorant Garamond', serif; font-size: 18px; font-weight: 500; text-transform: uppercase; letter-spacing: .08em; color: var(--ink); border-bottom: 1px solid var(--border); padding-bottom: 4px; margin-bottom: 10px; }
 .pdf-sub-title { font-family: 'Cormorant Garamond', serif; font-style: italic; font-weight: 400; font-size: 17px; color: #E8A0B8; margin: -6px 0 6px; }
-.pdf-mini-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-bottom: 16px; }
+.pdf-mini-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-bottom: 8px; }
 .pdf-mini-card { border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
 .pdf-mini-img { width: 100%; aspect-ratio: 1; background: var(--cloud); display: flex; align-items: center; justify-content: center; }
 .pdf-mini-lbl { font-size: 10px; padding: 4px 6px; color: var(--ink); font-weight: 500; }
@@ -4250,7 +4250,7 @@ async function drawVisionBoard(doc, state) {
       if (col === cols) { col = 0; state.y += rowH; }
     });
     if (col !== 0) state.y += rowH;   /* close a partial final row */
-    state.y += 6;
+    state.y += 2;
   });
 }
 
