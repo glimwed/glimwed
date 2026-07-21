@@ -1163,9 +1163,10 @@ button, input, select, textarea { font-family: inherit; }
   display: flex; flex-direction: column; padding: 32px 36px;
 }
 .pdf-header {
-  display: flex; align-items: flex-start; justify-content: space-between;
+  display: block;
   padding-bottom: 18px; border-bottom: 2px solid var(--petal); margin-bottom: 18px;
 }
+.pdf-header-icon { text-align: right; margin-bottom: 12px; }
 .pdf-header-name { font-family: 'Cormorant Garamond', serif; font-size: 30px; font-weight: 400; color: var(--ink); }
 .pdf-header-date { font-size: 12px; color: var(--muted); }
 .pdf-section-title { font-family: 'Cormorant Garamond', serif; font-size: 18px; font-weight: 500; text-transform: uppercase; letter-spacing: .08em; color: var(--ink); border-bottom: 1px solid var(--border); padding-bottom: 4px; margin-top: 30px; margin-bottom: 10px; }
@@ -3934,11 +3935,10 @@ function renderPdfPreview() {
   const includePalettes  = opts.palettes;
 
   const ds = weddingDateStr();
-  let html = `<div class="pdf-header"><div>
-      <div class="pdf-header-name">${esc(weddingTitle())}</div>
-      <div class="pdf-header-date" style="font-size:12px;color:var(--muted);margin-top:2px;">${esc(ds)}</div>
-    </div>
-    <img src="glimwed-icon.png" alt="Glimwed" style="height:30px;width:30px;display:block;"/>
+  let html = `<div class="pdf-header">
+    <div class="pdf-header-icon"><img src="glimwed-icon.png" alt="Glimwed" style="height:34px;width:34px;display:inline-block;"/></div>
+    <div class="pdf-header-name">${esc(weddingTitle())}</div>
+    <div class="pdf-header-date" style="font-size:12px;color:var(--muted);margin-top:2px;">${esc(ds)}</div>
   </div>`;
 
   if (!includeBoard && !includeBudget && !includeChecklist && !includePalettes) {
@@ -4115,30 +4115,37 @@ function ensureSpace(doc, state, needed) {
 }
 function drawHeader(doc, state, favicon) {
   const y = state.y;
-  /* Couple's display name (top-left) in the serif heading font (Cormorant) */
+  /* Circular app icon (pink "g") alone on the top-right; the couple's name and
+     date — and everything after — begin on the next row below it. */
+  const iconSize = 34;
+  let textTop;
+  if (favicon && favicon.naturalWidth && favicon.naturalHeight) {
+    try {
+      doc.addImage(favicon, 'PNG', PDF.W - PDF.MARGIN - iconSize, y, iconSize, iconSize);
+      textTop = y + iconSize + 16;
+    } catch (e) {
+      doc.setFont(PDF.fontBody, 'normal'); doc.setFontSize(11); doc.setTextColor(...PDF.rose);
+      doc.text('GLIMWED', PDF.W - PDF.MARGIN, y + 14, { align: 'right' });
+      textTop = y + 30;
+    }
+  } else {
+    doc.setFont(PDF.fontBody, 'normal'); doc.setFontSize(11); doc.setTextColor(...PDF.rose);
+    doc.text('GLIMWED', PDF.W - PDF.MARGIN, y + 14, { align: 'right' });
+    textTop = y + 30;
+  }
+  /* Couple's display name (left) in the serif heading font (Cormorant) */
   doc.setFont(PDF.fontHead, 'normal');
   doc.setTextColor(...PDF.ink);
   doc.setFontSize(24);
-  doc.text(weddingTitle(), PDF.MARGIN, y + 20);
-  /* Subtitle just below the name — black, to match the title */
+  doc.text(weddingTitle(), PDF.MARGIN, textTop + 20);
+  /* Date just below the name — black, to match the title */
   doc.setFont(PDF.fontBody, 'normal');
   doc.setFontSize(9);
   doc.setTextColor(...PDF.ink);
   const ds = weddingDateStr();
-  if (ds) doc.text(ds, PDF.MARGIN, y + 44);
-  /* Square app icon (pink "g"), top-right (falls back to text if unavailable) */
-  const iconSize = 32;
-  if (favicon && favicon.naturalWidth && favicon.naturalHeight) {
-    try { doc.addImage(favicon, 'PNG', PDF.W - PDF.MARGIN - iconSize, y, iconSize, iconSize); }
-    catch (e) {
-      doc.setFont(PDF.fontBody, 'normal'); doc.setFontSize(11); doc.setTextColor(...PDF.rose);
-      doc.text('GLIMWED', PDF.W - PDF.MARGIN, y + 18, { align: 'right' });
-    }
-  } else {
-    doc.setFont(PDF.fontBody, 'normal'); doc.setFontSize(11); doc.setTextColor(...PDF.rose);
-    doc.text('GLIMWED', PDF.W - PDF.MARGIN, y + 18, { align: 'right' });
-  }
-  state.y = y + 80;   /* a little breathing room between the date and the first section */
+  if (ds) doc.text(ds, PDF.MARGIN, textTop + 44);
+  /* Breathing room before the first section (measured from the last text line) */
+  state.y = textTop + (ds ? 44 : 20) + 36;
 }
 function drawSectionTitle(doc, state, title) {
   /* Generous breathing room above each major section so the top-level blocks
