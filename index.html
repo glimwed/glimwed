@@ -4204,53 +4204,69 @@ async function drawVisionBoard(doc, state) {
   const contentW = PDF.W - PDF.MARGIN * 2;
   const cellW = (contentW - gap * (cols - 1)) / cols;
   const imgH = cellW * 0.75;
-  const rowH = imgH + 24 + 10;   /* image + 2-line caption + spacing */
+  /* Caption + spacing metrics. A row's height depends on whether ANY item in   */
+  /* it has a vendor line, so vendor-less rows don't leave a phantom empty line  */
+  /* — that was the source of the uneven gaps between rows/categories.           */
+  const capGap = 11;     /* image bottom → label baseline                        */
+  const lineH  = 9;      /* label baseline → vendor baseline                     */
+  const rowGap = 8;      /* consistent gap below a row's caption                 */
+  const headGap = 11;    /* below a category heading (hugs its own images)       */
+  const groupGap = 14;   /* above a category heading (separates from the one above) */
+  const rowHeight = row => imgH + capGap + (row.some(it => it.vendor) ? lineH : 0) + 3 + rowGap;
 
-  groups.forEach(g => {
-    ensureSpace(doc, state, 18 + rowH);
+  groups.forEach((g, gi) => {
+    /* Split the category's items into rows of `cols`. */
+    const rows = [];
+    for (let i = 0; i < g.items.length; i += cols) rows.push(g.items.slice(i, i + cols));
+
+    /* Separate categories with a small, consistent gap (none before the first). */
+    if (gi > 0) state.y += groupGap;
+    /* Keep the heading glued to its first row only — remaining rows are free to  */
+    /* flow onto the current page's leftover space and break individually.        */
+    ensureSpace(doc, state, headGap + rowHeight(rows[0]));
+
     /* Category sub-heading — Cormorant Garamond italic, rose. Kept in the
        label's natural case since italic serif reads better than all-caps. */
     doc.setFont(PDF.fontHead, 'italic');
     doc.setFontSize(12);
     doc.setTextColor(232, 160, 184);   /* lighter rose */
     doc.text(g.label + '', PDF.MARGIN, state.y);
-    state.y += 14;
+    state.y += headGap;
 
-    let col = 0;
-    g.items.forEach(it => {
-      if (col === 0) ensureSpace(doc, state, rowH);
-      const x = PDF.MARGIN + col * (cellW + gap);
-      /* Image cell background */
-      doc.setFillColor(...PDF.cloud);
-      doc.rect(x, state.y, cellW, imgH, 'F');
-      const j = cache.get(itemImgs(it)[0]);
-      if (j) {
-        /* Contain-fit, centered (matches the app's object-fit: contain) */
-        const ar = j.w / j.h, boxAr = cellW / imgH;
-        let dw, dh;
-        if (ar > boxAr) { dw = cellW; dh = cellW / ar; }
-        else { dh = imgH; dw = imgH * ar; }
-        try { doc.addImage(j.dataUrl, 'JPEG', x + (cellW - dw) / 2, state.y + (imgH - dh) / 2, dw, dh); } catch (e) {}
-      }
-      doc.setDrawColor(...PDF.border);
-      doc.setLineWidth(0.6);
-      doc.rect(x, state.y, cellW, imgH, 'S');
-      /* Caption: label + optional vendor */
-      const cy = state.y + imgH + 11;
-      doc.setFont(PDF.fontBody, 'normal');
-      doc.setFontSize(8.5);
-      doc.setTextColor(...PDF.ink);
-      doc.text(doc.splitTextToSize(it.label || '', cellW)[0] || '', x, cy);
-      if (it.vendor) {
-        doc.setFontSize(7);
-        doc.setTextColor(...PDF.sub);
-        doc.text(doc.splitTextToSize(it.vendor, cellW)[0] || '', x, cy + 9);
-      }
-      col++;
-      if (col === cols) { col = 0; state.y += rowH; }
+    rows.forEach(row => {
+      const rh = rowHeight(row);
+      ensureSpace(doc, state, rh);
+      row.forEach((it, col) => {
+        const x = PDF.MARGIN + col * (cellW + gap);
+        /* Image cell background */
+        doc.setFillColor(...PDF.cloud);
+        doc.rect(x, state.y, cellW, imgH, 'F');
+        const j = cache.get(itemImgs(it)[0]);
+        if (j) {
+          /* Contain-fit, centered (matches the app's object-fit: contain) */
+          const ar = j.w / j.h, boxAr = cellW / imgH;
+          let dw, dh;
+          if (ar > boxAr) { dw = cellW; dh = cellW / ar; }
+          else { dh = imgH; dw = imgH * ar; }
+          try { doc.addImage(j.dataUrl, 'JPEG', x + (cellW - dw) / 2, state.y + (imgH - dh) / 2, dw, dh); } catch (e) {}
+        }
+        doc.setDrawColor(...PDF.border);
+        doc.setLineWidth(0.6);
+        doc.rect(x, state.y, cellW, imgH, 'S');
+        /* Caption: label + optional vendor */
+        const cy = state.y + imgH + capGap;
+        doc.setFont(PDF.fontBody, 'normal');
+        doc.setFontSize(8.5);
+        doc.setTextColor(...PDF.ink);
+        doc.text(doc.splitTextToSize(it.label || '', cellW)[0] || '', x, cy);
+        if (it.vendor) {
+          doc.setFontSize(7);
+          doc.setTextColor(...PDF.sub);
+          doc.text(doc.splitTextToSize(it.vendor, cellW)[0] || '', x, cy + lineH);
+        }
+      });
+      state.y += rh;
     });
-    if (col !== 0) state.y += rowH;   /* close a partial final row */
-    state.y += 2;
   });
 }
 
