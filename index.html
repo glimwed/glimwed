@@ -3869,6 +3869,18 @@ function weddingDateStr() {
 /* both the on-screen preview and the exported PDF so they stay in sync.        */
 function getLogoImg() { return document.querySelector('.logo-wrap img'); }
 function getLogoSrc() { const el = getLogoImg(); return el ? el.src : ''; }
+/* Square app icon (pink "g") shown in the PDF header corner. Loaded on demand  */
+/* and cached; awaited before drawing the header so it's ready when export runs. */
+let PDF_FAVICON_IMG = null;
+function loadPdfFavicon() {
+  if (PDF_FAVICON_IMG && PDF_FAVICON_IMG.complete && PDF_FAVICON_IMG.naturalWidth) return Promise.resolve(PDF_FAVICON_IMG);
+  return new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => { PDF_FAVICON_IMG = img; resolve(img); };
+    img.onerror = () => resolve(null);
+    img.src = 'favicon-192.png';
+  });
+}
 
 /* Safe download filename derived from the couple's names. */
 function exportFilename() {
@@ -3926,7 +3938,7 @@ function renderPdfPreview() {
       <div class="pdf-header-name">${esc(weddingTitle())}</div>
       <div class="pdf-header-date" style="font-size:12px;color:var(--muted);margin-top:2px;">${esc(ds)}</div>
     </div>
-    <img src="${esc(getLogoSrc())}" alt="Glimwed" style="height:26px;width:auto;display:block;"/>
+    <img src="favicon-192.png" alt="Glimwed" style="height:30px;width:30px;display:block;"/>
   </div>`;
 
   if (!includeBoard && !includeBudget && !includeChecklist && !includePalettes) {
@@ -4064,8 +4076,9 @@ async function buildGlimwedPdf() {
   /* Page state — tracks current Y position; pdfNewPage resets it.      */
   const state = { y: PDF.MARGIN };
 
-  /* Top banner — wedding name + date, present on every section header  */
-  drawHeader(doc, state);
+  /* Top banner — wedding name + date + app icon.                       */
+  const favicon = await loadPdfFavicon();
+  drawHeader(doc, state, favicon);
 
   /* Decide which sections to include based on the toggles              */
   const includeBoard     = opts.board;
@@ -4100,7 +4113,7 @@ function pdfNewPage(doc, state) {
 function ensureSpace(doc, state, needed) {
   if (state.y + needed > PDF.H - PDF.MARGIN - 30) pdfNewPage(doc, state);
 }
-function drawHeader(doc, state) {
+function drawHeader(doc, state, favicon) {
   const y = state.y;
   /* Couple's display name (top-left) in the serif heading font (Cormorant) */
   doc.setFont(PDF.fontHead, 'normal');
@@ -4113,12 +4126,10 @@ function drawHeader(doc, state) {
   doc.setTextColor(...PDF.ink);
   const ds = weddingDateStr();
   if (ds) doc.text(ds, PDF.MARGIN, y + 44);
-  /* Wordmark logo, top-right (falls back to text if unavailable) */
-  const logo = getLogoImg();
-  if (logo && logo.naturalWidth && logo.naturalHeight) {
-    const lh = 30;
-    const lw = lh * (logo.naturalWidth / logo.naturalHeight);
-    try { doc.addImage(logo.src, 'PNG', PDF.W - PDF.MARGIN - lw, y, lw, lh); }
+  /* Square app icon (pink "g"), top-right (falls back to text if unavailable) */
+  const iconSize = 32;
+  if (favicon && favicon.naturalWidth && favicon.naturalHeight) {
+    try { doc.addImage(favicon, 'PNG', PDF.W - PDF.MARGIN - iconSize, y, iconSize, iconSize); }
     catch (e) {
       doc.setFont(PDF.fontBody, 'normal'); doc.setFontSize(11); doc.setTextColor(...PDF.rose);
       doc.text('GLIMWED', PDF.W - PDF.MARGIN, y + 18, { align: 'right' });
