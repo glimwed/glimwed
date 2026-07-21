@@ -1169,7 +1169,7 @@ button, input, select, textarea { font-family: inherit; }
 .pdf-header-name { font-family: 'Cormorant Garamond', serif; font-size: 30px; font-weight: 400; color: var(--ink); }
 .pdf-header-date { font-size: 12px; color: var(--muted); }
 .pdf-section-title { font-family: 'Cormorant Garamond', serif; font-size: 18px; font-weight: 500; text-transform: uppercase; letter-spacing: .08em; color: var(--ink); border-bottom: 1px solid var(--border); padding-bottom: 4px; margin-top: 30px; margin-bottom: 10px; }
-.pdf-header + .pdf-section-title { margin-top: 0; }
+.pdf-header + .pdf-section-title { margin-top: 12px; }
 .pdf-sub-title { font-family: 'Cormorant Garamond', serif; font-style: italic; font-weight: 400; font-size: 17px; color: #E8A0B8; margin: -6px 0 6px; }
 .pdf-mini-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-bottom: 8px; }
 .pdf-mini-card { border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
@@ -3935,6 +3935,15 @@ function renderPdfPreview() {
     return;
   }
 
+  if (includePalettes) {
+    html += `<div class="pdf-section-title">Color Palettes</div>`;
+    PALETTES.forEach(p => {
+      html += `<div style="margin-bottom:10px;"><div style="font-size:11px;color:var(--ink);margin-bottom:5px;">${esc(p.name)}</div><div style="display:flex;gap:8px;">`;
+      (p.colors || []).forEach(hex => { html += `<div style="width:34px;height:34px;border-radius:6px;background:${esc(hex)};border:1px solid var(--border);"></div>`; });
+      html += `</div></div>`;
+    });
+  }
+
   if (includeBoard) {
     let boardHtml = '';
     BOARD_TABS.filter(c => c !== 'all').forEach(catId => {
@@ -3953,15 +3962,6 @@ function renderPdfPreview() {
     });
     html += `<div class="pdf-section-title">Vision Board</div>`;
     html += boardHtml || `<div style="font-size:12px;color:var(--muted);padding:6px 0 12px;">No photos added yet — upload images to your boards and they’ll appear here.</div>`;
-  }
-
-  if (includePalettes) {
-    html += `<div class="pdf-section-title">Color Palettes</div>`;
-    PALETTES.forEach(p => {
-      html += `<div style="margin-bottom:10px;"><div style="font-size:11px;color:var(--ink);margin-bottom:5px;">${esc(p.name)}</div><div style="display:flex;gap:8px;">`;
-      (p.colors || []).forEach(hex => { html += `<div style="width:34px;height:34px;border-radius:6px;background:${esc(hex)};border:1px solid var(--border);"></div>`; });
-      html += `</div></div>`;
-    });
   }
 
   if (includeBudget) {
@@ -4080,8 +4080,8 @@ async function buildGlimwedPdf() {
     return doc;
   }
 
-  if (includeBoard) await drawVisionBoard(doc, state);
   if (includePalettes) drawPalettes(doc, state);
+  if (includeBoard) await drawVisionBoard(doc, state);
   if (includeBudget) drawBudget(doc, state);
   if (includeChecklist) drawChecklist(doc, state);
 
@@ -4127,7 +4127,7 @@ function drawHeader(doc, state) {
     doc.setFont(PDF.fontBody, 'normal'); doc.setFontSize(11); doc.setTextColor(...PDF.rose);
     doc.text('GLIMWED', PDF.W - PDF.MARGIN, y + 18, { align: 'right' });
   }
-  state.y = y + 68;
+  state.y = y + 80;   /* a little breathing room between the date and the first section */
 }
 function drawSectionTitle(doc, state, title) {
   /* Generous breathing room above each major section so the top-level blocks
