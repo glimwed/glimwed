@@ -1168,7 +1168,8 @@ button, input, select, textarea { font-family: inherit; }
 }
 .pdf-header-name { font-family: 'Cormorant Garamond', serif; font-size: 30px; font-weight: 400; color: var(--ink); }
 .pdf-header-date { font-size: 12px; color: var(--muted); }
-.pdf-section-title { font-family: 'Cormorant Garamond', serif; font-size: 18px; font-weight: 500; text-transform: uppercase; letter-spacing: .08em; color: var(--ink); border-bottom: 1px solid var(--border); padding-bottom: 4px; margin-bottom: 10px; }
+.pdf-section-title { font-family: 'Cormorant Garamond', serif; font-size: 18px; font-weight: 500; text-transform: uppercase; letter-spacing: .08em; color: var(--ink); border-bottom: 1px solid var(--border); padding-bottom: 4px; margin-top: 30px; margin-bottom: 10px; }
+.pdf-section-title:first-child { margin-top: 0; }
 .pdf-sub-title { font-family: 'Cormorant Garamond', serif; font-style: italic; font-weight: 400; font-size: 17px; color: #E8A0B8; margin: -6px 0 6px; }
 .pdf-mini-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-bottom: 8px; }
 .pdf-mini-card { border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
@@ -3955,7 +3956,7 @@ function renderPdfPreview() {
   }
 
   if (includePalettes) {
-    html += `<div class="pdf-section-title" style="margin-top:14px;">Color Palettes</div>`;
+    html += `<div class="pdf-section-title">Color Palettes</div>`;
     PALETTES.forEach(p => {
       html += `<div style="margin-bottom:10px;"><div style="font-size:11px;color:var(--ink);margin-bottom:5px;">${esc(p.name)}</div><div style="display:flex;gap:8px;">`;
       (p.colors || []).forEach(hex => { html += `<div style="width:34px;height:34px;border-radius:6px;background:${esc(hex)};border:1px solid var(--border);"></div>`; });
@@ -3975,7 +3976,7 @@ function renderPdfPreview() {
   }
 
   if (includeChecklist) {
-    html += `<div class="pdf-section-title" style="margin-top:14px;">Checklist</div>`;
+    html += `<div class="pdf-section-title">Checklist</div>`;
     CHECKLIST.forEach(c => {
       const mark = c.done
         ? `<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#10B981" stroke-width="2"><path d="M2 6l3 3 5-5"/></svg>`
@@ -4129,6 +4130,10 @@ function drawHeader(doc, state) {
   state.y = y + 68;
 }
 function drawSectionTitle(doc, state, title) {
+  /* Generous breathing room above each major section so the top-level blocks
+     (Vision Board / Color Palettes / Budget / Checklist) read as clearly
+     separate. Skipped when the title lands at the very top of a fresh page. */
+  if (state.y > PDF.MARGIN + 1) state.y += 30;
   ensureSpace(doc, state, 36);
   /* Section titles in Cormorant Garamond (heading font) — 500 Medium ('bold'
      slot) for a touch more weight; sized up since Cormorant reads small. */
