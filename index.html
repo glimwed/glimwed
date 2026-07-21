@@ -4376,7 +4376,11 @@ function drawChecklist(doc, state) {
 /* ----- Section: Palettes ----- */
 function drawPalettes(doc, state) {
   drawSectionTitle(doc, state, 'Color Palettes');
-  PALETTES.forEach(p => {
+  const swatchW = 64, swatchH = 28, gap = 8;
+  PALETTES.forEach((p, i) => {
+    /* Gap BETWEEN palettes (not after the last one — that was leaving a big    */
+    /* trailing whitespace, making the gap to the next section inconsistent).   */
+    if (i > 0) state.y += 38;
     ensureSpace(doc, state, 56);
     /* Name — Cormorant Garamond italic, same weight as the board sub-headers */
     doc.setFont(PDF.fontHead, 'italic');
@@ -4385,15 +4389,15 @@ function drawPalettes(doc, state) {
     doc.text(p.name, PDF.MARGIN, state.y);
     state.y += 12;
     /* Swatches in a row */
-    const swatchW = 64, swatchH = 28, gap = 8;
     p.colors.forEach((hex, idx) => {
       const x = PDF.MARGIN + idx * (swatchW + gap);
       const rgb = hexToRgb(hex);
       doc.setFillColor(...rgb);
       doc.roundedRect(x, state.y, swatchW, swatchH, 3, 3, 'F');
     });
-    state.y += swatchH + 38;
+    state.y += swatchH;
   });
+  state.y += 10;   /* section trailing — matches Budget, so section gaps are even */
 }
 
 function hexToRgb(hex) {
