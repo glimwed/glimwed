@@ -3854,8 +3854,10 @@ function weddingTitle() {
   const last  = ((PROFILE.lastName  || meta.last_name  || '') + '').trim();
   const bride = [first, last].filter(Boolean).join(' ');
   const partner = ((PROFILE.partnerName || '') + '').trim();
-  if (bride && partner) return bride + ' & ' + partner;
+  /* Partner (groom) name first, then the account owner's name. */
+  if (bride && partner) return partner + ' & ' + bride;
   if (bride) return bride;
+  if (partner) return partner;
   return 'Your Wedding';
 }
 /* Wedding date formatted for print, or '' when none is set. */
