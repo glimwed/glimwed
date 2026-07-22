@@ -1169,7 +1169,7 @@ button, input, select, textarea { font-family: inherit; }
 .pdf-header-name { font-family: 'Cormorant Garamond', serif; font-size: 36px; font-weight: 400; color: var(--ink); }
 .pdf-header-date { font-family: 'Cormorant Garamond', serif; font-size: 16px; color: var(--ink); }
 .pdf-section-title { font-family: 'Cormorant Garamond', serif; font-size: 18px; font-weight: 500; text-transform: uppercase; letter-spacing: .08em; color: var(--ink); border-bottom: 1px solid var(--border); padding-bottom: 4px; margin-top: 30px; margin-bottom: 10px; }
-.pdf-header + .pdf-section-title { margin-top: 12px; }
+.pdf-header + .pdf-section-title { margin-top: 34px; }
 .pdf-sub-title { font-family: 'Cormorant Garamond', serif; font-style: italic; font-weight: 400; font-size: 17px; color: #E8A0B8; margin: -6px 0 6px; }
 .pdf-mini-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-bottom: 8px; }
 .pdf-mini-card { border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
@@ -3924,7 +3924,7 @@ function renderPdfPreview() {
   const ds = weddingDateStr();
   let html = `<div class="pdf-header" style="text-align:center;">
     <div class="pdf-header-name">${esc(weddingTitle())}</div>
-    <div class="pdf-header-date" style="margin-top:2px;">${esc(ds)}</div>
+    <div class="pdf-header-date" style="margin-top:12px;">${esc(ds)}</div>
   </div>`;
 
   if (!includeBoard && !includeBudget && !includeChecklist && !includePalettes) {
@@ -4107,14 +4107,15 @@ function drawHeader(doc, state) {
   doc.setTextColor(...PDF.ink);
   doc.setFontSize(28);
   doc.text(weddingTitle(), cx, y + 20, { align: 'center' });
-  /* Wedding date centered below — same serif heading font as the title */
+  /* Wedding date centered below — same serif heading font as the title, with
+     a generous gap under the name. */
   doc.setFont(PDF.fontHead, 'normal');
   doc.setFontSize(12);
   doc.setTextColor(...PDF.ink);
   const ds = weddingDateStr();
-  if (ds) doc.text(ds, cx, y + 44, { align: 'center' });
-  /* Breathing room before the first section (measured from the last text line) */
-  state.y = y + (ds ? 44 : 20) + 36;
+  if (ds) doc.text(ds, cx, y + 54, { align: 'center' });
+  /* Much more breathing room before the first section (from the last text line) */
+  state.y = y + (ds ? 54 : 20) + 64;
 }
 function drawSectionTitle(doc, state, title) {
   /* Generous breathing room above each major section so the top-level blocks
