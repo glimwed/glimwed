@@ -3869,6 +3869,29 @@ function weddingDateStr() {
 /* both the on-screen preview and the exported PDF so they stay in sync.        */
 function getLogoImg() { return document.querySelector('.logo-wrap img'); }
 function getLogoSrc() { const el = getLogoImg(); return el ? el.src : ''; }
+/* Small outline-heart PNG (pink) drawn on a canvas — the embedded PDF fonts    */
+/* don't carry the ♡ glyph, so the header heart is embedded as an image.        */
+let PDF_HEART_URL = null;
+function pdfHeartDataUrl() {
+  if (PDF_HEART_URL) return PDF_HEART_URL;
+  const S = 128;
+  const c = document.createElement('canvas'); c.width = S; c.height = S;
+  const ctx = c.getContext('2d');
+  const cx = S / 2, cy = S * 0.24, size = S * 0.54, top = size * 0.3;
+  ctx.beginPath();
+  ctx.moveTo(cx, cy + size * 0.25);
+  ctx.bezierCurveTo(cx, cy, cx - size / 2, cy, cx - size / 2, cy + top);
+  ctx.bezierCurveTo(cx - size / 2, cy + (size + top) / 2, cx, cy + (size + top) / 2, cx, cy + size);
+  ctx.bezierCurveTo(cx, cy + (size + top) / 2, cx + size / 2, cy + (size + top) / 2, cx + size / 2, cy + top);
+  ctx.bezierCurveTo(cx + size / 2, cy, cx, cy, cx, cy + size * 0.25);
+  ctx.closePath();
+  ctx.lineWidth = S * 0.055;
+  ctx.lineJoin = 'round';
+  ctx.strokeStyle = '#D45C84';
+  ctx.stroke();
+  PDF_HEART_URL = c.toDataURL('image/png');
+  return PDF_HEART_URL;
+}
 
 /* Safe download filename derived from the couple's names. */
 function exportFilename() {
@@ -3924,7 +3947,8 @@ function renderPdfPreview() {
   const ds = weddingDateStr();
   let html = `<div class="pdf-header" style="text-align:center;">
     <div class="pdf-header-name">${esc(weddingTitle())}</div>
-    <div class="pdf-header-date" style="margin-top:12px;">${esc(ds)}</div>
+    <div style="color:#D45C84;font-size:16px;margin-top:6px;line-height:1;">&#9825;</div>
+    <div class="pdf-header-date" style="margin-top:8px;">${esc(ds)}</div>
   </div>`;
 
   if (!includeBoard && !includeBudget && !includeChecklist && !includePalettes) {
@@ -4106,14 +4130,17 @@ function drawHeader(doc, state) {
   doc.setTextColor(...PDF.ink);
   doc.setFontSize(28);
   doc.text(weddingTitle(), cx, y + 20, { align: 'center' });
-  /* Wedding date centered below the name — italic, same black as the name */
+  /* Small pink outline heart between the name and the date */
+  const hs = 13;
+  try { doc.addImage(pdfHeartDataUrl(), 'PNG', cx - hs / 2, y + 32, hs, hs); } catch (e) {}
+  /* Wedding date centered below the heart — italic, same black as the name */
   doc.setFont(PDF.fontHead, 'italic');
   doc.setFontSize(14);
   doc.setTextColor(...PDF.ink);
   const ds = weddingDateStr();
-  if (ds) doc.text(ds, cx, y + 54, { align: 'center' });
+  if (ds) doc.text(ds, cx, y + 66, { align: 'center' });
   /* Much more breathing room before the first section (from the last text line) */
-  state.y = y + (ds ? 54 : 20) + 64;
+  state.y = y + (ds ? 66 : 20) + 64;
 }
 function drawSectionTitle(doc, state, title) {
   /* Generous breathing room above each major section so the top-level blocks
