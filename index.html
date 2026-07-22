@@ -1166,7 +1166,6 @@ button, input, select, textarea { font-family: inherit; }
   display: block;
   padding-bottom: 18px; border-bottom: 2px solid var(--petal); margin-bottom: 18px;
 }
-.pdf-header-icon { text-align: right; margin-bottom: 12px; }
 .pdf-header-name { font-family: 'Cormorant Garamond', serif; font-size: 30px; font-weight: 400; color: var(--ink); }
 .pdf-header-date { font-size: 12px; color: var(--muted); }
 .pdf-section-title { font-family: 'Cormorant Garamond', serif; font-size: 18px; font-weight: 500; text-transform: uppercase; letter-spacing: .08em; color: var(--ink); border-bottom: 1px solid var(--border); padding-bottom: 4px; margin-top: 30px; margin-bottom: 10px; }
@@ -3870,18 +3869,6 @@ function weddingDateStr() {
 /* both the on-screen preview and the exported PDF so they stay in sync.        */
 function getLogoImg() { return document.querySelector('.logo-wrap img'); }
 function getLogoSrc() { const el = getLogoImg(); return el ? el.src : ''; }
-/* Square app icon (pink "g") shown in the PDF header corner. Loaded on demand  */
-/* and cached; awaited before drawing the header so it's ready when export runs. */
-let PDF_FAVICON_IMG = null;
-function loadPdfFavicon() {
-  if (PDF_FAVICON_IMG && PDF_FAVICON_IMG.complete && PDF_FAVICON_IMG.naturalWidth) return Promise.resolve(PDF_FAVICON_IMG);
-  return new Promise(resolve => {
-    const img = new Image();
-    img.onload = () => { PDF_FAVICON_IMG = img; resolve(img); };
-    img.onerror = () => resolve(null);
-    img.src = 'glimwed-icon.png';
-  });
-}
 
 /* Safe download filename derived from the couple's names. */
 function exportFilename() {
@@ -3935,8 +3922,7 @@ function renderPdfPreview() {
   const includePalettes  = opts.palettes;
 
   const ds = weddingDateStr();
-  let html = `<div class="pdf-header">
-    <div class="pdf-header-icon"><img src="glimwed-icon.png" alt="Glimwed" style="height:34px;width:34px;display:inline-block;"/></div>
+  let html = `<div class="pdf-header" style="text-align:center;">
     <div class="pdf-header-name">${esc(weddingTitle())}</div>
     <div class="pdf-header-date" style="font-size:12px;color:var(--muted);margin-top:2px;">${esc(ds)}</div>
   </div>`;
@@ -4076,9 +4062,8 @@ async function buildGlimwedPdf() {
   /* Page state — tracks current Y position; pdfNewPage resets it.      */
   const state = { y: PDF.MARGIN };
 
-  /* Top banner — wedding name + date + app icon.                       */
-  const favicon = await loadPdfFavicon();
-  drawHeader(doc, state, favicon);
+  /* Top banner — centered couple name + wedding date.                  */
+  drawHeader(doc, state);
 
   /* Decide which sections to include based on the toggles              */
   const includeBoard     = opts.board;
@@ -4113,39 +4098,22 @@ function pdfNewPage(doc, state) {
 function ensureSpace(doc, state, needed) {
   if (state.y + needed > PDF.H - PDF.MARGIN - 30) pdfNewPage(doc, state);
 }
-function drawHeader(doc, state, favicon) {
+function drawHeader(doc, state) {
   const y = state.y;
-  /* Circular app icon (pink "g") alone on the top-right; the couple's name and
-     date — and everything after — begin on the next row below it. */
-  const iconSize = 34;
-  let textTop;
-  if (favicon && favicon.naturalWidth && favicon.naturalHeight) {
-    try {
-      doc.addImage(favicon, 'PNG', PDF.W - PDF.MARGIN - iconSize, y, iconSize, iconSize);
-      textTop = y + iconSize + 16;
-    } catch (e) {
-      doc.setFont(PDF.fontBody, 'normal'); doc.setFontSize(11); doc.setTextColor(...PDF.rose);
-      doc.text('GLIMWED', PDF.W - PDF.MARGIN, y + 14, { align: 'right' });
-      textTop = y + 30;
-    }
-  } else {
-    doc.setFont(PDF.fontBody, 'normal'); doc.setFontSize(11); doc.setTextColor(...PDF.rose);
-    doc.text('GLIMWED', PDF.W - PDF.MARGIN, y + 14, { align: 'right' });
-    textTop = y + 30;
-  }
-  /* Couple's display name (left) in the serif heading font (Cormorant) */
+  const cx = PDF.W / 2;
+  /* Couple's display name, centered, in the serif heading font (Cormorant) */
   doc.setFont(PDF.fontHead, 'normal');
   doc.setTextColor(...PDF.ink);
   doc.setFontSize(24);
-  doc.text(weddingTitle(), PDF.MARGIN, textTop + 20);
-  /* Date just below the name — black, to match the title */
+  doc.text(weddingTitle(), cx, y + 24, { align: 'center' });
+  /* Wedding date centered just below the name */
   doc.setFont(PDF.fontBody, 'normal');
   doc.setFontSize(9);
   doc.setTextColor(...PDF.ink);
   const ds = weddingDateStr();
-  if (ds) doc.text(ds, PDF.MARGIN, textTop + 44);
+  if (ds) doc.text(ds, cx, y + 46, { align: 'center' });
   /* Breathing room before the first section (measured from the last text line) */
-  state.y = textTop + (ds ? 44 : 20) + 36;
+  state.y = y + (ds ? 46 : 24) + 36;
 }
 function drawSectionTitle(doc, state, title) {
   /* Generous breathing room above each major section so the top-level blocks
