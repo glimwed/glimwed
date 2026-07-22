@@ -3967,7 +3967,7 @@ function renderPdfPreview() {
   /* Render the "&" much smaller than the names. */
   const _nameParts = weddingTitle().split(' & ');
   const nameHtml = _nameParts.length === 2
-    ? esc(_nameParts[0]) + '<span style="font-size:0.42em;">&nbsp;&amp;&nbsp;</span>' + esc(_nameParts[1])
+    ? esc(_nameParts[0]) + '<span style="font-size:0.6em;">&nbsp;&amp;&nbsp;</span>' + esc(_nameParts[1])
     : esc(weddingTitle());
   let html = `<div class="pdf-header" style="text-align:center;">
     <div class="pdf-header-name">${nameHtml}</div>
@@ -4153,7 +4153,7 @@ function drawHeader(doc, state) {
      The "&" is drawn much smaller than the names, so render in segments. */
   doc.setFont(PDF.fontHead, 'normal');
   doc.setTextColor(...PDF.ink);
-  const nameSize = 28, ampSize = 14, ampPad = 6;
+  const nameSize = 28, ampSize = 20, ampPad = 6;
   const parts = weddingTitle().split(' & ');
   if (parts.length === 2) {
     doc.setFontSize(nameSize);
