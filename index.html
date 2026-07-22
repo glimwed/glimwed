@@ -3869,28 +3869,38 @@ function weddingDateStr() {
 /* both the on-screen preview and the exported PDF so they stay in sync.        */
 function getLogoImg() { return document.querySelector('.logo-wrap img'); }
 function getLogoSrc() { const el = getLogoImg(); return el ? el.src : ''; }
-/* Small outline-heart PNG (pink) drawn on a canvas — the embedded PDF fonts    */
-/* don't carry the ♡ glyph, so the header heart is embedded as an image.        */
-let PDF_HEART_URL = null;
-function pdfHeartDataUrl() {
-  if (PDF_HEART_URL) return PDF_HEART_URL;
-  const S = 128;
+/* The embedded PDF fonts don't carry the ♡ glyph, so the header heart is        */
+/* embedded as an image. To match the on-screen preview exactly, we render the   */
+/* real ♡ character (U+2661) onto a canvas, then crop it tight so it can be       */
+/* placed at its true aspect ratio. Returns { url, ar } (ar = width/height).      */
+let PDF_HEART = null;
+function pdfHeart() {
+  if (PDF_HEART) return PDF_HEART;
+  const S = 220;
   const c = document.createElement('canvas'); c.width = S; c.height = S;
   const ctx = c.getContext('2d');
-  const cx = S / 2, cy = S * 0.24, size = S * 0.54, top = size * 0.3;
-  ctx.beginPath();
-  ctx.moveTo(cx, cy + size * 0.25);
-  ctx.bezierCurveTo(cx, cy, cx - size / 2, cy, cx - size / 2, cy + top);
-  ctx.bezierCurveTo(cx - size / 2, cy + (size + top) / 2, cx, cy + (size + top) / 2, cx, cy + size);
-  ctx.bezierCurveTo(cx, cy + (size + top) / 2, cx + size / 2, cy + (size + top) / 2, cx + size / 2, cy + top);
-  ctx.bezierCurveTo(cx + size / 2, cy, cx, cy, cx, cy + size * 0.25);
-  ctx.closePath();
-  ctx.lineWidth = S * 0.055;
-  ctx.lineJoin = 'round';
-  ctx.strokeStyle = '#D45C84';
-  ctx.stroke();
-  PDF_HEART_URL = c.toDataURL('image/png');
-  return PDF_HEART_URL;
+  ctx.fillStyle = '#D45C84';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.font = Math.round(S * 0.74) + 'px "Open Sans", Georgia, serif';
+  ctx.fillText('♡', S / 2, S / 2);
+  /* Crop to the glyph's bounding box via an alpha scan. */
+  const d = ctx.getImageData(0, 0, S, S).data;
+  let x0 = S, y0 = S, x1 = 0, y1 = 0, found = false;
+  for (let yy = 0; yy < S; yy++) {
+    for (let xx = 0; xx < S; xx++) {
+      if (d[(yy * S + xx) * 4 + 3] > 12) { found = true; if (xx < x0) x0 = xx; if (xx > x1) x1 = xx; if (yy < y0) y0 = yy; if (yy > y1) y1 = yy; }
+    }
+  }
+  if (!found) { PDF_HEART = { url: c.toDataURL('image/png'), ar: 1 }; return PDF_HEART; }
+  const pad = 3;
+  x0 = Math.max(0, x0 - pad); y0 = Math.max(0, y0 - pad);
+  x1 = Math.min(S - 1, x1 + pad); y1 = Math.min(S - 1, y1 + pad);
+  const w = x1 - x0 + 1, h = y1 - y0 + 1;
+  const oc = document.createElement('canvas'); oc.width = w; oc.height = h;
+  oc.getContext('2d').drawImage(c, x0, y0, w, h, 0, 0, w, h);
+  PDF_HEART = { url: oc.toDataURL('image/png'), ar: w / h };
+  return PDF_HEART;
 }
 
 /* Safe download filename derived from the couple's names. */
@@ -4130,9 +4140,10 @@ function drawHeader(doc, state) {
   doc.setTextColor(...PDF.ink);
   doc.setFontSize(28);
   doc.text(weddingTitle(), cx, y + 20, { align: 'center' });
-  /* Small pink outline heart between the name and the date */
-  const hs = 17;
-  try { doc.addImage(pdfHeartDataUrl(), 'PNG', cx - hs / 2, y + 31, hs, hs); } catch (e) {}
+  /* Small pink ♡ (rendered from the real glyph) between the name and the date */
+  const H = pdfHeart();
+  const hh = 17, hw = hh * H.ar;
+  try { doc.addImage(H.url, 'PNG', cx - hw / 2, y + 31, hw, hh); } catch (e) {}
   /* Wedding date centered below the heart — italic, same black as the name */
   doc.setFont(PDF.fontHead, 'italic');
   doc.setFontSize(14);
