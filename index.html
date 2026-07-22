@@ -3964,7 +3964,7 @@ function renderPdfPreview() {
   const ds = weddingDateStr();
   let html = `<div class="pdf-header" style="text-align:center;">
     <div class="pdf-header-name">${esc(weddingTitle())}</div>
-    <div style="margin-top:8px;line-height:0;"><img src="${pdfHeart().url}" alt="" style="height:21px;width:${(21 * pdfHeart().ar).toFixed(1)}px;display:inline-block;"/></div>
+    <div style="margin-top:8px;line-height:0;"><img src="${pdfHeart().url}" alt="" style="height:15px;width:${(15 * pdfHeart().ar).toFixed(1)}px;display:inline-block;"/></div>
     <div class="pdf-header-date" style="margin-top:8px;">${esc(ds)}</div>
   </div>`;
 
@@ -4149,8 +4149,8 @@ function drawHeader(doc, state) {
   doc.text(weddingTitle(), cx, y + 20, { align: 'center' });
   /* Small pink ♡ (rendered from the real glyph) between the name and the date */
   const H = pdfHeart();
-  const hh = 17, hw = hh * H.ar;
-  try { doc.addImage(H.url, 'PNG', cx - hw / 2, y + 31, hw, hh); } catch (e) {}
+  const hh = 12, hw = hh * H.ar;
+  try { doc.addImage(H.url, 'PNG', cx - hw / 2, y + 33, hw, hh); } catch (e) {}
   /* Wedding date centered below the heart — italic, same black as the name */
   doc.setFont(PDF.fontHead, 'italic');
   doc.setFontSize(14);
