@@ -3950,9 +3950,9 @@ function renderPdfPreview() {
   if (includePalettes) {
     html += `<div class="pdf-section-title">Color Palettes</div>`;
     PALETTES.forEach(p => {
-      html += `<div style="margin-bottom:10px;"><div style="font-size:11px;color:var(--ink);margin-bottom:5px;">${esc(p.name)}</div><div style="display:flex;gap:8px;">`;
+      html += `<div style="margin-bottom:14px;"><div style="display:flex;gap:8px;margin-bottom:6px;">`;
       (p.colors || []).forEach(hex => { html += `<div style="width:34px;height:34px;border-radius:6px;background:${esc(hex)};border:1px solid var(--border);"></div>`; });
-      html += `</div></div>`;
+      html += `</div><div style="font-size:11px;color:var(--ink);">${esc(p.name)}</div></div>`;
     });
   }
 
@@ -4400,22 +4400,22 @@ function drawPalettes(doc, state) {
     /* trailing whitespace, making the gap to the next section inconsistent).   */
     if (i > 0) state.y += 38;
     ensureSpace(doc, state, 56);
-    /* Name — Cormorant Garamond italic, same weight as the board sub-headers */
-    doc.setFont(PDF.fontHead, 'italic');
-    doc.setFontSize(12);
-    doc.setTextColor(...PDF.ink);
-    doc.text(p.name, PDF.MARGIN, state.y);
-    state.y += 12;
     /* Swatches in a row */
+    const swatchTop = state.y;
     p.colors.forEach((hex, idx) => {
       const x = PDF.MARGIN + idx * (swatchW + gap);
       const rgb = hexToRgb(hex);
       doc.setFillColor(...rgb);
-      doc.roundedRect(x, state.y, swatchW, swatchH, 3, 3, 'F');
+      doc.roundedRect(x, swatchTop, swatchW, swatchH, 3, 3, 'F');
     });
-    state.y += swatchH;
+    /* Name BELOW the swatches — Cormorant Garamond italic */
+    state.y = swatchTop + swatchH + 14;
+    doc.setFont(PDF.fontHead, 'italic');
+    doc.setFontSize(12);
+    doc.setTextColor(...PDF.ink);
+    doc.text(p.name, PDF.MARGIN, state.y);
   });
-  state.y += 10;   /* section trailing — matches Budget, so section gaps are even */
+  state.y += 12;   /* section trailing (below the last name) — keeps section gaps even */
 }
 
 function hexToRgb(hex) {
