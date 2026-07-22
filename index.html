@@ -3854,8 +3854,8 @@ function weddingTitle() {
   const last  = ((PROFILE.lastName  || meta.last_name  || '') + '').trim();
   const bride = [first, last].filter(Boolean).join(' ');
   const partner = ((PROFILE.partnerName || '') + '').trim();
-  /* Partner (groom) name first, then the account owner's name. */
-  if (bride && partner) return partner + ' & ' + bride;
+  /* Account owner's name first, then the partner's name. */
+  if (bride && partner) return bride + ' & ' + partner;
   if (bride) return bride;
   if (partner) return partner;
   return 'Your Wedding';
@@ -3964,8 +3964,13 @@ function renderPdfPreview() {
   const includePalettes  = opts.palettes;
 
   const ds = weddingDateStr();
+  /* Render the "&" much smaller than the names. */
+  const _nameParts = weddingTitle().split(' & ');
+  const nameHtml = _nameParts.length === 2
+    ? esc(_nameParts[0]) + '<span style="font-size:0.42em;">&nbsp;&amp;&nbsp;</span>' + esc(_nameParts[1])
+    : esc(weddingTitle());
   let html = `<div class="pdf-header" style="text-align:center;">
-    <div class="pdf-header-name">${esc(weddingTitle())}</div>
+    <div class="pdf-header-name">${nameHtml}</div>
     <div style="margin-top:15px;line-height:0;"><img src="${pdfHeart().url}" alt="" style="height:15px;width:${(15 * pdfHeart().ar).toFixed(1)}px;display:inline-block;"/></div>
     <div class="pdf-header-date" style="margin-top:15px;">${esc(ds)}</div>
   </div>`;
@@ -4144,11 +4149,26 @@ function ensureSpace(doc, state, needed) {
 function drawHeader(doc, state) {
   const y = state.y;
   const cx = PDF.W / 2;
-  /* Couple's display name, centered, in the serif heading font (Cormorant) */
+  /* Couple's display name, centered, in the serif heading font (Cormorant).
+     The "&" is drawn much smaller than the names, so render in segments. */
   doc.setFont(PDF.fontHead, 'normal');
   doc.setTextColor(...PDF.ink);
-  doc.setFontSize(28);
-  doc.text(weddingTitle(), cx, y + 20, { align: 'center' });
+  const nameSize = 28, ampSize = 14, ampPad = 6;
+  const parts = weddingTitle().split(' & ');
+  if (parts.length === 2) {
+    doc.setFontSize(nameSize);
+    const w1 = doc.getTextWidth(parts[0]);
+    const w2 = doc.getTextWidth(parts[1]);
+    doc.setFontSize(ampSize);
+    const wa = doc.getTextWidth('&');
+    let x = cx - (w1 + ampPad + wa + ampPad + w2) / 2;
+    doc.setFontSize(nameSize); doc.text(parts[0], x, y + 20); x += w1 + ampPad;
+    doc.setFontSize(ampSize);  doc.text('&', x, y + 20);      x += wa + ampPad;
+    doc.setFontSize(nameSize); doc.text(parts[1], x, y + 20);
+  } else {
+    doc.setFontSize(nameSize);
+    doc.text(weddingTitle(), cx, y + 20, { align: 'center' });
+  }
   /* Small pink ♡ (rendered from the real glyph) between the name and the date */
   const H = pdfHeart();
   const hh = 12, hw = hh * H.ar;
