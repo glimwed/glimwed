@@ -3869,22 +3869,29 @@ function weddingDateStr() {
 /* both the on-screen preview and the exported PDF so they stay in sync.        */
 function getLogoImg() { return document.querySelector('.logo-wrap img'); }
 function getLogoSrc() { const el = getLogoImg(); return el ? el.src : ''; }
-/* The embedded PDF fonts don't carry the ♡ glyph, so the header heart is        */
-/* embedded as an image. To match the on-screen preview exactly, we render the   */
-/* real ♡ character (U+2661) onto a canvas, then crop it tight so it can be       */
-/* placed at its true aspect ratio. Returns { url, ar } (ar = width/height).      */
+/* The embedded PDF fonts don't carry the ♡ glyph, and the system glyph varies    */
+/* by OS — so we draw our OWN fixed outline-heart path on a canvas (identical on   */
+/* every machine) and embed it as a PNG. The SAME image is used in the preview so  */
+/* the two always match. Returns { url, ar } (ar = width/height).                  */
 let PDF_HEART = null;
 function pdfHeart() {
   if (PDF_HEART) return PDF_HEART;
-  const S = 220;
+  const S = 260, W = S, Ht = S, cx = W / 2;
   const c = document.createElement('canvas'); c.width = S; c.height = S;
   const ctx = c.getContext('2d');
-  ctx.fillStyle = '#D45C84';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.font = Math.round(S * 0.74) + 'px "Open Sans", Georgia, serif';
-  ctx.fillText('♡', S / 2, S / 2);
-  /* Crop to the glyph's bounding box via an alpha scan. */
+  /* An open (outline) heart shaped to read like ♡ — rounded lobes, pointed tip. */
+  ctx.beginPath();
+  ctx.moveTo(cx, Ht * 0.31);
+  ctx.bezierCurveTo(W * 0.42, Ht * 0.10, W * 0.06, Ht * 0.13, W * 0.075, Ht * 0.38);
+  ctx.bezierCurveTo(W * 0.075, Ht * 0.60, W * 0.34, Ht * 0.76, cx, Ht * 0.95);
+  ctx.bezierCurveTo(W * 0.66, Ht * 0.76, W * 0.925, Ht * 0.60, W * 0.925, Ht * 0.38);
+  ctx.bezierCurveTo(W * 0.94, Ht * 0.13, W * 0.58, Ht * 0.10, cx, Ht * 0.31);
+  ctx.closePath();
+  ctx.lineWidth = S * 0.045;
+  ctx.lineJoin = 'round';
+  ctx.strokeStyle = '#1C1C1C';   /* black outline */
+  ctx.stroke();
+  /* Crop tight so the heart can be placed at its true aspect ratio. */
   const d = ctx.getImageData(0, 0, S, S).data;
   let x0 = S, y0 = S, x1 = 0, y1 = 0, found = false;
   for (let yy = 0; yy < S; yy++) {
@@ -3957,7 +3964,7 @@ function renderPdfPreview() {
   const ds = weddingDateStr();
   let html = `<div class="pdf-header" style="text-align:center;">
     <div class="pdf-header-name">${esc(weddingTitle())}</div>
-    <div style="color:#D45C84;font-size:21px;margin-top:6px;line-height:1;">&#9825;</div>
+    <div style="margin-top:8px;line-height:0;"><img src="${pdfHeart().url}" alt="" style="height:21px;width:${(21 * pdfHeart().ar).toFixed(1)}px;display:inline-block;"/></div>
     <div class="pdf-header-date" style="margin-top:8px;">${esc(ds)}</div>
   </div>`;
 
