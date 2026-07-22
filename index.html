@@ -1167,7 +1167,7 @@ button, input, select, textarea { font-family: inherit; }
   padding-bottom: 18px; border-bottom: 2px solid var(--petal); margin-bottom: 18px;
 }
 .pdf-header-name { font-family: 'Cormorant Garamond', serif; font-size: 36px; font-weight: 400; color: var(--ink); }
-.pdf-header-date { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 19px; color: var(--ink); }
+.pdf-header-date { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 23px; color: var(--ink); }
 .pdf-section-title { font-family: 'Cormorant Garamond', serif; font-size: 18px; font-weight: 500; text-transform: uppercase; letter-spacing: .08em; color: var(--ink); border-bottom: 1px solid var(--border); padding-bottom: 4px; margin-top: 30px; margin-bottom: 10px; }
 .pdf-header + .pdf-section-title { margin-top: 34px; }
 .pdf-sub-title { font-family: 'Cormorant Garamond', serif; font-style: italic; font-weight: 400; font-size: 17px; color: #E8A0B8; margin: -6px 0 6px; }
@@ -4153,7 +4153,7 @@ function drawHeader(doc, state) {
   try { doc.addImage(H.url, 'PNG', cx - hw / 2, y + 40, hw, hh); } catch (e) {}
   /* Wedding date centered below the heart — italic, same black as the name */
   doc.setFont(PDF.fontHead, 'italic');
-  doc.setFontSize(14);
+  doc.setFontSize(17);
   doc.setTextColor(...PDF.ink);
   const ds = weddingDateStr();
   if (ds) doc.text(ds, cx, y + 80, { align: 'center' });
