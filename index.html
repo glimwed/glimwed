@@ -3924,7 +3924,7 @@ function renderPdfPreview() {
   const ds = weddingDateStr();
   let html = `<div class="pdf-header" style="text-align:center;">
     <div class="pdf-header-name">${esc(weddingTitle())}</div>
-    <div class="pdf-header-date" style="margin-top:12px;">${esc(ds)}</div>
+    <div class="pdf-header-date" style="margin-top:12px;">${esc(ds ? 'for the wedding on ' + ds : '')}</div>
   </div>`;
 
   if (!includeBoard && !includeBudget && !includeChecklist && !includePalettes) {
@@ -4113,7 +4113,7 @@ function drawHeader(doc, state) {
   doc.setFontSize(14);
   doc.setTextColor(212, 92, 132);   /* darker pink (#D45C84) */
   const ds = weddingDateStr();
-  if (ds) doc.text(ds, cx, y + 54, { align: 'center' });
+  if (ds) doc.text('for the wedding on ' + ds, cx, y + 54, { align: 'center' });
   /* Much more breathing room before the first section (from the last text line) */
   state.y = y + (ds ? 54 : 20) + 64;
 }
