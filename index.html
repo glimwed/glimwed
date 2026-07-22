@@ -1166,6 +1166,7 @@ button, input, select, textarea { font-family: inherit; }
   display: block;
   padding-bottom: 18px; border-bottom: 2px solid var(--petal); margin-bottom: 18px;
 }
+.pdf-header-lead { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 17px; color: #D45C84; margin-bottom: 8px; }
 .pdf-header-name { font-family: 'Cormorant Garamond', serif; font-size: 36px; font-weight: 400; color: var(--ink); }
 .pdf-header-date { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 19px; color: #D45C84; }
 .pdf-section-title { font-family: 'Cormorant Garamond', serif; font-size: 18px; font-weight: 500; text-transform: uppercase; letter-spacing: .08em; color: var(--ink); border-bottom: 1px solid var(--border); padding-bottom: 4px; margin-top: 30px; margin-bottom: 10px; }
@@ -3923,8 +3924,9 @@ function renderPdfPreview() {
 
   const ds = weddingDateStr();
   let html = `<div class="pdf-header" style="text-align:center;">
+    <div class="pdf-header-lead">For The Wedding Of</div>
     <div class="pdf-header-name">${esc(weddingTitle())}</div>
-    <div class="pdf-header-date" style="margin-top:12px;">${esc(ds ? 'for the wedding on ' + ds : '')}</div>
+    <div class="pdf-header-date" style="margin-top:12px;">${esc(ds)}</div>
   </div>`;
 
   if (!includeBoard && !includeBudget && !includeChecklist && !includePalettes) {
@@ -4101,21 +4103,24 @@ function ensureSpace(doc, state, needed) {
 function drawHeader(doc, state) {
   const y = state.y;
   const cx = PDF.W / 2;
-  /* Couple's display name, centered, in the serif heading font (Cormorant).
-     Pulled up toward the top margin and sized up a touch. */
+  /* Lead-in line, centered italic pink, above the couple's name */
+  doc.setFont(PDF.fontHead, 'italic');
+  doc.setFontSize(13);
+  doc.setTextColor(212, 92, 132);   /* darker pink (#D45C84) */
+  doc.text('For The Wedding Of', cx, y + 16, { align: 'center' });
+  /* Couple's display name, centered, in the serif heading font (Cormorant) */
   doc.setFont(PDF.fontHead, 'normal');
   doc.setTextColor(...PDF.ink);
   doc.setFontSize(28);
-  doc.text(weddingTitle(), cx, y + 20, { align: 'center' });
-  /* Wedding date centered below — same serif heading font as the title, with
-     a generous gap under the name. */
+  doc.text(weddingTitle(), cx, y + 48, { align: 'center' });
+  /* Wedding date centered below the name — italic pink */
   doc.setFont(PDF.fontHead, 'italic');
   doc.setFontSize(14);
-  doc.setTextColor(212, 92, 132);   /* darker pink (#D45C84) */
+  doc.setTextColor(212, 92, 132);
   const ds = weddingDateStr();
-  if (ds) doc.text('for the wedding on ' + ds, cx, y + 54, { align: 'center' });
+  if (ds) doc.text(ds, cx, y + 78, { align: 'center' });
   /* Much more breathing room before the first section (from the last text line) */
-  state.y = y + (ds ? 54 : 20) + 64;
+  state.y = y + (ds ? 78 : 48) + 60;
 }
 function drawSectionTitle(doc, state, title) {
   /* Generous breathing room above each major section so the top-level blocks
