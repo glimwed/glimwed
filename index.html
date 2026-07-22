@@ -3947,7 +3947,7 @@ function renderPdfPreview() {
   const ds = weddingDateStr();
   let html = `<div class="pdf-header" style="text-align:center;">
     <div class="pdf-header-name">${esc(weddingTitle())}</div>
-    <div style="color:#D45C84;font-size:16px;margin-top:6px;line-height:1;">&#9825;</div>
+    <div style="color:#D45C84;font-size:21px;margin-top:6px;line-height:1;">&#9825;</div>
     <div class="pdf-header-date" style="margin-top:8px;">${esc(ds)}</div>
   </div>`;
 
@@ -4131,8 +4131,8 @@ function drawHeader(doc, state) {
   doc.setFontSize(28);
   doc.text(weddingTitle(), cx, y + 20, { align: 'center' });
   /* Small pink outline heart between the name and the date */
-  const hs = 13;
-  try { doc.addImage(pdfHeartDataUrl(), 'PNG', cx - hs / 2, y + 32, hs, hs); } catch (e) {}
+  const hs = 17;
+  try { doc.addImage(pdfHeartDataUrl(), 'PNG', cx - hs / 2, y + 31, hs, hs); } catch (e) {}
   /* Wedding date centered below the heart — italic, same black as the name */
   doc.setFont(PDF.fontHead, 'italic');
   doc.setFontSize(14);
