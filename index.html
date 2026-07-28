@@ -2126,10 +2126,10 @@ body.share-mode { background: var(--cream, #FBF8F5); }
   <!-- Footer: signed-in user -->
   <div class="sb-footer">
     <div class="sb-user-row">
-      <div class="sb-avatar">S</div>
+      <div class="sb-avatar"></div>
       <div>
-        <div class="sb-user-name">Sarah Mitchell</div>
-        <div class="sb-user-email">sarah@example.com</div>
+        <div class="sb-user-name"></div>
+        <div class="sb-user-email"></div>
       </div>
     </div>
   </div>
@@ -4238,12 +4238,20 @@ function renderPdfPreview() {
 
   if (includePalettes) {
     html += `<div class="pdf-section-title">Color Palettes</div>`;
-    PALETTES.forEach(p => {
-      html += `<div style="margin-bottom:14px;">`;
-      if (p.image) { html += `<div style="margin-bottom:6px;height:150px;background:var(--cloud);border-radius:6px;border:1px solid var(--border);overflow:hidden;"><img src="${esc(p.image)}" style="width:100%;height:100%;object-fit:contain;" alt=""/></div>`; }
-      html += `<div style="display:flex;gap:8px;margin-bottom:6px;">`;
-      (p.colors || []).forEach(hex => { html += `<div style="width:34px;height:34px;border-radius:6px;background:${esc(hex)};border:1px solid var(--border);"></div>`; });
-      html += `</div><div style="font-size:11px;color:var(--ink);">${esc(p.name)}</div></div>`;
+    const shownPals = PALETTES.filter(p => (Array.isArray(p.colors) && p.colors.length) || p.image);
+    if (!shownPals.length) {
+      html += `<div style="font-size:11px;color:var(--muted);">No color palettes yet — add colours on the Palettes page and they’ll appear here.</div>`;
+    }
+    shownPals.forEach(p => {
+      const isPh = (p.name === PALETTE_NAME_PLACEHOLDER);
+      html += `<div style="margin-bottom:22px;">`;
+      /* Name on top — italic serif, muted when it's still the placeholder */
+      html += `<div style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:16px;color:${isPh ? 'var(--muted)' : 'var(--ink)'};margin-bottom:8px;">${esc(p.name || PALETTE_NAME_PLACEHOLDER)}</div>`;
+      if (p.image) { html += `<div style="margin-bottom:8px;height:150px;background:var(--cloud);border-radius:6px;border:1px solid var(--border);overflow:hidden;"><img src="${esc(p.image)}" style="width:100%;height:100%;object-fit:contain;" alt=""/></div>`; }
+      /* Colours as tall rounded strips */
+      html += `<div style="display:flex;gap:8px;">`;
+      (p.colors || []).forEach(hex => { html += `<div style="width:38px;height:95px;border-radius:8px;background:${esc(hex)};border:1px solid var(--border);"></div>`; });
+      html += `</div></div>`;
     });
   }
 
@@ -4686,31 +4694,47 @@ function drawChecklist(doc, state) {
 /* ----- Section: Palettes ----- */
 async function drawPalettes(doc, state) {
   drawSectionTitle(doc, state, 'Color Palettes');
-  const swatchW = 64, swatchH = 28, gap = 8;
+
+  /* Only palettes with something to show (colours and/or an inspiration image). */
+  const shown = PALETTES.filter(p => (Array.isArray(p.colors) && p.colors.length) || p.image);
+  if (!shown.length) {
+    drawText(doc, state, 'No color palettes yet — add colours on the Palettes page and they’ll appear here.', { size: 11, color: PDF.sub });
+    return;
+  }
 
   /* Pre-load every palette's inspiration image once, in parallel, as JPEGs. */
   const cache = new Map();
-  await Promise.all([...new Set(PALETTES.map(p => p.image).filter(Boolean))].map(async s => {
+  await Promise.all([...new Set(shown.map(p => p.image).filter(Boolean))].map(async s => {
     const j = await loadPdfImage(s);
     if (j) cache.set(s, j);
   }));
 
   const contentW = PDF.W - PDF.MARGIN * 2;
-  const inspH = 150;   /* fixed height for the inspiration image band */
+  const inspH = 150;                 /* inspiration image band height        */
+  const stripW = 46, stripH = 115;   /* tall rounded colour strips (≈2/5)    */
+  const stripGap = 10, stripR = 6;
 
-  PALETTES.forEach((p, i) => {
-    /* Gap BETWEEN palettes (not after the last one — that was leaving a big    */
-    /* trailing whitespace, making the gap to the next section inconsistent).   */
-    if (i > 0) state.y += 38;
-
-    /* Inspiration image (if any) — sits above the swatches, cover-fit into a
-       full-width band, matching the app's Palettes page and the PDF preview.  */
+  shown.forEach((p, i) => {
     const j = p.image ? cache.get(p.image) : null;
+    /* Keep each palette together: name + image + strips reserve their space up
+       front so a palette doesn't split awkwardly across a page break.        */
+    const need = 20 + (j ? inspH + 12 : 0) + stripH + 12;
+    if (i > 0) state.y += 34;
+    ensureSpace(doc, state, need);
+
+    /* Name at the TOP — Cormorant Garamond italic (placeholder shown muted,
+       mirroring the Palettes page).                                          */
+    const isPh = (p.name === PALETTE_NAME_PLACEHOLDER);
+    doc.setFont(PDF.fontHead, 'italic');
+    doc.setFontSize(14);
+    doc.setTextColor(...(isPh ? PDF.sub : PDF.ink));
+    state.y += 14;
+    doc.text(p.name || PALETTE_NAME_PLACEHOLDER, PDF.MARGIN, state.y);
+    state.y += 12;
+
+    /* Inspiration image band (contain-fit on a cloud background). */
     if (j) {
-      ensureSpace(doc, state, inspH + 12 + 56);
       const boxTop = state.y;
-      /* Cloud background band, then contain-fit the image centered inside it
-         (same proven approach as drawVisionBoard — no clipping, never overflows). */
       doc.setFillColor(...PDF.cloud);
       doc.roundedRect(PDF.MARGIN, boxTop, contentW, inspH, 4, 4, 'F');
       const ar = j.w / j.h, boxAr = contentW / inspH;
@@ -4724,26 +4748,21 @@ async function drawPalettes(doc, state) {
       doc.setLineWidth(0.6);
       doc.roundedRect(PDF.MARGIN, boxTop, contentW, inspH, 4, 4, 'S');
       state.y = boxTop + inspH + 12;
-    } else {
-      ensureSpace(doc, state, 56);
     }
 
-    /* Swatches in a row */
-    const swatchTop = state.y;
-    p.colors.forEach((hex, idx) => {
-      const x = PDF.MARGIN + idx * (swatchW + gap);
-      const rgb = hexToRgb(hex);
-      doc.setFillColor(...rgb);
-      doc.roundedRect(x, swatchTop, swatchW, swatchH, 3, 3, 'F');
+    /* Colours as tall rounded strips in a row. */
+    const stripTop = state.y;
+    (p.colors || []).forEach((hex, idx) => {
+      const x = PDF.MARGIN + idx * (stripW + stripGap);
+      doc.setFillColor(...hexToRgb(hex));
+      doc.roundedRect(x, stripTop, stripW, stripH, stripR, stripR, 'F');
+      doc.setDrawColor(...PDF.border);
+      doc.setLineWidth(0.5);
+      doc.roundedRect(x, stripTop, stripW, stripH, stripR, stripR, 'S');
     });
-    /* Name BELOW the swatches — Cormorant Garamond italic */
-    state.y = swatchTop + swatchH + 14;
-    doc.setFont(PDF.fontHead, 'italic');
-    doc.setFontSize(12);
-    doc.setTextColor(...PDF.ink);
-    doc.text(p.name, PDF.MARGIN, state.y);
+    state.y = stripTop + ((p.colors && p.colors.length) ? stripH : 0);
   });
-  state.y += 12;   /* section trailing (below the last name) — keeps section gaps even */
+  state.y += 12;   /* section trailing — keeps section gaps even */
 }
 
 function hexToRgb(hex) {
