@@ -5346,6 +5346,13 @@ function setState(s) {
     PROFILE = Object.assign({ firstName:'', lastName:'', email:'', weddingDate:'', partnerName:'', venueCity:'', photoUrl:'' }, s.PROFILE);
   }
   render();
+  /* render() only refreshes the board + its side panel. The full-page sections
+     (Palettes, Checklist, Budget) read straight from state too, so refresh them
+     here — otherwise loaded data never appears on those pages (the Palettes page
+     is the default home, so this is what made saved palettes look "not saved"). */
+  renderColorsPage();
+  renderChecklist();
+  renderBudget();
 }
 
 /* Pristine starting state, snapshotted before any sign-in — used to clear the
