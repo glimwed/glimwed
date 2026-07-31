@@ -1507,7 +1507,8 @@ body.share-mode { background: var(--cream, #FBF8F5); }
   gap: 12px;
   margin-bottom: 16px;
 }
-/* One editable colour chip — tall, narrow rounded strip */
+/* One editable colour chip — tall, narrow rounded strip.
+   Click to edit its colour, drag to reorder within the palette. */
 .palette-page-chip {
   position: relative;
   flex: 1 1 0;
@@ -1516,20 +1517,27 @@ body.share-mode { background: var(--cream, #FBF8F5); }
   border-radius: 12px;
   border: 1px solid var(--border);
   overflow: hidden;
-  transition: box-shadow .15s, border-color .15s;
+  cursor: grab;
+  transition: box-shadow .15s, border-color .15s, opacity .12s, transform .12s;
 }
 .palette-page-chip:hover { box-shadow: 0 4px 14px rgba(230,108,149,.18); }
-/* The whole strip is a click target that opens the native colour picker */
+.palette-page-chip:active { cursor: grabbing; }
+.palette-page-chip.chip-dragging { opacity: .4; }
+/* Drop target being hovered during a drag */
+.palette-page-chip.chip-drop-target { box-shadow: 0 0 0 2px var(--rose); }
+/* Hidden native colour picker — opened programmatically on click so the chip
+   itself stays free to be dragged (a full-cover input would swallow the drag). */
 .palette-chip-input {
   position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
+  left: 8px;
+  bottom: 8px;
+  width: 1px;
+  height: 1px;
   margin: 0;
   padding: 0;
   border: none;
   opacity: 0;
-  cursor: pointer;
+  pointer-events: none;
 }
 /* Remove-colour × — top-right of a strip, shown on hover */
 .palette-chip-rm {
@@ -3237,10 +3245,14 @@ function renderColorsPage() {
   if (!el) return;
   const cards = PALETTES.map((p, pi) => {
     const swatchHtml = (p.colors || []).map((c, ci) =>
-      `<div class="palette-page-chip" style="background:${c};">
-         <input type="color" class="palette-chip-input" value="${c}"
-                oninput="setPaletteColor(${pi},${ci},this)" title="Edit colour" aria-label="Edit colour">
-         <button class="palette-chip-rm" onclick="removePaletteColor(${pi},${ci})" title="Remove colour" aria-label="Remove colour">×</button>
+      `<div class="palette-page-chip" style="background:${c};" draggable="true"
+            data-pi="${pi}" data-ci="${ci}" title="Click to edit · drag to reorder"
+            onclick="chipClick(event,${pi},${ci})"
+            ondragstart="chipDragStart(event,${pi},${ci})" ondragover="chipDragOver(event,this)"
+            ondragleave="chipDragLeave(this)" ondragend="chipDragEnd()" ondrop="chipDrop(event,${pi},${ci})">
+         <input type="color" class="palette-chip-input" value="${c}" tabindex="-1"
+                oninput="setPaletteColor(${pi},${ci},this)" aria-label="Edit colour">
+         <button class="palette-chip-rm" draggable="false" onclick="event.stopPropagation();removePaletteColor(${pi},${ci})" title="Remove colour" aria-label="Remove colour">×</button>
        </div>`
     ).join('') +
       `<div class="palette-chip-add" onclick="addPaletteColor(${pi})" title="Add a colour" aria-label="Add a colour">+</div>`;
@@ -3315,6 +3327,47 @@ function removePaletteColor(pi, ci) {
   renderColorsPage();
   renderPalettePanel();
   scheduleAutosave();
+}
+
+/* --- Reorder colours within a palette by dragging the chips --- */
+/* A click (no movement) opens the colour picker; a drag (movement) reorders.
+   The browser fires only one of the two, so they never conflict. */
+let chipDrag = null;        // { pi, ci } of the chip being dragged
+function chipClick(e, pi, ci) {
+  const input = e.currentTarget.querySelector('.palette-chip-input');
+  if (input) input.click();                            // open the native colour picker
+}
+function chipDragStart(e, pi, ci) {
+  chipDrag = { pi, ci };
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', pi + ':' + ci);   // required for Safari/Firefox
+  const chip = e.currentTarget;
+  if (chip) setTimeout(() => chip.classList.add('chip-dragging'), 0);
+}
+function chipDragOver(e, el) {
+  if (!chipDrag || chipDrag.pi !== +el.dataset.pi) return;   // only reorder within the same palette
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  if (chipDrag.ci !== +el.dataset.ci) el.classList.add('chip-drop-target');
+}
+function chipDragLeave(el) { el.classList.remove('chip-drop-target'); }
+function chipDragEnd() {
+  chipDrag = null;
+  document.querySelectorAll('.palette-page-chip.chip-dragging, .palette-page-chip.chip-drop-target')
+    .forEach(c => c.classList.remove('chip-dragging', 'chip-drop-target'));
+}
+function chipDrop(e, pi, ci) {
+  e.preventDefault();
+  if (!chipDrag || chipDrag.pi !== pi) { chipDragEnd(); return; }
+  const from = chipDrag.ci, to = ci;
+  if (from !== to) {
+    const cols = PALETTES[pi].colors;
+    cols.splice(to, 0, cols.splice(from, 1)[0]);       // move dragged colour to the target slot
+    renderColorsPage();
+    renderPalettePanel();
+    scheduleAutosave();
+  }
+  chipDragEnd();
 }
 
 /* --- Palette inspiration image: drop / browse / remove --- */
