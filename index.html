@@ -1119,6 +1119,16 @@ button, input, select, textarea { font-family: inherit; }
 .auth-link a:hover { text-decoration: underline; }
 .auth-terms { text-align: center; font-size: 11.5px; color: var(--muted); margin-top: 12px; line-height: 1.6; }
 .auth-terms a { color: var(--sub); }
+.auth-divider { display: flex; align-items: center; gap: 12px; margin: 16px 0; color: var(--muted); font-size: 12px; }
+.auth-divider::before, .auth-divider::after { content: ""; flex: 1; height: 1px; background: var(--border); }
+.btn-google {
+  width: 100%; padding: 11px; font-size: 14px; font-weight: 600;
+  border-radius: var(--radius-sm); border: 1px solid var(--border2);
+  background: #fff; color: #3c4043; cursor: pointer; transition: .12s;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+}
+.btn-google:hover { background: #F7F7F7; }
+.btn-google svg { width: 18px; height: 18px; }
 
 /* pw strength */
 .pw-strength { margin-top: 8px; }
@@ -1442,6 +1452,7 @@ body.share-mode { background: var(--cream, #FBF8F5); }
 /* Inspiration image for a palette — sits above the colour chips */
 .palette-insp {
   position: relative;
+  max-width: 360px;
   margin-bottom: 24px;
 }
 /* Empty state: dashed drop zone */
@@ -1452,10 +1463,10 @@ body.share-mode { background: var(--cream, #FBF8F5); }
   justify-content: center;
   text-align: center;
   gap: 6px;
-  min-height: 260px;
+  min-height: 400px;
   padding: 40px 24px;
   border: 1px dashed var(--border);
-  border-radius: var(--radius);
+  border-radius: 0;
   background: var(--cloud);
   color: var(--muted);
   cursor: pointer;
@@ -1475,9 +1486,9 @@ body.share-mode { background: var(--cream, #FBF8F5); }
 .palette-insp-img {
   display: block;
   width: 100%;
-  max-height: 420px;
+  aspect-ratio: 340 / 440;
   object-fit: cover;
-  border-radius: var(--radius);
+  border-radius: 0;
   border: 1px solid rgba(0,0,0,.06);
 }
 /* Remove button on the image — top-right, shown on hover */
@@ -1505,16 +1516,17 @@ body.share-mode { background: var(--cream, #FBF8F5); }
 .palette-page-circles {
   display: flex;
   gap: 12px;
+  max-width: 360px;
   margin-bottom: 16px;
 }
-/* One editable colour chip — tall, narrow rounded strip.
+/* One editable colour chip — square swatch that flexes to fill the row so the
+   chips together span the width of the inspiration image above.
    Click to edit its colour, drag to reorder within the palette. */
 .palette-page-chip {
   position: relative;
   flex: 1 1 0;
-  max-width: 150px;
-  aspect-ratio: 2 / 5;
-  border-radius: 12px;
+  aspect-ratio: 1 / 1;
+  border-radius: 0;
   border: 1px solid var(--border);
   overflow: hidden;
   cursor: grab;
@@ -1560,25 +1572,22 @@ body.share-mode { background: var(--cream, #FBF8F5); }
 }
 .palette-page-chip:hover .palette-chip-rm { opacity: 1; }
 .palette-chip-rm:hover { background: rgba(0,0,0,.68); }
-/* "+" slot — add a colour to this palette (styled like an empty card slot) */
-.palette-chip-add {
-  flex: 1 1 0;
-  max-width: 150px;
-  aspect-ratio: 2 / 5;
-  border-radius: 12px;
-  border: 1.5px dashed var(--border);
-  background: var(--cloud);
+/* "+ Add a color chip" — outlined button below a palette's chips (matches "+ Add palette") */
+.palette-add-chip-link {
+  display: inline-block;
+  margin-top: 14px;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
   color: var(--muted);
-  font-size: 22px;
-  font-weight: 300;
-  line-height: 1;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 13px;
+  font-weight: 400;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: border-color .15s, color .15s, background .15s, box-shadow .15s;
+  padding: 10px 22px;
+  transition: border-color .15s, color .15s, background .15s;
 }
-.palette-chip-add:hover { border-color: var(--rose); color: var(--rose); background: #fff; box-shadow: 0 4px 14px rgba(230,108,149,.18); }
+.palette-add-chip-link:hover { border-color: var(--muted); color: var(--sub); background: var(--cloud); }
 
 /* "N colors" meta label */
 .palette-page-meta {
@@ -1610,22 +1619,22 @@ body.share-mode { background: var(--cream, #FBF8F5); }
   background: var(--cloud);
 }
 
-/* "+ Add palette" — plain button below the palettes, not a slot */
+/* "+ Add palette" — plain text link below the palettes, not a slot */
 .palette-add-below {
   display: inline-block;
   margin-top: 36px;
   background: none;
-  border: 1px solid var(--border);
+  border: none;
   border-radius: var(--radius);
   color: var(--muted);
   font-family: 'Montserrat', sans-serif;
   font-size: 13px;
   font-weight: 400;
   cursor: pointer;
-  padding: 10px 22px;
-  transition: border-color .15s, color .15s, background .15s;
+  padding: 10px 4px;
+  transition: color .15s;
 }
-.palette-add-below:hover { border-color: var(--muted); color: var(--sub); background: var(--cloud); }
+.palette-add-below:hover { color: var(--rose); }
 
 
 .avatar-btn-wrap { position: relative; }
@@ -2298,6 +2307,11 @@ body.share-mode { background: var(--cream, #FBF8F5); }
           <input id="si-pass" class="form-input" type="password" placeholder="Your password" autocomplete="current-password" />
         </div>
         <button class="btn-full" onclick="doSignIn()">Sign in</button>
+        <div class="auth-divider">or</div>
+        <button class="btn-google" onclick="doSignInGoogle()">
+          <svg viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg"><path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.92c1.7-1.57 2.68-3.88 2.68-6.62z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.92-2.26c-.8.54-1.84.86-3.04.86-2.34 0-4.32-1.58-5.03-3.7H.96v2.33A9 9 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.97 10.72a5.4 5.4 0 0 1 0-3.44V4.95H.96a9 9 0 0 0 0 8.1l3.01-2.33z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58C13.47.9 11.43 0 9 0A9 9 0 0 0 .96 4.95l3.01 2.33C4.68 5.16 6.66 3.58 9 3.58z"/></svg>
+          Continue with Google
+        </button>
         <div class="auth-link">New here? <a href="#" onclick="setAccTab('signup');return false;">Create account</a></div>
         <div class="auth-terms"><a href="/privacy.html" target="_blank">Privacy Policy</a> · <a href="/terms.html" target="_blank">Terms</a></div>
       </div>
@@ -2326,6 +2340,11 @@ body.share-mode { background: var(--cream, #FBF8F5); }
         </div>
         <div class="form-group"><label class="form-label">Wedding date <span style="color:var(--muted);font-weight:400;text-transform:none;font-size:11px;">(optional)</span></label><input class="form-input" type="date"/></div>
         <button class="btn-full" onclick="doSignUp()">Create account</button>
+        <div class="auth-divider">or</div>
+        <button class="btn-google" onclick="doSignInGoogle()">
+          <svg viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg"><path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.92c1.7-1.57 2.68-3.88 2.68-6.62z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.92-2.26c-.8.54-1.84.86-3.04.86-2.34 0-4.32-1.58-5.03-3.7H.96v2.33A9 9 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.97 10.72a5.4 5.4 0 0 1 0-3.44V4.95H.96a9 9 0 0 0 0 8.1l3.01-2.33z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58C13.47.9 11.43 0 9 0A9 9 0 0 0 .96 4.95l3.01 2.33C4.68 5.16 6.66 3.58 9 3.58z"/></svg>
+          Continue with Google
+        </button>
         <div class="auth-link">Already have an account? <a href="#" onclick="setAccTab('signin');return false;">Sign in</a></div>
         <div class="auth-terms">By creating an account you agree to our <a href="/terms.html" target="_blank">Terms</a> and <a href="/privacy.html" target="_blank">Privacy Policy</a>.</div>
       </div>
@@ -3254,8 +3273,7 @@ function renderColorsPage() {
                 oninput="setPaletteColor(${pi},${ci},this)" aria-label="Edit colour">
          <button class="palette-chip-rm" draggable="false" onclick="event.stopPropagation();removePaletteColor(${pi},${ci})" title="Remove colour" aria-label="Remove colour">×</button>
        </div>`
-    ).join('') +
-      `<div class="palette-chip-add" onclick="addPaletteColor(${pi})" title="Add a colour" aria-label="Add a colour">+</div>`;
+    ).join('');
     const inspInner = p.image
       ? `<img class="palette-insp-img" src="${p.image}" alt="Inspiration for ${p.name}">
          <button class="palette-insp-rm" onclick="event.stopPropagation();removePalInsp(${pi})" title="Remove image" aria-label="Remove image">×</button>`
@@ -3274,10 +3292,11 @@ function renderColorsPage() {
             title="Click to rename">${shEsc(p.name)}</span>
       <div class="palette-insp">${inspInner}</div>
       <div class="palette-page-circles">${swatchHtml}</div>
+      <button class="palette-add-chip-link" onclick="addPaletteColor(${pi})">+ Add a color chip</button>
     </div>`;
   }).join('');
   el.innerHTML = `<div class="palette-page-grid">${cards}</div>
-    <button class="palette-add-below" onclick="openPaletteModal()">+ Add palette</button>`;
+    <button class="palette-add-below" onclick="openPaletteModal()">+ Add another palette</button>`;
 }
 
 /* --- Rename a palette inline on the Palettes page --- */
@@ -4300,10 +4319,10 @@ function renderPdfPreview() {
       html += `<div style="margin-bottom:22px;">`;
       /* Name on top — italic serif, muted when it's still the placeholder */
       html += `<div style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:16px;color:${isPh ? 'var(--muted)' : 'var(--ink)'};margin-bottom:8px;">${esc(p.name || PALETTE_NAME_PLACEHOLDER)}</div>`;
-      if (p.image) { html += `<div style="margin-bottom:8px;height:150px;background:var(--cloud);border-radius:6px;border:1px solid var(--border);overflow:hidden;"><img src="${esc(p.image)}" style="width:100%;height:100%;object-fit:contain;" alt=""/></div>`; }
-      /* Colours as tall rounded strips */
-      html += `<div style="display:flex;gap:8px;">`;
-      (p.colors || []).forEach(hex => { html += `<div style="width:38px;height:95px;border-radius:8px;background:${esc(hex)};border:1px solid var(--border);"></div>`; });
+      if (p.image) { html += `<div style="margin-bottom:8px;max-width:300px;aspect-ratio:340/440;background:var(--cloud);border:1px solid var(--border);overflow:hidden;"><img src="${esc(p.image)}" style="width:100%;height:100%;object-fit:cover;" alt=""/></div>`; }
+      /* Colours as square swatches that flex to fill the image width */
+      html += `<div style="display:flex;gap:8px;max-width:300px;">`;
+      (p.colors || []).forEach(hex => { html += `<div style="flex:1 1 0;aspect-ratio:1/1;background:${esc(hex)};border:1px solid var(--border);"></div>`; });
       html += `</div></div>`;
     });
   }
@@ -4763,15 +4782,17 @@ async function drawPalettes(doc, state) {
   }));
 
   const contentW = PDF.W - PDF.MARGIN * 2;
-  const inspH = 150;                 /* inspiration image band height        */
-  const stripW = 46, stripH = 115;   /* tall rounded colour strips (≈2/5)    */
-  const stripGap = 10, stripR = 6;
+  const inspW = 340, inspH = 440;    /* narrower, taller inspiration band     */
+  const stripGap = 10, stripR = 0;   /* square swatches sized per-palette to  */
+                                     /* fill inspW (see loop below); sharp     */
 
   shown.forEach((p, i) => {
     const j = p.image ? cache.get(p.image) : null;
     /* Keep each palette together: name + image + strips reserve their space up
        front so a palette doesn't split awkwardly across a page break.        */
-    const need = 20 + (j ? inspH + 12 : 0) + stripH + 12;
+    const _nCols = (p.colors && p.colors.length) || 0;
+    const _swatch = _nCols ? (inspW - (_nCols - 1) * stripGap) / _nCols : 0;
+    const need = 20 + (j ? inspH + 12 : 0) + _swatch + 12;
     if (i > 0) state.y += 34;
     ensureSpace(doc, state, need);
 
@@ -4785,35 +4806,44 @@ async function drawPalettes(doc, state) {
     doc.text(p.name || PALETTE_NAME_PLACEHOLDER, PDF.MARGIN, state.y);
     state.y += 12;
 
-    /* Inspiration image band (contain-fit on a cloud background). */
+    /* Inspiration image band — cover-fit (fills the box, cropping overflow),
+       mirroring how the Palettes page shows it (object-fit: cover).         */
     if (j) {
       const boxTop = state.y;
       doc.setFillColor(...PDF.cloud);
-      doc.roundedRect(PDF.MARGIN, boxTop, contentW, inspH, 4, 4, 'F');
-      const ar = j.w / j.h, boxAr = contentW / inspH;
+      doc.rect(PDF.MARGIN, boxTop, inspW, inspH, 'F');
+      const ar = j.w / j.h, boxAr = inspW / inspH;
       let dw, dh;
-      if (ar > boxAr) { dw = contentW; dh = contentW / ar; }
-      else { dh = inspH; dw = inspH * ar; }
-      const ix = PDF.MARGIN + (contentW - dw) / 2;
+      if (ar > boxAr) { dh = inspH; dw = inspH * ar; }   /* wider than box → match height, crop sides */
+      else { dw = inspW; dh = inspW / ar; }              /* taller than box → match width, crop top/bottom */
+      const ix = PDF.MARGIN + (inspW - dw) / 2;
       const iy = boxTop + (inspH - dh) / 2;
+      /* Clip to the box so the overflow is cropped, not spilled. */
+      doc.saveGraphicsState();
+      doc.rect(PDF.MARGIN, boxTop, inspW, inspH, null);
+      doc.clip();
+      doc.discardPath();
       try { doc.addImage(j.dataUrl, 'JPEG', ix, iy, dw, dh); } catch (e) {}
+      doc.restoreGraphicsState();
       doc.setDrawColor(...PDF.border);
       doc.setLineWidth(0.6);
-      doc.roundedRect(PDF.MARGIN, boxTop, contentW, inspH, 4, 4, 'S');
+      doc.rect(PDF.MARGIN, boxTop, inspW, inspH, 'S');
       state.y = boxTop + inspH + 12;
     }
 
-    /* Colours as tall rounded strips in a row. */
+    /* Colours as square swatches in one row, sized to fill the image width. */
     const stripTop = state.y;
+    const nCols = (p.colors || []).length;
+    const swatch = nCols ? (inspW - (nCols - 1) * stripGap) / nCols : 0;
     (p.colors || []).forEach((hex, idx) => {
-      const x = PDF.MARGIN + idx * (stripW + stripGap);
+      const x = PDF.MARGIN + idx * (swatch + stripGap);
       doc.setFillColor(...hexToRgb(hex));
-      doc.roundedRect(x, stripTop, stripW, stripH, stripR, stripR, 'F');
+      doc.rect(x, stripTop, swatch, swatch, 'F');
       doc.setDrawColor(...PDF.border);
       doc.setLineWidth(0.5);
-      doc.roundedRect(x, stripTop, stripW, stripH, stripR, stripR, 'S');
+      doc.rect(x, stripTop, swatch, swatch, 'S');
     });
-    state.y = stripTop + ((p.colors && p.colors.length) ? stripH : 0);
+    state.y = stripTop + swatch;
   });
   state.y += 12;   /* section trailing — keeps section gaps even */
 }
@@ -5596,6 +5626,15 @@ async function doSignIn() {
   if (error) { showToast(error.message, 'error'); return; }
   showToast('Signed in — welcome back!', 'success');
   switchMain('colors');
+}
+
+async function doSignInGoogle() {
+  const { error } = await sb.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo: window.location.origin + window.location.pathname }
+  });
+  // On success the browser redirects to Google, so nothing runs after this.
+  if (error) showToast(error.message, 'error');
 }
 
 async function doSignUp() {
