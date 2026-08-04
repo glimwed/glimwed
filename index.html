@@ -5411,6 +5411,7 @@ const STORAGE_BUCKET = 'board-images';
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let currentUser  = null;
+let currentAccessToken = null;   // cached from the auth session for exit-time saves
 let lastSavedJson = null;
 let autosaveTimer = null;
 let SHARE_VIEWER = false;   // true when the page is opened as a read-only ?share= link
@@ -5488,6 +5489,38 @@ async function saveBoards() {
   }
   lastSavedJson = json;
   setSaveStatus('saved');
+}
+
+/* Reliable exit-time save. A normal async upsert (saveBoards) can be cancelled
+   when the tab is being closed/navigated, silently losing the last edits — e.g.
+   a colour chip added moments before leaving. On hide/close we instead fire a
+   `keepalive` fetch straight at Supabase's REST API; the browser is required to
+   let that request finish even after the page goes away. */
+function flushSaveOnExit() {
+  if (!currentUser || SHARE_VIEWER || !currentAccessToken) return;
+  const state = getState();
+  const json  = JSON.stringify(state);
+  if (json === lastSavedJson) return;                       // nothing new to save
+  const body = JSON.stringify({ user_id: currentUser.id, data: state, updated_at: new Date().toISOString() });
+  // `keepalive` requests are capped at ~64KB; if we're over, fall back to the
+  // normal (cancelable) save as a best effort rather than throwing.
+  if (body.length > 60000) { saveBoards(); return; }
+  try {
+    fetch(SUPABASE_URL + '/rest/v1/boards?on_conflict=user_id', {
+      method: 'POST',
+      keepalive: true,
+      headers: {
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: 'Bearer ' + currentAccessToken,
+        'Content-Type': 'application/json',
+        Prefer: 'resolution=merge-duplicates,return=minimal'
+      },
+      body
+    });
+    lastSavedJson = json;                                   // keepalive requests are honoured to completion
+  } catch (e) {
+    saveBoards();                                           // last-ditch best effort
+  }
 }
 
 let saveStatusTimer = null;
@@ -5687,6 +5720,7 @@ sb.auth.onAuthStateChange((event, session) => {
   if (SHARE_VIEWER) return;   // read-only public view: ignore any signed-in session
   const prev = currentUser;
   currentUser = (session && session.user) || null;
+  currentAccessToken = (session && session.access_token) || null;
   updateAccountUI();
   if (event === 'PASSWORD_RECOVERY') showModal('newpass-modal');
   if (currentUser && (!prev || prev.id !== currentUser.id)) loadBoards();
@@ -5700,8 +5734,10 @@ sb.auth.onAuthStateChange((event, session) => {
 const _origRender = render;
 render = function() { _origRender.apply(this, arguments); scheduleAutosave(); };
 
-/* Flush a pending save when the tab is hidden/closed. */
-document.addEventListener('visibilitychange', () => { if (document.hidden) saveBoards(); });
+/* Flush a pending save when the tab is hidden/closed — via a keepalive request
+   so it survives the page being torn down. */
+document.addEventListener('visibilitychange', () => { if (document.hidden) flushSaveOnExit(); });
+window.addEventListener('pagehide', flushSaveOnExit);
 
 /* ------------------------------------------------------------------ */
 /*  INIT                                                                */
