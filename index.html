@@ -1426,6 +1426,7 @@ body.share-mode { background: var(--cream, #FBF8F5); }
 
 .palette-page-card {
   position: relative;
+  text-align: center;
 }
 
 /* Palette name — italic serif, top. Click to rename (contenteditable). */
@@ -1441,7 +1442,6 @@ body.share-mode { background: var(--cream, #FBF8F5); }
   outline: none;
   border-radius: 5px;
   padding: 1px 6px;
-  margin-left: -6px;
   max-width: 100%;
   transition: background .12s, box-shadow .12s;
 }
@@ -1453,7 +1453,7 @@ body.share-mode { background: var(--cream, #FBF8F5); }
 .palette-insp {
   position: relative;
   max-width: 360px;
-  margin-bottom: 24px;
+  margin: 0 auto 24px;
 }
 /* Empty state: dashed drop zone */
 .palette-insp-drop {
@@ -1517,7 +1517,7 @@ body.share-mode { background: var(--cream, #FBF8F5); }
   display: flex;
   gap: 12px;
   max-width: 360px;
-  margin-bottom: 16px;
+  margin: 0 auto 16px;
 }
 /* One editable colour chip — square swatch that flexes to fill the row so the
    chips together span the width of the inspiration image above.
@@ -4316,12 +4316,12 @@ function renderPdfPreview() {
     }
     shownPals.forEach(p => {
       const isPh = (p.name === PALETTE_NAME_PLACEHOLDER);
-      html += `<div style="margin-bottom:22px;">`;
+      html += `<div style="margin-bottom:22px;text-align:center;">`;
       /* Name on top — italic serif, muted when it's still the placeholder */
       html += `<div style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:16px;color:${isPh ? 'var(--muted)' : 'var(--ink)'};margin-bottom:8px;">${esc(p.name || PALETTE_NAME_PLACEHOLDER)}</div>`;
-      if (p.image) { html += `<div style="margin-bottom:8px;max-width:300px;aspect-ratio:340/440;background:var(--cloud);border:1px solid var(--border);overflow:hidden;"><img src="${esc(p.image)}" style="width:100%;height:100%;object-fit:cover;" alt=""/></div>`; }
+      if (p.image) { html += `<div style="margin:0 auto 8px;max-width:300px;aspect-ratio:340/440;background:var(--cloud);border:1px solid var(--border);overflow:hidden;"><img src="${esc(p.image)}" style="width:100%;height:100%;object-fit:cover;" alt=""/></div>`; }
       /* Colours as square swatches that flex to fill the image width */
-      html += `<div style="display:flex;gap:8px;max-width:300px;">`;
+      html += `<div style="display:flex;gap:8px;max-width:300px;margin:0 auto;">`;
       (p.colors || []).forEach(hex => { html += `<div style="flex:1 1 0;aspect-ratio:1/1;background:${esc(hex)};border:1px solid var(--border);"></div>`; });
       html += `</div></div>`;
     });
@@ -4803,31 +4803,34 @@ async function drawPalettes(doc, state) {
     doc.setFontSize(14);
     doc.setTextColor(...(isPh ? PDF.sub : PDF.ink));
     state.y += 14;
-    doc.text(p.name || PALETTE_NAME_PLACEHOLDER, PDF.MARGIN, state.y);
+    doc.text(p.name || PALETTE_NAME_PLACEHOLDER, PDF.W / 2, state.y, { align: 'center' });
     state.y += 12;
+
+    /* Centre the (narrower) image band + swatch row within the content width. */
+    const bandX = PDF.MARGIN + (contentW - inspW) / 2;
 
     /* Inspiration image band — cover-fit (fills the box, cropping overflow),
        mirroring how the Palettes page shows it (object-fit: cover).         */
     if (j) {
       const boxTop = state.y;
       doc.setFillColor(...PDF.cloud);
-      doc.rect(PDF.MARGIN, boxTop, inspW, inspH, 'F');
+      doc.rect(bandX, boxTop, inspW, inspH, 'F');
       const ar = j.w / j.h, boxAr = inspW / inspH;
       let dw, dh;
       if (ar > boxAr) { dh = inspH; dw = inspH * ar; }   /* wider than box → match height, crop sides */
       else { dw = inspW; dh = inspW / ar; }              /* taller than box → match width, crop top/bottom */
-      const ix = PDF.MARGIN + (inspW - dw) / 2;
+      const ix = bandX + (inspW - dw) / 2;
       const iy = boxTop + (inspH - dh) / 2;
       /* Clip to the box so the overflow is cropped, not spilled. */
       doc.saveGraphicsState();
-      doc.rect(PDF.MARGIN, boxTop, inspW, inspH, null);
+      doc.rect(bandX, boxTop, inspW, inspH, null);
       doc.clip();
       doc.discardPath();
       try { doc.addImage(j.dataUrl, 'JPEG', ix, iy, dw, dh); } catch (e) {}
       doc.restoreGraphicsState();
       doc.setDrawColor(...PDF.border);
       doc.setLineWidth(0.6);
-      doc.rect(PDF.MARGIN, boxTop, inspW, inspH, 'S');
+      doc.rect(bandX, boxTop, inspW, inspH, 'S');
       state.y = boxTop + inspH + 12;
     }
 
@@ -4836,7 +4839,7 @@ async function drawPalettes(doc, state) {
     const nCols = (p.colors || []).length;
     const swatch = nCols ? (inspW - (nCols - 1) * stripGap) / nCols : 0;
     (p.colors || []).forEach((hex, idx) => {
-      const x = PDF.MARGIN + idx * (swatch + stripGap);
+      const x = bandX + idx * (swatch + stripGap);
       doc.setFillColor(...hexToRgb(hex));
       doc.rect(x, stripTop, swatch, swatch, 'F');
       doc.setDrawColor(...PDF.border);
