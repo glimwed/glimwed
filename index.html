@@ -1452,7 +1452,7 @@ body.share-mode { background: var(--cream, #FBF8F5); }
 /* Inspiration image for a palette — sits above the colour chips */
 .palette-insp {
   position: relative;
-  max-width: 360px;
+  max-width: 420px;
   margin: 0 auto 24px;
 }
 /* Empty state: dashed drop zone */
@@ -1515,8 +1515,10 @@ body.share-mode { background: var(--cream, #FBF8F5); }
 /* Colour swatches — long rectangular strips, spread across the page width */
 .palette-page-circles {
   display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   gap: 12px;
-  max-width: 360px;
+  max-width: 420px;
   margin: 0 auto 16px;
 }
 /* One editable colour chip — square swatch that flexes to fill the row so the
@@ -1524,7 +1526,7 @@ body.share-mode { background: var(--cream, #FBF8F5); }
    Click to edit its colour, drag to reorder within the palette. */
 .palette-page-chip {
   position: relative;
-  flex: 1 1 0;
+  flex: 0 0 calc((100% - 48px) / 5);   /* up to 5 per row (4 × 12px gaps), then wrap */
   aspect-ratio: 1 / 1;
   border-radius: 0;
   border: 1px solid var(--border);
@@ -4319,10 +4321,10 @@ function renderPdfPreview() {
       html += `<div style="margin-bottom:22px;text-align:center;">`;
       /* Name on top — italic serif, muted when it's still the placeholder */
       html += `<div style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:16px;color:${isPh ? 'var(--muted)' : 'var(--ink)'};margin-bottom:8px;">${esc(p.name || PALETTE_NAME_PLACEHOLDER)}</div>`;
-      if (p.image) { html += `<div style="margin:0 auto 8px;max-width:300px;aspect-ratio:340/440;background:var(--cloud);border:1px solid var(--border);overflow:hidden;"><img src="${esc(p.image)}" style="width:100%;height:100%;object-fit:cover;" alt=""/></div>`; }
-      /* Colours as square swatches that flex to fill the image width */
-      html += `<div style="display:flex;gap:8px;max-width:300px;margin:0 auto;">`;
-      (p.colors || []).forEach(hex => { html += `<div style="flex:1 1 0;aspect-ratio:1/1;background:${esc(hex)};border:1px solid var(--border);"></div>`; });
+      if (p.image) { html += `<div style="margin:0 auto 8px;max-width:340px;aspect-ratio:360/466;background:var(--cloud);border:1px solid var(--border);overflow:hidden;"><img src="${esc(p.image)}" style="width:100%;height:100%;object-fit:cover;" alt=""/></div>`; }
+      /* Colours as square swatches — up to 5 per row, then wrap */
+      html += `<div style="display:flex;flex-wrap:wrap;justify-content:center;gap:8px;max-width:340px;margin:0 auto;">`;
+      (p.colors || []).forEach(hex => { html += `<div style="flex:0 0 calc((100% - 32px)/5);aspect-ratio:1/1;background:${esc(hex)};border:1px solid var(--border);"></div>`; });
       html += `</div></div>`;
     });
   }
@@ -4782,17 +4784,18 @@ async function drawPalettes(doc, state) {
   }));
 
   const contentW = PDF.W - PDF.MARGIN * 2;
-  const inspW = 340, inspH = 440;    /* narrower, taller inspiration band     */
-  const stripGap = 10, stripR = 0;   /* square swatches sized per-palette to  */
-                                     /* fill inspW (see loop below); sharp     */
+  const inspW = 360, inspH = 466;    /* narrower, taller inspiration band     */
+  const stripGap = 10, SWATCH_PER_ROW = 5;   /* up to 5 square swatches per    */
+                                     /* row, then wrap; sized for 5 (loop)     */
 
   shown.forEach((p, i) => {
     const j = p.image ? cache.get(p.image) : null;
     /* Keep each palette together: name + image + strips reserve their space up
        front so a palette doesn't split awkwardly across a page break.        */
     const _nCols = (p.colors && p.colors.length) || 0;
-    const _swatch = _nCols ? (inspW - (_nCols - 1) * stripGap) / _nCols : 0;
-    const need = 20 + (j ? inspH + 12 : 0) + _swatch + 12;
+    const _swatch = (inspW - (SWATCH_PER_ROW - 1) * stripGap) / SWATCH_PER_ROW;
+    const _rows = _nCols ? Math.ceil(_nCols / SWATCH_PER_ROW) : 0;
+    const need = 20 + (j ? inspH + 12 : 0) + (_rows ? _rows * _swatch + (_rows - 1) * stripGap : 0) + 12;
     if (i > 0) state.y += 34;
     ensureSpace(doc, state, need);
 
@@ -4834,19 +4837,26 @@ async function drawPalettes(doc, state) {
       state.y = boxTop + inspH + 12;
     }
 
-    /* Colours as square swatches in one row, sized to fill the image width. */
+    /* Colours as square swatches, up to 5 per row then wrapping; each row is
+       centred under the image band (mirrors the Palettes page). */
     const stripTop = state.y;
     const nCols = (p.colors || []).length;
-    const swatch = nCols ? (inspW - (nCols - 1) * stripGap) / nCols : 0;
+    const swatch = (inspW - (SWATCH_PER_ROW - 1) * stripGap) / SWATCH_PER_ROW;
     (p.colors || []).forEach((hex, idx) => {
-      const x = bandX + idx * (swatch + stripGap);
+      const col = idx % SWATCH_PER_ROW, row = Math.floor(idx / SWATCH_PER_ROW);
+      const rowCount = Math.min(SWATCH_PER_ROW, nCols - row * SWATCH_PER_ROW);
+      const rowWidth = rowCount * swatch + (rowCount - 1) * stripGap;
+      const rowStartX = bandX + (inspW - rowWidth) / 2;
+      const x = rowStartX + col * (swatch + stripGap);
+      const y = stripTop + row * (swatch + stripGap);
       doc.setFillColor(...hexToRgb(hex));
-      doc.rect(x, stripTop, swatch, swatch, 'F');
+      doc.rect(x, y, swatch, swatch, 'F');
       doc.setDrawColor(...PDF.border);
       doc.setLineWidth(0.5);
-      doc.rect(x, stripTop, swatch, swatch, 'S');
+      doc.rect(x, y, swatch, swatch, 'S');
     });
-    state.y = stripTop + swatch;
+    const stripRows = nCols ? Math.ceil(nCols / SWATCH_PER_ROW) : 0;
+    state.y = stripTop + (stripRows ? stripRows * swatch + (stripRows - 1) * stripGap : 0);
   });
   state.y += 12;   /* section trailing — keeps section gaps even */
 }
