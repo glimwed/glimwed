@@ -1653,7 +1653,9 @@ body.share-mode { background: var(--cream, #FBF8F5); }
 .tools-btn .tools-bar {
   width: 18px; height: 1.5px;
   background: var(--muted); border-radius: 1px; display: block;
+  transition: background .15s;
 }
+.tools-btn:hover .tools-bar { background: var(--ink); }
 .tools-menu { right: 0; }
 
 .account-menu {
