@@ -1640,6 +1640,21 @@ body.share-mode { background: var(--cream, #FBF8F5); }
 
 
 .avatar-btn-wrap { position: relative; }
+.tools-menu-wrap { position: relative; }
+.tools-btn {
+  width: 36px; height: 36px;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 4px;
+  border: none; background: transparent; cursor: pointer;
+  border-radius: var(--radius-sm); padding: 6px;
+  transition: background .15s; flex-shrink: 0;
+}
+.tools-btn:hover { background: var(--cloud); }
+.tools-btn .tools-bar {
+  width: 18px; height: 1.5px;
+  background: var(--ink); border-radius: 1px; display: block;
+}
+.tools-menu { right: 0; }
 
 .account-menu {
   display: none;
@@ -2062,6 +2077,27 @@ body.share-mode { background: var(--cream, #FBF8F5); }
     <button class="header-tab" onclick="switchMain('budget')">Budget</button>
   </nav>
   <div class="header-right">
+    <div class="tools-menu-wrap" id="tools-wrap">
+      <button class="tools-btn" id="tools-btn" onclick="toggleToolsMenu()" aria-label="Open tools menu" title="Tools">
+        <span class="tools-bar"></span>
+        <span class="tools-bar"></span>
+        <span class="tools-bar"></span>
+      </button>
+      <div class="account-menu tools-menu" id="tools-menu">
+        <button class="account-menu-item" onclick="closeToolsMenu();switchMain('packs')">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2l9 4.5-9 4.5-9-4.5z"/><path d="M3 12l9 4.5 9-4.5"/><path d="M3 17l9 4.5 9-4.5"/></svg>
+          Moodboard Packs
+        </button>
+        <button class="account-menu-item" onclick="closeToolsMenu();switchMain('export')">
+          <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 12h8M8 2v8M5 7l3 3 3-3"/></svg>
+          PDF Export
+        </button>
+        <button class="account-menu-item" onclick="closeToolsMenu();switchMain('share')">
+          <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="3" r="2"/><circle cx="4" cy="8" r="2"/><circle cx="12" cy="13" r="2"/><path d="M6 7l4-3M6 9l4 3"/></svg>
+          Shareable Links
+        </button>
+      </div>
+    </div>
     <div class="avatar-btn-wrap" id="avatar-wrap">
       <div class="header-avatar" id="avatar-btn" onclick="toggleAccountMenu()"></div>
       <div class="account-menu" id="account-menu">
@@ -2077,23 +2113,6 @@ body.share-mode { background: var(--cream, #FBF8F5); }
         <button class="account-menu-item" id="acct-menu-signin" onclick="closeAccountMenu();switchMain('accounts');setAccTab('signin')">
           <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="5" r="3"/><path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg>
           Sign in / Sign up
-        </button>
-        <div class="account-menu-divider"></div>
-        <button class="account-menu-item" onclick="closeAccountMenu();switchMain('packs')">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2l9 4.5-9 4.5-9-4.5z"/><path d="M3 12l9 4.5 9-4.5"/><path d="M3 17l9 4.5 9-4.5"/></svg>
-          Moodboard Packs
-          <span style="margin-left:auto;font-size:10px;font-weight:600;padding:2px 7px;background:#FBE9EF;color:var(--rose);border-radius:8px;">New</span>
-        </button>
-        <div class="account-menu-divider"></div>
-        <button class="account-menu-item" onclick="closeAccountMenu();switchMain('export')">
-          <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 12h8M8 2v8M5 7l3 3 3-3"/></svg>
-          PDF Export
-          <span style="margin-left:auto;font-size:10px;font-weight:600;padding:2px 6px;background:#EBF7EE;color:#2E8A4A;border-radius:8px;">New</span>
-        </button>
-        <button class="account-menu-item" onclick="closeAccountMenu();switchMain('share')">
-          <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="3" r="2"/><circle cx="4" cy="8" r="2"/><circle cx="12" cy="13" r="2"/><path d="M6 7l4-3M6 9l4 3"/></svg>
-          Shareable Links
-          <span style="margin-left:auto;font-size:10px;font-weight:600;padding:2px 6px;background:#EBF7EE;color:#2E8A4A;border-radius:8px;">New</span>
         </button>
         <div class="account-menu-divider" id="acct-menu-signout-divider"></div>
         <button class="account-menu-item" id="acct-menu-signout" style="color:#C03030;" onclick="closeAccountMenu();showModal('signout-modal')">
@@ -2130,7 +2149,7 @@ body.share-mode { background: var(--cream, #FBF8F5); }
     <div class="sidebar-sub" id="board-sub-nav"></div>
     <div class="sidebar-sub">
       <button class="sidebar-sub-item active" id="sb-colors" onclick="switchMain('colors');setSB('sb-colors')">Palettes</button>
-      <button class="sidebar-sub-item" id="sb-packs" onclick="switchMain('packs');setSB('sb-packs')">Moodboard Packs <span class="sb-new-pill">New</span></button>
+      <button class="sidebar-sub-item" id="sb-packs" onclick="switchMain('packs');setSB('sb-packs')">Moodboard Packs</button>
     </div>
     <button class="sb-item" id="sb-planner" onclick="switchMain('checklist');setSB('sb-checklist')">
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M2 8h8M2 12h10"/></svg>
@@ -5361,6 +5380,18 @@ function closeAccountMenu() {
 document.addEventListener('click', function(e) {
   const wrap = document.getElementById('avatar-wrap');
   if (wrap && !wrap.contains(e.target)) closeAccountMenu();
+});
+
+function toggleToolsMenu() {
+  document.getElementById('tools-menu').classList.toggle('open');
+}
+function closeToolsMenu() {
+  document.getElementById('tools-menu').classList.remove('open');
+}
+// Close tools menu when clicking outside
+document.addEventListener('click', function(e) {
+  const wrap = document.getElementById('tools-wrap');
+  if (wrap && !wrap.contains(e.target)) closeToolsMenu();
 });
 
 /* ------------------------------------------------------------------ */
