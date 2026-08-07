@@ -394,6 +394,8 @@ textarea.pb-inp { resize: vertical; }
 .pb-preview-col { position: sticky; top: 20px; }
 .pb-preview-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--sub); margin-bottom: 12px; }
 
+.pack-admin-ribbon { max-width: 720px; margin: 0 auto 20px; background: #fbf0e8; border: 1px solid #f0d9c8; color: #9a5b34; border-radius: 10px; padding: 10px 16px; font-size: 12.5px; text-align: center; }
+
 /* Coming-soon waitlist (Moodboard Packs) */
 .packs-soon { max-width: 560px; margin: 8px auto 48px; text-align: center; }
 .packs-soon .packs-hero-title { line-height: 1.22; font-size: 46px; font-style: italic; }
@@ -3974,6 +3976,22 @@ function pbUnEm(s) {
 function renderPacks() {
   const grid = document.getElementById('pack-grid');
   if (!grid) return;
+  /* Admin preview: while the store is pre-launch, show the real store       */
+  /* (with your packs) ONLY to the signed-in admin; everyone else keeps the  */
+  /* "Coming soon" teaser. Flip both toggles off here to launch publicly.    */
+  const store = document.getElementById('packs-store-hidden');
+  const soon  = document.querySelector('.packs-soon');
+  const preview = isAdmin();
+  if (store) store.style.display = preview ? '' : 'none';
+  if (soon)  soon.style.display  = preview ? 'none' : '';
+  /* One-time admin ribbon so it's obvious the public still sees the teaser. */
+  if (preview && store && !document.getElementById('pack-admin-ribbon')) {
+    const r = document.createElement('div');
+    r.id = 'pack-admin-ribbon';
+    r.className = 'pack-admin-ribbon';
+    r.innerHTML = 'Admin preview — customers still see “Coming soon”. Your published packs appear below.';
+    store.insertBefore(r, store.firstChild);
+  }
   /* Public store shows published packs only (demo-set entries have no      */
   /* _published flag, so they always show while the DB is still empty).     */
   const list = PACKS.filter(p => p._published !== false);
