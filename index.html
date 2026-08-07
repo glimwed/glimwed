@@ -329,6 +329,71 @@ button, input, select, textarea { font-family: inherit; }
   .pack-trust { grid-template-columns: 1fr; gap: 16px; }
 }
 
+/* ---- Pack Builder (admin) ---- */
+#pack-builder { max-width: 980px; margin: 0 auto; }
+.pb-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; margin-bottom: 18px; }
+.pb-sub { font-size: 13px; color: var(--sub); line-height: 1.55; max-width: 560px; margin: 8px 0 0; }
+.pb-new { white-space: nowrap; }
+.pb-note { background: var(--cloud); border-radius: 10px; padding: 12px 16px; font-size: 12.5px; color: var(--sub); margin-bottom: 18px; }
+.pb-locked { max-width: 460px; margin: 60px auto; text-align: center; color: var(--sub); }
+.pb-locked-title { font-family: 'Cormorant Garamond', serif; font-size: 30px; color: var(--ink); margin-bottom: 8px; }
+.pb-locked p { font-size: 14px; line-height: 1.6; margin-bottom: 18px; }
+.pb-list { display: flex; flex-direction: column; gap: 10px; }
+.pb-empty { color: var(--sub); font-size: 13px; padding: 24px 0; text-align: center; }
+.pb-row { display: flex; align-items: center; gap: 14px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; background: #fff; }
+.pb-row-thumb { width: 52px; height: 52px; border-radius: 8px; overflow: hidden; background: var(--cloud); flex-shrink: 0; }
+.pb-row-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.pb-row-main { flex: 1; min-width: 0; }
+.pb-row-name { font-size: 14px; font-weight: 600; color: var(--ink); }
+.pb-row-meta { font-size: 12px; color: var(--sub); margin-top: 2px; }
+.pb-badge { font-size: 11px; padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
+.pb-badge.live { background: #e8f3ec; color: #2e7d5c; }
+.pb-badge.draft { background: var(--cloud); color: var(--sub); }
+.pb-row-actions { display: flex; gap: 6px; }
+.pb-mini { font-size: 12px; padding: 6px 11px; border: 1px solid var(--line); background: #fff; border-radius: 8px; cursor: pointer; color: var(--ink); }
+.pb-mini:hover { background: var(--cloud); }
+.pb-mini.danger { color: #b23b3b; }
+.pb-editor { display: grid; grid-template-columns: 1fr 320px; gap: 32px; align-items: start; }
+@media (max-width: 860px) { .pb-editor { grid-template-columns: 1fr; } }
+.pb-label { display: block; font-size: 12px; font-weight: 600; color: var(--ink); margin: 16px 0 6px; }
+.pb-hint { font-weight: 400; color: var(--sub); font-size: 11px; }
+.pb-inp { width: 100%; padding: 9px 12px; border: 1px solid var(--line); border-radius: 8px; font-size: 13px; font-family: inherit; color: var(--ink); background: #fff; }
+.pb-inp:focus { outline: none; border-color: var(--rose); }
+.pb-inp.big { font-size: 15px; }
+textarea.pb-inp { resize: vertical; }
+.pb-inp-pair { display: flex; gap: 10px; }
+.pb-inp-pair > * { flex: 1; }
+.pb-colors { display: flex; gap: 8px; }
+.pb-color { width: 46px; height: 40px; padding: 0; border: 1px solid var(--line); border-radius: 8px; cursor: pointer; background: none; }
+.pb-hero-drop { display: flex; align-items: center; justify-content: center; height: 150px; border: 1.5px dashed var(--line); border-radius: 10px; cursor: pointer; overflow: hidden; color: var(--sub); font-size: 12.5px; text-align: center; }
+.pb-hero-drop img { width: 100%; height: 100%; object-fit: cover; }
+.pb-hero-drop:hover { border-color: var(--rose); }
+.pb-imgs { display: flex; flex-direction: column; gap: 12px; }
+.pb-sections { display: flex; flex-direction: column; gap: 20px; }
+.pb-section { border: 1px solid var(--line); border-radius: 14px; padding: 14px 14px 16px; background: var(--cloud); }
+.pb-section-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 12px; }
+.pb-section-title { font-family: 'Cormorant Garamond', serif; font-size: 20px; color: var(--ink); }
+.pb-section-count { font-size: 11px; color: var(--sub); text-transform: uppercase; letter-spacing: 0.06em; }
+.pb-section-empty { font-size: 12px; color: var(--sub); padding: 4px 2px 10px; }
+.pb-section .pb-img-row { background: #fff; margin-bottom: 10px; }
+.pb-sel { appearance: none; background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23999' fill='none' stroke-width='1.5'/%3E%3C/svg%3E") no-repeat right 12px center; padding-right: 28px; cursor: pointer; }
+.pb-sel:disabled { color: var(--muted); background-color: var(--cloud); cursor: default; }
+.pb-add-img.small { margin-top: 6px; padding: 9px; font-size: 12.5px; }
+.pb-img-row { display: flex; gap: 12px; align-items: flex-start; padding: 12px; border: 1px solid var(--line); border-radius: 12px; }
+.pb-img-drop { width: 84px; height: 84px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; border: 1.5px dashed var(--line); border-radius: 8px; cursor: pointer; overflow: hidden; color: var(--sub); font-size: 11px; }
+.pb-img-drop img { width: 100%; height: 100%; object-fit: cover; }
+.pb-img-drop:hover { border-color: var(--rose); }
+.pb-img-fields { flex: 1; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.pb-img-del { border: none; background: none; color: var(--sub); cursor: pointer; font-size: 14px; padding: 4px; }
+.pb-img-del:hover { color: #b23b3b; }
+.pb-add-img { margin-top: 12px; width: 100%; padding: 11px; border: 1.5px dashed var(--line); background: #fff; border-radius: 10px; cursor: pointer; font-size: 13px; color: var(--ink); }
+.pb-add-img:hover { border-color: var(--rose); background: var(--cloud); }
+.pb-check { display: flex; align-items: center; gap: 8px; margin: 22px 0 8px; font-size: 13px; color: var(--ink); cursor: pointer; }
+.pb-save-row { display: flex; align-items: center; gap: 14px; margin-top: 10px; }
+.pb-save-row .btn-full { flex: 1; }
+.pb-preview-col { position: sticky; top: 20px; }
+.pb-preview-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--sub); margin-bottom: 12px; }
+
 /* Coming-soon waitlist (Moodboard Packs) */
 .packs-soon { max-width: 560px; margin: 8px auto 48px; text-align: center; }
 .packs-soon .packs-hero-title { line-height: 1.22; font-size: 46px; font-style: italic; }
@@ -2089,6 +2154,10 @@ body.share-mode { background: var(--cream, #FBF8F5); }
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2l9 4.5-9 4.5-9-4.5z"/><path d="M3 12l9 4.5 9-4.5"/><path d="M3 17l9 4.5 9-4.5"/></svg>
           Moodboard Packs
         </button>
+        <button class="account-menu-item" id="tools-packbuilder" style="display:none;" onclick="closeToolsMenu();switchMain('packbuilder')">
+          <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><path d="M11.5 9v5M9 11.5h5"/></svg>
+          Pack Builder
+        </button>
         <button class="account-menu-item" onclick="closeToolsMenu();switchMain('export')">
           <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 12h8M8 2v8M5 7l3 3 3-3"/></svg>
           PDF Export
@@ -2266,6 +2335,13 @@ body.share-mode { background: var(--cream, #FBF8F5); }
       </div>
     </div>
   </div>
+</div>
+
+<!-- ================================================================
+     [1d] PACK BUILDER (admin only)
+     ================================================================ -->
+<div class="app-section" id="section-packbuilder">
+  <div id="pack-builder"><!-- rendered by renderPackBuilder() --></div>
 </div>
 
 <!-- ================================================================
@@ -2976,6 +3052,249 @@ function packImageMeta(img) {
     : 'www.' + vendor.toLowerCase().replace(/&/g, 'and').replace(/[^a-z0-9]+/g, '') + '.com';
   return { vendor, product, price: img.price || '', web };
 }
+
+/* ------------------------------------------------------------------ */
+/*  MOODBOARD PACKS — live data from Supabase + admin builder          */
+/* ------------------------------------------------------------------ */
+/* The store shows PACKS. Until the DB loads (or if it's empty) PACKS   */
+/* falls back to the hard-coded MOODBOARD_PACKS demo set above, so the  */
+/* page is never blank. Once you save real packs in the builder they    */
+/* live in the `packs` table and replace the demo set for everyone.     */
+let PACKS = MOODBOARD_PACKS.slice();
+
+/* Only this account sees the Pack Builder and can write packs. The DB   */
+/* enforces the same rule via RLS (auth.email() check) — the client     */
+/* gate is just so the UI stays hidden for everyone else.               */
+const ADMIN_EMAIL = 'kobosblue@gmail.com';
+function isAdmin() {
+  return !!(currentUser && currentUser.email &&
+            currentUser.email.toLowerCase() === ADMIN_EMAIL);
+}
+
+/* Small HTML-escaper for builder input values / preview text.          */
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c =>
+    ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+}
+
+/* Pull every pack from Supabase and swap it in for the demo set.        */
+/* Called on load and whenever auth changes. Admin sees drafts too;      */
+/* the public store filters to published packs in renderPacks().         */
+async function loadPacks() {
+  try {
+    const { data, error } = await sb.from('packs')
+      .select('id,data,sort,published')
+      .order('sort', { ascending: true });
+    if (error) { console.warn('packs load:', error.message); return; }
+    if (data && data.length) {
+      PACKS = data.map(r => Object.assign(
+        { id: r.id, _published: !!r.published, _sort: r.sort || 0 },
+        r.data || {}
+      ));
+    } else {
+      PACKS = MOODBOARD_PACKS.slice();   // DB empty → keep demo set visible
+    }
+  } catch (e) { console.warn('packs load failed', e); }
+  if (currentMain === 'packs') renderPacks();
+  if (currentMain === 'packbuilder') renderPackBuilder();
+}
+
+/* ------------------------------------------------------------------ */
+/*  PACK BUILDER (admin only)                                          */
+/* ------------------------------------------------------------------ */
+/* pbDraft holds the pack currently being edited in the form, or null   */
+/* when we're just showing the list. Its shape mirrors a store pack.    */
+let pbDraft = null;
+let pbSaving = false;
+
+const PB_DEFAULT_PALETTE = ['#D4B896','#E8C4A0','#A8946F','#6B7B5C','#F0E6D0'];
+
+/* The board's sections + their slots, reused so pack images can be tagged  */
+/* to exactly where they belong on a couple's board. 'all' is the synthetic */
+/* view, not a real section, so it's excluded.                              */
+const PB_SECTIONS = BOARD_TABS.filter(k => k !== 'all');
+function pbSectionLabel(cat) { return (BOARDS[cat] && BOARDS[cat].label) || cat; }
+function pbSlotsFor(cat) { return (BOARDS[cat] && BOARDS[cat].items.map(i => i.label)) || []; }
+
+/* Change an image's section: reset its slot and re-render so the row moves  */
+/* under the right heading and its slot dropdown refreshes.                  */
+function pbSetCat(i, cat) {
+  if (!pbDraft || !pbDraft.images[i]) return;
+  pbDraft.images[i].cat = cat;
+  pbDraft.images[i].slot = '';
+  renderPackBuilder();
+}
+
+function pbSlugify(s) {
+  return String(s || '').toLowerCase().trim()
+    .replace(/&/g, ' and ')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 40) || ('pack-' + Date.now().toString(36));
+}
+
+/* Start a fresh, empty pack. */
+function pbNew() {
+  pbDraft = {
+    id: '', _isNew: true, name: '', eyebrow: '', story: '',
+    hero: '', price: 18, palette: PB_DEFAULT_PALETTE.slice(),
+    images: [], published: false, sort: (PACKS.length + 1) * 10
+  };
+  renderPackBuilder();
+}
+
+/* Load an existing pack into the editor. */
+function pbEdit(id) {
+  const p = PACKS.find(x => x.id === id);
+  if (!p) return;
+  pbDraft = {
+    id: p.id, _isNew: false,
+    name: p.name || '', eyebrow: p.eyebrow || '', story: p.story || '',
+    hero: p.hero || '', price: p.price || 18,
+    palette: (p.palette && p.palette.slice(0, 5)) || PB_DEFAULT_PALETTE.slice(),
+    images: (p.images || []).map(im => ({
+      url: im.url || (typeof im === 'string' ? im : ''),
+      vendor: (im.vendor || '').replace(/&amp;/g, '&'),
+      product: (im.product || '').replace(/&amp;/g, '&'),
+      price: im.price || '', link: im.link && im.link !== '#' ? im.link : '',
+      cat: im.cat || '', slot: im.slot || ''
+    })),
+    published: p._published !== false,
+    sort: p._sort || (PACKS.indexOf(p) + 1) * 10
+  };
+  while (pbDraft.palette.length < 5) pbDraft.palette.push('#F0E6D0');
+  renderPackBuilder();
+}
+
+function pbCancel() { pbDraft = null; renderPackBuilder(); }
+
+function pbAddImageRow(cat) {
+  if (!pbDraft) return;
+  pbDraft.images.push({ url:'', vendor:'', product:'', price:'', link:'', cat: cat || '', slot:'' });
+  renderPackBuilder();
+}
+function pbRemoveImage(i) {
+  if (!pbDraft) return;
+  pbDraft.images.splice(i, 1);
+  renderPackBuilder();
+}
+
+/* Compress + upload a chosen file, then drop its URL into the draft.    */
+/* kind = 'hero' for the cover, or an image-row index number.            */
+async function pbUpload(inputEl, kind) {
+  const file = inputEl.files && inputEl.files[0];
+  if (!file) return;
+  if (!isAdmin()) { showToast('Sign in as admin to upload', 'error'); return; }
+  try {
+    showToast('Uploading image…', 'info');
+    const dataUrl = await compressImage(file);
+    const url = await uploadImageToStorage(dataUrl);
+    if (kind === 'hero') pbDraft.hero = url;
+    else pbDraft.images[kind].url = url;
+    renderPackBuilder();
+  } catch (e) {
+    console.error(e);
+    showToast('Upload failed — try again', 'error');
+  }
+}
+
+/* Save the draft to Supabase. Builds the same object shape the store    */
+/* reads, derives id/count/shoppable, then upserts and reloads.          */
+async function pbSave() {
+  if (!pbDraft || pbSaving) return;
+  if (!isAdmin()) { showToast('Sign in as admin to save', 'error'); return; }
+  const d = pbDraft;
+  if (!d.name.trim()) { showToast('Give the pack a name first', 'error'); return; }
+  const withUrl = d.images.filter(im => im.url);
+  if (!d.hero && withUrl[0]) d.hero = withUrl[0].url;
+  const id = d.id && d.id.trim() ? d.id.trim() : pbSlugify(d.name);
+  const shoppable = withUrl.filter(im => im.vendor.trim()).length;
+  const data = {
+    name: d.name.trim(),
+    eyebrow: d.eyebrow.trim(),
+    story: d.story.trim(),
+    hero: d.hero,
+    price: Number(d.price) || 0,
+    count: withUrl.length,
+    shoppable: shoppable,
+    palette: d.palette.slice(0, 5),
+    images: withUrl.map(im => ({
+      url: im.url,
+      vendor: im.vendor.trim(),
+      product: im.product.trim(),
+      price: im.price.trim(),
+      link: im.link.trim() || '#',
+      cat: im.cat || '',
+      slot: im.slot || ''
+    }))
+  };
+  pbSaving = true;
+  const { error } = await sb.from('packs').upsert({
+    id, data, sort: Number(d.sort) || 0,
+    published: !!d.published, updated_at: new Date().toISOString()
+  });
+  pbSaving = false;
+  if (error) {
+    console.error('pack save', error);
+    showToast('Save failed: ' + (error.message || 'unknown'), 'error');
+    return;
+  }
+  showToast('Pack saved' + (d.published ? ' & published' : ' as draft'), 'success');
+  pbDraft = null;
+  await loadPacks();
+  renderPackBuilder();
+}
+
+async function pbDelete(id) {
+  if (!isAdmin()) return;
+  const p = PACKS.find(x => x.id === id);
+  if (!confirm('Delete "' + (p ? packDisplayName(p) : id) + '"? This removes it from the store.')) return;
+  const { error } = await sb.from('packs').delete().eq('id', id);
+  if (error) { showToast('Delete failed: ' + error.message, 'error'); return; }
+  showToast('Pack deleted', 'success');
+  await loadPacks();
+  renderPackBuilder();
+}
+
+/* Flip published on/off straight from the list. */
+async function pbTogglePublish(id) {
+  if (!isAdmin()) return;
+  const p = PACKS.find(x => x.id === id);
+  if (!p) return;
+  const next = !(p._published !== false ? true : false);
+  const { error } = await sb.from('packs').update({ published: next, updated_at: new Date().toISOString() }).eq('id', id);
+  if (error) { showToast('Update failed: ' + error.message, 'error'); return; }
+  showToast(next ? 'Pack published' : 'Pack set to draft', 'success');
+  await loadPacks();
+  renderPackBuilder();
+}
+
+/* Repaint just the live preview card (called on text/color edits so we  */
+/* don't rebuild the form and lose input focus).                        */
+function pbRenderPreview() {
+  const box = document.getElementById('pb-preview');
+  if (!box || !pbDraft) return;
+  const d = pbDraft;
+  const shoppable = d.images.filter(im => im.url && im.vendor.trim()).length;
+  const count = d.images.filter(im => im.url).length;
+  const hero = d.hero || (d.images.find(im => im.url) || {}).url || '';
+  box.innerHTML = `
+    <div class="pack-card" style="cursor:default;max-width:300px;">
+      <div class="pack-card-media">
+        ${hero ? `<img src="${esc(hero)}" alt="">` : '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:var(--cloud);color:var(--sub);font-size:12px;">Cover photo</div>'}
+      </div>
+      <div class="pack-card-body">
+        <div class="pack-card-eyebrow">${esc(d.eyebrow) || 'Theme · Style'}</div>
+        <div class="pack-card-name">${d.name || 'Pack name'}</div>
+        <div class="pack-card-story">${esc(d.story) || 'A one-line story about the look and feel of this pack.'}</div>
+        <div class="pack-card-foot">
+          <span class="pack-card-images">${count} looks · <strong>${shoppable} linked products</strong></span>
+          <span class="pack-card-price">$${Number(d.price) || 0}</span>
+        </div>
+      </div>
+    </div>`;
+}
+
 let NOTE = '', TOTAL_BUDGET = '', activeBoardTab = 'bridal';
 let currentMain = 'colors';   // which main section is showing (Palettes is the default home)
 let PROFILE = { firstName:'', lastName:'', email:'', weddingDate:'', partnerName:'', venueCity:'', photoUrl:'' };
@@ -2988,7 +3307,7 @@ let allOrder = [];
 /* ------------------------------------------------------------------ */
 /*  MAIN NAV                                                            */
 /* ------------------------------------------------------------------ */
-const SECTIONS = ['board','colors','packs','checklist','budget','accounts','export','share'];
+const SECTIONS = ['board','colors','packs','packbuilder','checklist','budget','accounts','export','share'];
 const HEADER_TABS = ['colors','board','checklist','budget'];
 
 function switchMain(id) {
@@ -3009,6 +3328,7 @@ function switchMain(id) {
   if (id === 'board') render();
   if (id === 'colors') renderColorsPage();
   if (id === 'packs') renderPacks();
+  if (id === 'packbuilder') renderPackBuilder();
   if (id === 'checklist') renderChecklist();
   if (id === 'budget') renderBudget();
   if (id === 'export') renderPdfPreview();
@@ -3465,13 +3785,199 @@ function removePalInsp(pi) {
 }
 
 /* ------------------------------------------------------------------ */
+/*  PACK BUILDER — render the admin screen (list + editor form)         */
+/* ------------------------------------------------------------------ */
+function renderPackBuilder() {
+  const root = document.getElementById('pack-builder');
+  if (!root) return;
+  if (!isAdmin()) {
+    root.innerHTML = `<div class="pb-locked">
+      <div class="pb-locked-title">Pack Builder</div>
+      <p>This tool is for the Glimwed team. Sign in with the admin account to create and manage moodboard packs.</p>
+      <button class="btn-c" onclick="switchMain('accounts');setAccTab('signin')">Sign in</button>
+    </div>`;
+    return;
+  }
+  root.innerHTML = pbDraft ? pbEditorHtml() : pbListHtml();
+  if (pbDraft) pbRenderPreview();
+}
+
+/* The list of every pack (published + drafts) with quick actions.       */
+function pbListHtml() {
+  const rows = PACKS.map(p => {
+    const pub = p._published !== false;
+    const hero = p.hero || ((p.images || [])[0] || {}).url || '';
+    return `<div class="pb-row">
+      <div class="pb-row-thumb">${hero ? `<img src="${esc(hero)}" alt="">` : ''}</div>
+      <div class="pb-row-main">
+        <div class="pb-row-name">${p.name || p.id}</div>
+        <div class="pb-row-meta">${esc(p.eyebrow || '')} · ${(p.images||[]).length} images · $${p.price || 0}</div>
+      </div>
+      <span class="pb-badge ${pub ? 'live' : 'draft'}">${pub ? 'Published' : 'Draft'}</span>
+      <div class="pb-row-actions">
+        <button class="pb-mini" onclick="pbEdit('${p.id}')">Edit</button>
+        <button class="pb-mini" onclick="pbTogglePublish('${p.id}')">${pub ? 'Unpublish' : 'Publish'}</button>
+        <button class="pb-mini danger" onclick="pbDelete('${p.id}')">Delete</button>
+      </div>
+    </div>`;
+  }).join('');
+  const usingDemo = PACKS.length && PACKS[0]._published === undefined;
+  return `
+    <div class="pb-head">
+      <div>
+        <h1 class="page-title" style="margin:0;">Pack Builder</h1>
+        <p class="pb-sub">Create a themed moodboard. Fill in each image's vendor, price &amp; link once — customers import the image and all of it lands on their board automatically.</p>
+      </div>
+      <button class="btn-c pb-new" onclick="pbNew()">＋ New pack</button>
+    </div>
+    ${usingDemo ? '<div class="pb-note">These are the built-in demo packs. Create your first real pack and it replaces them in the store.</div>' : ''}
+    <div class="pb-list">${rows || '<div class="pb-empty">No packs yet — click “New pack” to build your first.</div>'}</div>`;
+}
+
+/* The editor form for one pack. Text/colour inputs update pbDraft       */
+/* silently (oninput) and only nudge the live preview, so typing never   */
+/* rebuilds the form. Adding/removing/uploading images re-renders.       */
+/* One collapsible-ish section group of image rows in the editor.        */
+/* cat is a board key, or '_unsorted' for images with no section yet.     */
+function pbSectionBlock(cat, idxs) {
+  const isUnsorted = cat === '_unsorted';
+  const label = isUnsorted ? 'Unsorted' : pbSectionLabel(cat);
+  const rows = idxs.map(i => pbImgRowHtml(pbDraft.images[i], i)).join('');
+  return `<div class="pb-section">
+    <div class="pb-section-head">
+      <span class="pb-section-title">${esc(label)}</span>
+      <span class="pb-section-count">${idxs.length || 'none yet'}</span>
+    </div>
+    ${rows || '<div class="pb-section-empty">No images in this section yet.</div>'}
+    ${isUnsorted ? '' : `<button class="pb-add-img small" onclick="pbAddImageRow('${cat}')">＋ Add image to ${esc(label)}</button>`}
+  </div>`;
+}
+
+/* One image row: photo + section/slot tags + vendor/product/price/link.  */
+function pbImgRowHtml(im, i) {
+  const sectionOpts = ['<option value="">Section…</option>']
+    .concat(PB_SECTIONS.map(c =>
+      `<option value="${c}" ${im.cat === c ? 'selected' : ''}>${esc(pbSectionLabel(c))}</option>`))
+    .join('');
+  const slotOpts = ['<option value="">General (any slot)</option>']
+    .concat(pbSlotsFor(im.cat).map(s =>
+      `<option ${im.slot === s ? 'selected' : ''}>${esc(s)}</option>`))
+    .join('');
+  return `
+    <div class="pb-img-row">
+      <label class="pb-img-drop">
+        ${im.url ? `<img src="${esc(im.url)}" alt="">` : '<span>＋ Image</span>'}
+        <input type="file" accept="image/*" hidden onchange="pbUpload(this, ${i})">
+      </label>
+      <div class="pb-img-fields">
+        <div class="pb-inp-pair">
+          <select class="pb-inp pb-sel" onchange="pbSetCat(${i}, this.value)">${sectionOpts}</select>
+          <select class="pb-inp pb-sel" ${im.cat ? '' : 'disabled'} onchange="pbDraft.images[${i}].slot=this.value">${slotOpts}</select>
+        </div>
+        <input class="pb-inp" placeholder="Vendor (e.g. The Pollen Studio)" value="${esc(im.vendor)}" oninput="pbDraft.images[${i}].vendor=this.value;pbRenderPreview()">
+        <input class="pb-inp" placeholder="Product (e.g. Wildflower bouquet)" value="${esc(im.product)}" oninput="pbDraft.images[${i}].product=this.value">
+        <div class="pb-inp-pair">
+          <input class="pb-inp" placeholder="Price (e.g. $285)" value="${esc(im.price)}" oninput="pbDraft.images[${i}].price=this.value">
+          <input class="pb-inp" placeholder="Link (https://…)" value="${esc(im.link)}" oninput="pbDraft.images[${i}].link=this.value">
+        </div>
+      </div>
+      <button class="pb-img-del" title="Remove image" onclick="pbRemoveImage(${i})">✕</button>
+    </div>`;
+}
+
+function pbEditorHtml() {
+  const d = pbDraft;
+  const swatches = d.palette.map((c, i) =>
+    `<input type="color" class="pb-color" value="${esc(c)}"
+       oninput="pbDraft.palette[${i}]=this.value;pbRenderPreview()">`
+  ).join('');
+  /* Group image rows under their board section (Bridal looks, Flowers, …)  */
+  /* so the builder mirrors the couple's board. Each section has its own     */
+  /* "add image" button that pre-tags the new row to that section. Images    */
+  /* with no section fall into an "Unsorted" group at the end.               */
+  const byCat = {};
+  d.images.forEach((im, i) => {
+    const c = (im.cat && BOARDS[im.cat]) ? im.cat : '_unsorted';
+    (byCat[c] = byCat[c] || []).push(i);
+  });
+  const sectionBlocks = PB_SECTIONS.map(cat => pbSectionBlock(cat, byCat[cat] || [])).join('');
+  const unsortedBlock = (byCat._unsorted && byCat._unsorted.length)
+    ? pbSectionBlock('_unsorted', byCat._unsorted) : '';
+  return `
+    <div class="pb-head">
+      <h1 class="page-title" style="margin:0;">${d._isNew ? 'New pack' : 'Edit pack'}</h1>
+      <button class="pb-mini" onclick="pbCancel()">← Back to all packs</button>
+    </div>
+    <div class="pb-editor">
+      <div class="pb-form">
+        <label class="pb-label">Pack name <span class="pb-hint">wrap one word in *stars* to italicise it in rose — e.g. Bohemian *Meadow*</span></label>
+        <input class="pb-inp big" placeholder="Bohemian *Meadow*" value="${esc(pbUnEm(d.name))}" oninput="pbDraft.name=pbToEm(this.value);pbRenderPreview()">
+
+        <label class="pb-label">Theme label <span class="pb-hint">the small line above the title</span></label>
+        <input class="pb-inp" placeholder="Bohemian · Wildflower" value="${esc(d.eyebrow)}" oninput="pbDraft.eyebrow=this.value;pbRenderPreview()">
+
+        <label class="pb-label">Story <span class="pb-hint">one romantic sentence</span></label>
+        <textarea class="pb-inp" rows="2" placeholder="Wildflowers, macrame, and golden-hour light…" oninput="pbDraft.story=this.value;pbRenderPreview()">${esc(d.story)}</textarea>
+
+        <div class="pb-inp-pair">
+          <div>
+            <label class="pb-label">Price ($)</label>
+            <input class="pb-inp" type="number" min="0" value="${esc(d.price)}" oninput="pbDraft.price=this.value;pbRenderPreview()">
+          </div>
+          <div>
+            <label class="pb-label">Sort order <span class="pb-hint">lower = earlier</span></label>
+            <input class="pb-inp" type="number" value="${esc(d.sort)}" oninput="pbDraft.sort=this.value">
+          </div>
+        </div>
+
+        <label class="pb-label">Palette <span class="pb-hint">five colors</span></label>
+        <div class="pb-colors">${swatches}</div>
+
+        <label class="pb-label">Cover photo</label>
+        <label class="pb-hero-drop">
+          ${d.hero ? `<img src="${esc(d.hero)}" alt="">` : '<span>＋ Upload cover (or leave blank to use first image)</span>'}
+          <input type="file" accept="image/*" hidden onchange="pbUpload(this, 'hero')">
+        </label>
+
+        <label class="pb-label" style="margin-top:22px;">Images &amp; linked products <span class="pb-hint">grouped by board section — fill each one out like the couple's board</span></label>
+        <div class="pb-sections">${sectionBlocks}${unsortedBlock}</div>
+
+        <label class="pb-check">
+          <input type="checkbox" ${d.published ? 'checked' : ''} onchange="pbDraft.published=this.checked">
+          Published (visible in the store)
+        </label>
+
+        <div class="pb-save-row">
+          <button class="btn-full" onclick="pbSave()">Save pack</button>
+          <button class="pb-mini" onclick="pbCancel()">Cancel</button>
+        </div>
+      </div>
+      <div class="pb-preview-col">
+        <div class="pb-preview-label">Live preview</div>
+        <div id="pb-preview"></div>
+      </div>
+    </div>`;
+}
+
+/* Convert between the store's <em> markup and the *stars* the form uses  */
+/* so the admin never has to type HTML.                                   */
+function pbToEm(s) {
+  return String(s || '').replace(/\*([^*]+)\*/g, '<em>$1</em>');
+}
+function pbUnEm(s) {
+  return String(s || '').replace(/<em>([^<]*)<\/em>/g, '*$1*');
+}
+
+/* ------------------------------------------------------------------ */
 /*  MOODBOARD PACKS — render + detail modal                             */
 /* ------------------------------------------------------------------ */
 function renderPacks() {
   const grid = document.getElementById('pack-grid');
   if (!grid) return;
-  /* Render all packs in the grid uniformly — no separate featured slot. */
-  const cards = MOODBOARD_PACKS.map(p => {
+  /* Public store shows published packs only (demo-set entries have no      */
+  /* _published flag, so they always show while the DB is still empty).     */
+  const list = PACKS.filter(p => p._published !== false);
+  const cards = list.map(p => {
     const owned = purchasedPacks.has(p.id);
     return `<div class="pack-card" onclick="openPackDetail('${p.id}')">
       <div class="pack-card-media">
@@ -3482,7 +3988,7 @@ function renderPacks() {
         <div class="pack-card-name">${p.name}</div>
         <div class="pack-card-story">${p.story}</div>
         <div class="pack-card-foot">
-          <span class="pack-card-images">${p.count} looks · <strong>${p.shoppable || p.images.length} linked products</strong></span>
+          <span class="pack-card-images">${p.count} looks · <strong>${p.shoppable || (p.images||[]).length} linked products</strong></span>
           <span class="pack-card-price">${owned ? '<span style=\"color:var(--rose);font-size:13px;font-family:\'Montserrat\',sans-serif;font-weight:500;\">Owned</span>' : '$'+p.price}</span>
         </div>
       </div>
@@ -3492,7 +3998,7 @@ function renderPacks() {
 }
 
 function openPackDetail(packId) {
-  const pack = MOODBOARD_PACKS.find(p => p.id === packId);
+  const pack = PACKS.find(p => p.id === packId);
   if (!pack) return;
   activePack = pack;
   selectedImages = new Set();
@@ -3850,7 +4356,7 @@ function togglePackImage(idx) {
 function buyPack(packId) {
   /* In the real build this opens Stripe Checkout. The client cannot      */
   /* mark a user as a paid owner — the server confirms via webhook.       */
-  showToast(`Checkout for "${packDisplayName(MOODBOARD_PACKS.find(p=>p.id===packId))}" — coming in full build`, 'info');
+  showToast(`Checkout for "${packDisplayName(PACKS.find(p=>p.id===packId))}" — coming in full build`, 'info');
   /* Simulate successful purchase for the prototype demo only.            */
   setTimeout(() => {
     purchasedPacks.add(packId);
@@ -3869,10 +4375,30 @@ function importSelected() {
   if (!activePack || selectedImages.size === 0) return;
   importMode = true;
   assignments = new Map();
-  /* Auto-arm the first selected image so she sees the interaction         */
-  /* without needing to discover it.                                       */
   const sorted = [...selectedImages].sort((a,b)=>a-b);
-  activeImageIdx = sorted[0];
+  /* Pre-sort: if a pack image was tagged with a board section (and slot),  */
+  /* drop it straight into that place so it arrives already organized. She  */
+  /* can still re-place any of them in the picker. Two images tagged to the */
+  /* same exact slot: the first takes the slot, extras become new items.    */
+  const usedSlots = new Set();
+  sorted.forEach(imgIdx => {
+    const im = activePack.images[imgIdx];
+    if (!im || !im.cat || !BOARDS[im.cat]) return;
+    let key = null;
+    if (im.slot) {
+      const iIdx = BOARDS[im.cat].items.findIndex(it => it.label === im.slot);
+      if (iIdx >= 0 && !usedSlots.has(im.cat + ':' + iIdx)) {
+        key = im.cat + ':' + iIdx;
+        usedSlots.add(key);
+      }
+    }
+    if (!key) key = im.cat + ':new';
+    assignments.set(imgIdx, key);
+  });
+  /* Auto-arm the first still-unassigned image so she sees the interaction  */
+  /* without needing to discover it.                                        */
+  activeImageIdx = sorted.find(i => !assignments.has(i));
+  if (activeImageIdx === undefined) activeImageIdx = null;
   renderPackDetail();
   const overlay = document.getElementById('pack-detail-modal');
   if (overlay) overlay.scrollTop = 0;
@@ -5652,6 +6178,9 @@ function updateAccountUI() {
     if (signoutBtn)     signoutBtn.style.display     = 'none';
     if (signoutDivider) signoutDivider.style.display = 'none';
   }
+  // Reveal the Pack Builder entry only for the admin account.
+  const pbNav = document.getElementById('tools-packbuilder');
+  if (pbNav) pbNav.style.display = isAdmin() ? '' : 'none';
   fillProfileForm();
 }
 
@@ -5766,6 +6295,8 @@ sb.auth.onAuthStateChange((event, session) => {
   updateAccountUI();
   if (event === 'PASSWORD_RECOVERY') showModal('newpass-modal');
   if (currentUser && (!prev || prev.id !== currentUser.id)) loadBoards();
+  // Refresh packs when the admin signs in (so drafts appear) or out.
+  if (isAdmin() || (prev && !currentUser)) loadPacks();
   if (!currentUser) {
     lastSavedJson = null;
     if (prev) { setState(JSON.parse(JSON.stringify(DEFAULT_STATE))); fillProfileForm(); }  // clear the signed-out couple's data off the screen
@@ -5792,6 +6323,7 @@ if (_shareToken) {
   render();
   renderColorsPage();   // Palettes is the default landing page — populate it on load
   syncProUI();
+  loadPacks();          // pull live packs from Supabase (falls back to the demo set)
 }
 </script>
 </body>
