@@ -280,12 +280,10 @@ button, input, select, textarea { font-family: inherit; }
   box-shadow: 0 1px 4px rgba(0,0,0,.05);
 }
 .pack-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); }
-.pack-card-media { position: relative; aspect-ratio: 4/5; overflow: hidden; }
+.pack-card-media { position: relative; aspect-ratio: 4/5; overflow: hidden; background: var(--cloud); }
 .pack-card-media img {
-  width: 100%; height: 100%; object-fit: cover;
-  transition: transform .6s ease;
+  width: 100%; height: 100%; object-fit: contain;
 }
-.pack-card:hover .pack-card-media img { transform: scale(1.05); }
 .pack-card-body { padding: 18px 18px 20px; }
 .pack-card-eyebrow {
   font-size: 10.5px; letter-spacing: 1.5px; text-transform: uppercase;
@@ -456,10 +454,10 @@ textarea.pb-inp { resize: vertical; }
 }
 .pack-detail-close:hover { background: var(--cloud); }
 .pack-detail-hero {
-  width: 100%; aspect-ratio: 21/9; overflow: hidden;
+  width: 100%; aspect-ratio: 16/9; overflow: hidden; background: var(--cloud);
   border-radius: var(--radius-lg) var(--radius-lg) 0 0;
 }
-.pack-detail-hero img { width: 100%; height: 100%; object-fit: cover; }
+.pack-detail-hero img { width: 100%; height: 100%; object-fit: contain; }
 .pack-detail-body { padding: 32px 36px 36px; }
 .pack-detail-name {
   font-family: 'Cormorant Garamond', serif;
@@ -3889,10 +3887,6 @@ function pbImgRowHtml(im, i) {
 
 function pbEditorHtml() {
   const d = pbDraft;
-  const swatches = d.palette.map((c, i) =>
-    `<input type="color" class="pb-color" value="${esc(c)}"
-       oninput="pbDraft.palette[${i}]=this.value;pbRenderPreview()">`
-  ).join('');
   /* Group image rows under their board section (Bridal looks, Flowers, …)  */
   /* so the builder mirrors the couple's board. Each section has its own     */
   /* "add image" button that pre-tags the new row to that section. Images    */
@@ -3931,9 +3925,6 @@ function pbEditorHtml() {
             <input class="pb-inp" type="number" value="${esc(d.sort)}" oninput="pbDraft.sort=this.value">
           </div>
         </div>
-
-        <label class="pb-label">Palette <span class="pb-hint">five colors</span></label>
-        <div class="pb-colors">${swatches}</div>
 
         <label class="pb-label">Cover photo</label>
         <label class="pb-hero-drop">
@@ -4045,9 +4036,6 @@ function renderPackDetail() {
   if (importMode) { renderImportDestinationPicker(); return; }
   const p = activePack;
   const owned = purchasedPacks.has(p.id);
-  const swatchHtml = p.palette.map(c =>
-    `<div class="pack-detail-swatch" style="background:${c};"></div>`
-  ).join('');
   /* Each pack image now carries product metadata: vendor, product, price, link. */
   /* When owned: full info + Shop link visible. When locked: teaser only.        */
   const imageHtml = p.images.map((img, i) => {
@@ -4089,13 +4077,9 @@ function renderPackDetail() {
       <div class="pack-eyebrow">${p.eyebrow}</div>
       <h2 class="pack-detail-name">${p.name}</h2>
       <p class="pack-detail-story">${p.story}</p>
-      <div class="pack-detail-palette-row">
-        <div class="pack-detail-palette-label">Palette</div>
-        <div class="pack-detail-palette">${swatchHtml}</div>
-      </div>
       <div class="pack-detail-section-title">
         ${owned ? 'Pick your favorites' : 'In this pack'}
-        <span class="pack-detail-section-sub">${owned ? `${selectedImages.size} of ${p.images.length} selected` : `${p.count} looks · ${p.shoppable || p.images.length} linked products · ${p.palette.length} palette`}</span>
+        <span class="pack-detail-section-sub">${owned ? `${selectedImages.size} of ${p.images.length} selected` : `${p.count} looks · ${p.shoppable || p.images.length} linked products`}</span>
       </div>
       <div class="pack-detail-grid">${imageHtml}</div>
       <div class="pack-detail-cta-row">${ctaHtml}</div>
