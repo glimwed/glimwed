@@ -3859,10 +3859,13 @@ function pbImgRowHtml(im, i) {
     .concat(PB_SECTIONS.map(c =>
       `<option value="${c}" ${im.cat === c ? 'selected' : ''}>${esc(pbSectionLabel(c))}</option>`))
     .join('');
-  const slotOpts = ['<option value="">General (any slot)</option>']
-    .concat(pbSlotsFor(im.cat).map(s =>
-      `<option ${im.slot === s ? 'selected' : ''}>${esc(s)}</option>`))
-    .join('');
+  /* Slot is now free-text: type any name, or pick one of the section's    */
+  /* existing slots from the datalist suggestions. A custom name becomes    */
+  /* the board card's label when the image is imported.                     */
+  const slotListId = `pb-slots-${i}`;
+  const slotList = `<datalist id="${slotListId}">`
+    + pbSlotsFor(im.cat).map(s => `<option value="${esc(s)}"></option>`).join('')
+    + `</datalist>`;
   return `
     <div class="pb-img-row">
       <label class="pb-img-drop">
@@ -3872,7 +3875,9 @@ function pbImgRowHtml(im, i) {
       <div class="pb-img-fields">
         <div class="pb-inp-pair">
           <select class="pb-inp pb-sel" onchange="pbSetCat(${i}, this.value)">${sectionOpts}</select>
-          <select class="pb-inp pb-sel" ${im.cat ? '' : 'disabled'} onchange="pbDraft.images[${i}].slot=this.value">${slotOpts}</select>
+          <input class="pb-inp" list="${slotListId}" placeholder="Slot name (optional)"
+                 ${im.cat ? '' : 'disabled'} value="${esc(im.slot || '')}"
+                 oninput="pbDraft.images[${i}].slot=this.value">${slotList}
         </div>
         <input class="pb-inp" placeholder="Vendor (e.g. The Pollen Studio)" value="${esc(im.vendor)}" oninput="pbDraft.images[${i}].vendor=this.value;pbRenderPreview()">
         <input class="pb-inp" placeholder="Product (e.g. Wildflower bouquet)" value="${esc(im.product)}" oninput="pbDraft.images[${i}].product=this.value">
@@ -4316,10 +4321,11 @@ function commitTapImport() {
   newByBoard.forEach((imgIdxs, bId) => {
     imgIdxs.forEach((imgIdx, n) => {
       const meta = packImageMeta(pack.images[imgIdx]);
+      const slotName = (pack.images[imgIdx].slot || '').trim();
       BOARDS[bId].items.push({
-        /* Use the curated product name as the label when we have one,    */
-        /* falling back to the numbered pack label.                       */
-        label: meta.product || `${packLabel} · ${n+1}`,
+        /* Prefer the slot name the admin typed in the pack builder, then  */
+        /* the curated product name, then a numbered pack label.           */
+        label: slotName || meta.product || `${packLabel} · ${n+1}`,
         imgs: [packImageUrl(pack.images[imgIdx])],
         img: packImageUrl(pack.images[imgIdx]),
         vendor: meta.vendor, web: meta.web, price: meta.price,
