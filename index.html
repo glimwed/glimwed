@@ -2141,6 +2141,7 @@ body.share-mode { background: var(--cream, #FBF8F5); }
     <button class="header-tab" onclick="switchMain('board')">Vision Board</button>
     <button class="header-tab" onclick="switchMain('checklist')">Checklist</button>
     <button class="header-tab" onclick="switchMain('budget')">Budget</button>
+    <button class="header-tab" onclick="switchMain('packs')">Wedding Plan Starters</button>
   </nav>
   <div class="header-right">
     <div class="tools-menu-wrap" id="tools-wrap">
@@ -2150,10 +2151,6 @@ body.share-mode { background: var(--cream, #FBF8F5); }
         <span class="tools-bar"></span>
       </button>
       <div class="account-menu tools-menu" id="tools-menu">
-        <button class="account-menu-item" onclick="closeToolsMenu();switchMain('packs')">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2l9 4.5-9 4.5-9-4.5z"/><path d="M3 12l9 4.5 9-4.5"/><path d="M3 17l9 4.5 9-4.5"/></svg>
-          Moodboard Packs
-        </button>
         <button class="account-menu-item" id="tools-packbuilder" style="display:none;" onclick="closeToolsMenu();switchMain('packbuilder')">
           <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><path d="M11.5 9v5M9 11.5h5"/></svg>
           Pack Builder
@@ -2219,7 +2216,7 @@ body.share-mode { background: var(--cream, #FBF8F5); }
     <div class="sidebar-sub" id="board-sub-nav"></div>
     <div class="sidebar-sub">
       <button class="sidebar-sub-item active" id="sb-colors" onclick="switchMain('colors');setSB('sb-colors')">Palettes</button>
-      <button class="sidebar-sub-item" id="sb-packs" onclick="switchMain('packs');setSB('sb-packs')">Moodboard Packs</button>
+      <button class="sidebar-sub-item" id="sb-packs" onclick="switchMain('packs');setSB('sb-packs')">Wedding Plan Starters</button>
     </div>
     <button class="sb-item" id="sb-planner" onclick="switchMain('checklist');setSB('sb-checklist')">
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M2 8h8M2 12h10"/></svg>
@@ -3308,7 +3305,7 @@ let allOrder = [];
 /*  MAIN NAV                                                            */
 /* ------------------------------------------------------------------ */
 const SECTIONS = ['board','colors','packs','packbuilder','checklist','budget','accounts','export','share'];
-const HEADER_TABS = ['colors','board','checklist','budget'];
+const HEADER_TABS = ['colors','board','checklist','budget','packs'];
 
 function switchMain(id) {
   currentMain = id;
