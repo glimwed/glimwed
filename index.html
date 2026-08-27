@@ -2311,8 +2311,8 @@ body.share-mode { background: var(--cream, #FBF8F5); }
   <!-- ORIGINAL STORE — hidden until Moodboard Packs launch. To re-enable: remove display:none below. -->
   <div id="packs-store-hidden" style="display:none;">
     <div class="packs-hero">
-      <div class="packs-hero-eyebrow">Curated by wedding stylists · Free</div>
-      <h1 class="packs-hero-title">Wedding Planning Starters <em>By Themes</em></h1>
+      <div class="packs-hero-eyebrow">Curated by a NYC based Designer</div>
+      <h1 class="packs-hero-title">Wedding Planning Starters<br>By Themes</h1>
       <p class="packs-hero-sub">These are not just aesthetic visuals. The images are curated by the themes and carefully selected and linked to the real products or vendors — bouquets, dresses, venues, table settings. Explore and envision your perfect wedding day.</p>
     </div>
 
@@ -3994,7 +3994,7 @@ function renderPacks() {
         <div class="pack-card-story">${p.story}</div>
         <div class="pack-card-foot">
           <span class="pack-card-images">${p.count} looks · <strong>${p.shoppable || (p.images||[]).length} linked products</strong></span>
-          <span class="pack-card-price">${owned ? '<span style=\"color:var(--rose);font-size:13px;font-family:\'Montserrat\',sans-serif;font-weight:500;\">Saved</span>' : '<span style=\"color:var(--rose);\">Free</span>'}</span>
+          <span class="pack-card-price">${owned ? '<span style=\"color:var(--rose);font-size:13px;font-family:\'Montserrat\',sans-serif;font-weight:500;\">Saved</span>' : ''}</span>
         </div>
       </div>
     </div>`;
