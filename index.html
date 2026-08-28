@@ -5956,6 +5956,11 @@ const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 let currentUser  = null;
 let currentAccessToken = null;   // cached from the auth session for exit-time saves
 let lastSavedJson = null;
+/* Guard against clobbering a good server record with the blank default.
+   Saving stays BLOCKED until loadBoards() has confirmed a successful load
+   (or confirmed the account is brand-new). A failed/pending load leaves this
+   false, so a network hiccup can never let an autosave overwrite real data. */
+let boardsReady = false;
 let autosaveTimer = null;
 let SHARE_VIEWER = false;   // true when the page is opened as a read-only ?share= link
 
@@ -5988,30 +5993,50 @@ function setState(s) {
 /* Pristine starting state, snapshotted before any sign-in — used to clear the
    screen on sign-out so one couple's data never lingers for the next person. */
 const DEFAULT_STATE = JSON.parse(JSON.stringify(getState()));
+/* Serialized blank template — used as a tripwire so a save can never replace
+   real, previously-saved data with the empty default. */
+const DEFAULT_JSON = JSON.stringify(DEFAULT_STATE);
 
 async function loadBoards() {
   if (!currentUser) return;
+  boardsReady = false;                            // block saves until we've safely loaded
   const { data, error } = await sb.from('boards').select('data').eq('user_id', currentUser.id).maybeSingle();
-  if (error) { console.error('load error', error); showToast('Could not load your saved boards', 'error'); return; }
+  if (error) {
+    // Leave boardsReady false: with the load unconfirmed we must NOT save, or a
+    // transient failure could overwrite the real record with the blank default.
+    console.error('load error', error);
+    showToast('Could not load your saved boards — your data is safe, editing is paused until it loads. Please refresh.', 'error');
+    return;
+  }
   if (data && data.data) {
     lastSavedJson = JSON.stringify(data.data);
     setState(data.data);
     showToast('Your saved boards loaded', 'success');
+    clearTimeout(autosaveTimer);                  // cancel the autosave setState just queued
+    boardsReady = true;                           // load succeeded — saving is now safe
     // One-time migration: move any embedded base64 photos into Storage, then
     // re-save the now-small row.
-    clearTimeout(autosaveTimer);                  // cancel the autosave setState just queued
     if (await migrateImagesToStorage()) { render(); saveBoards(); }
     fillProfileForm();                            // reflect the loaded profile in the settings form
   } else {
     lastSavedJson = JSON.stringify(getState());   // nothing saved yet
+    boardsReady = true;                           // brand-new account — safe to save its first data
   }
 }
 
 async function saveBoards() {
   if (!currentUser || SHARE_VIEWER) return;
+  if (!boardsReady) return;                        // load not confirmed — never overwrite the server record
   const state = getState();
   const json  = JSON.stringify(state);
   if (json === lastSavedJson) return;             // nothing changed
+  // Tripwire: refuse to replace real, previously-saved data with the blank
+  // default. If we're about to write the empty template over a row that held
+  // something else, that's the overwrite bug — bail out and keep the data.
+  if (json === DEFAULT_JSON && lastSavedJson && lastSavedJson !== DEFAULT_JSON) {
+    console.warn('Blocked a save that would blank real data with the default template.');
+    return;
+  }
   setSaveStatus('saving');
   const { error } = await sb.from('boards')
     .upsert({ user_id: currentUser.id, data: state, updated_at: new Date().toISOString() });
@@ -6040,10 +6065,11 @@ async function saveBoards() {
    `keepalive` fetch straight at Supabase's REST API; the browser is required to
    let that request finish even after the page goes away. */
 function flushSaveOnExit() {
-  if (!currentUser || SHARE_VIEWER || !currentAccessToken) return;
+  if (!currentUser || SHARE_VIEWER || !currentAccessToken || !boardsReady) return;
   const state = getState();
   const json  = JSON.stringify(state);
   if (json === lastSavedJson) return;                       // nothing new to save
+  if (json === DEFAULT_JSON && lastSavedJson && lastSavedJson !== DEFAULT_JSON) return;  // never blank real data
   const body = JSON.stringify({ user_id: currentUser.id, data: state, updated_at: new Date().toISOString() });
   // `keepalive` requests are capped at ~64KB; if we're over, fall back to the
   // normal (cancelable) save as a best effort rather than throwing.
@@ -6087,7 +6113,7 @@ function setSaveStatus(state) {
 }
 
 function scheduleAutosave() {
-  if (!currentUser || SHARE_VIEWER) return;
+  if (!currentUser || SHARE_VIEWER || !boardsReady) return;
   clearTimeout(autosaveTimer);
   autosaveTimer = setTimeout(saveBoards, 1500);
 }
@@ -6274,6 +6300,7 @@ sb.auth.onAuthStateChange((event, session) => {
   if (isAdmin() || (prev && !currentUser)) loadPacks();
   if (!currentUser) {
     lastSavedJson = null;
+    boardsReady = false;                          // signed out — nothing to save until a load confirms again
     if (prev) { setState(JSON.parse(JSON.stringify(DEFAULT_STATE))); fillProfileForm(); }  // clear the signed-out couple's data off the screen
   }
 });
