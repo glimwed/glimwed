@@ -2201,22 +2201,23 @@ body.share-mode { background: var(--cream, #FBF8F5); }
   <!-- Planning nav -->
   <div class="sb-section">
     <span class="sb-label">Planning</span>
+    <button class="sb-item active" id="sb-colors" onclick="switchMain('colors');setSB('sb-colors')">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="4" cy="8" r="1.8"/><circle cx="8" cy="8" r="1.8"/><circle cx="12" cy="8" r="1.8"/></svg>
+      Palettes
+    </button>
     <button class="sb-item" id="sb-board" onclick="switchMain('board');setSB('sb-board')">
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="6" height="6" rx="1.5"/><rect x="9" y="1" width="6" height="6" rx="1.5"/><rect x="1" y="9" width="6" height="6" rx="1.5"/><rect x="9" y="9" width="6" height="6" rx="1.5"/></svg>
       Vision Board
     </button>
     <div class="sidebar-sub" id="board-sub-nav"></div>
-    <div class="sidebar-sub">
-      <button class="sidebar-sub-item active" id="sb-colors" onclick="switchMain('colors');setSB('sb-colors')">Palettes</button>
-    </div>
-    <button class="sb-item" id="sb-planner" onclick="switchMain('checklist');setSB('sb-checklist')">
-      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M2 8h8M2 12h10"/></svg>
-      Planner
+    <button class="sb-item" id="sb-checklist" onclick="switchMain('checklist');setSB('sb-checklist')">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4l1.2 1.2L5.5 3M2 8l1.2 1.2L5.5 7M2 12l1.2 1.2L5.5 11M8 4h6M8 8h6M8 12h6"/></svg>
+      Checklist
     </button>
-    <div class="sidebar-sub">
-      <button class="sidebar-sub-item" id="sb-checklist" onclick="switchMain('checklist');setSB('sb-checklist')">Checklist</button>
-      <button class="sidebar-sub-item" id="sb-budget" onclick="switchMain('budget');setSB('sb-budget')">Budget</button>
-    </div>
+    <button class="sb-item" id="sb-budget" onclick="switchMain('budget');setSB('sb-budget')">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1.5" y="3.5" width="13" height="9" rx="1.5"/><path d="M1.5 6.5h13"/></svg>
+      Budget
+    </button>
     <button class="sb-item" id="sb-packs" onclick="switchMain('packs');setSB('sb-packs')">
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 1l6 3-6 3-6-3z"/><path d="M2 8l6 3 6-3"/><path d="M2 11.5l6 3 6-3"/></svg>
       Wedding Plan Starters
@@ -3332,11 +3333,6 @@ function setSB(id) {
   document.querySelectorAll('.sidebar-sub-item').forEach(el => el.classList.remove('active'));
   const el = document.getElementById(id);
   if (el) el.classList.add('active');
-  // Also highlight the parent sb-item for planner sub-items
-  if (id === 'sb-checklist' || id === 'sb-budget') {
-    const parent = document.getElementById('sb-planner');
-    if (parent) parent.classList.add('active');
-  }
   closeSidebar();
 }
 
