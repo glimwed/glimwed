@@ -2468,6 +2468,7 @@ body.share-mode { background: var(--cream, #FBF8F5); }
         <div class="settings-nav-item" id="sn-security" onclick="setSettingsPanel('security')">Password &amp; Security</div>
         <div class="settings-nav-item" id="sn-notif" onclick="setSettingsPanel('notif')">Notifications</div>
         <div class="settings-nav-item" id="sn-billing" onclick="setSettingsPanel('billing')">Billing</div>
+        <div class="settings-nav-item" id="sn-backup" onclick="setSettingsPanel('backup')">Backup &amp; Restore</div>
       </div>
       <div class="settings-panel">
         <!-- Profile -->
@@ -2537,6 +2538,20 @@ body.share-mode { background: var(--cream, #FBF8F5); }
           <div class="billing-section-title" style="margin-top:28px;">Payment method</div>
           <div class="billing-empty">No payment method on file. You'll add one at checkout.</div>
 
+        </div>
+        <!-- Backup & Restore -->
+        <div id="sp-backup" class="hidden">
+          <div class="settings-section-title">Backup &amp; Restore</div>
+          <div class="settings-section-sub">Save a copy of everything — your board, palettes, checklist, budget, profile and notes — to your own computer. If anything ever goes wrong, you can restore it in one click.</div>
+
+          <div class="billing-section-title" style="margin-top:8px;">Download a backup</div>
+          <div style="font-size:12.5px;color:var(--sub);line-height:1.6;margin-bottom:14px;max-width:520px;">Saves a single small file to your computer. Your photos are saved as links to your stored images (not copied into the file), so the backup stays tiny. Keep the file somewhere safe — download a fresh one now and then.</div>
+          <button class="btn-c" onclick="downloadMyData()">Download my data</button>
+
+          <div class="billing-section-title" style="margin-top:30px;">Restore from a backup</div>
+          <div style="font-size:12.5px;color:var(--sub);line-height:1.6;margin-bottom:14px;max-width:520px;">Choose a backup file you saved earlier. This <strong>replaces</strong> what's currently on your account with the contents of that file — so only use it to roll back after something went wrong.</div>
+          <input type="file" id="restore-file-input" accept="application/json,.json" style="display:none;" onchange="restoreMyData(this)">
+          <button class="btn-c" onclick="document.getElementById('restore-file-input').click()">Restore from a backup file…</button>
         </div>
       </div>
     </div>
@@ -4474,12 +4489,58 @@ function setAccTab(tab) {
   if(btn) btn.classList.add('active');
 }
 function setSettingsPanel(tab) {
-  ['profile','security','notif','billing'].forEach(t => {
+  ['profile','security','notif','billing','backup'].forEach(t => {
     document.getElementById('sp-'+t).classList.add('hidden');
     document.getElementById('sn-'+t).classList.remove('active');
   });
   document.getElementById('sp-'+tab).classList.remove('hidden');
   document.getElementById('sn-'+tab).classList.add('active');
+}
+
+/* ------------------------------------------------------------------ */
+/*  BACKUP & RESTORE — free-tier safety net against data loss.         */
+/*  The backup is the full app state as JSON; photos are referenced by  */
+/*  their Storage URLs (not embedded), so the file stays small.         */
+/* ------------------------------------------------------------------ */
+function downloadMyData() {
+  try {
+    const payload = { app: 'glimwed', version: 1, exportedAt: new Date().toISOString(), data: getState() };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url;
+    a.download = `glimwed-backup-${new Date().toISOString().slice(0,10)}.json`;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    showToast('Backup downloaded — keep the file somewhere safe.', 'success');
+  } catch (e) {
+    console.error('backup download failed', e);
+    showToast('Could not create the backup file — please try again.', 'error');
+  }
+}
+
+function restoreMyData(input) {
+  const file = input && input.files && input.files[0];
+  if (input) input.value = '';                    // let the same file be re-picked later
+  if (!file) return;
+  if (!currentUser) { showToast('Please sign in first, then restore.', 'error'); return; }
+  const reader = new FileReader();
+  reader.onload = () => {
+    let parsed;
+    try { parsed = JSON.parse(reader.result); }
+    catch (e) { showToast('That file isn’t a valid Glimwed backup.', 'error'); return; }
+    const state = (parsed && parsed.data) ? parsed.data : parsed;   // tolerate a raw state object too
+    if (!state || typeof state !== 'object' || !state.BOARDS) {
+      showToast('That file doesn’t look like a Glimwed backup.', 'error'); return;
+    }
+    const when = (parsed && parsed.exportedAt) ? new Date(parsed.exportedAt).toLocaleString() : 'an unknown date';
+    if (!confirm(`Restore this backup (from ${when})?\n\nThis will REPLACE everything currently on your account with the backup.`)) return;
+    setState(state);        // repaint from the backup
+    saveBoards();           // persist it (boardsReady is true once signed in & loaded)
+    showToast('Backup restored and saved.', 'success');
+  };
+  reader.onerror = () => showToast('Could not read that file — please try again.', 'error');
+  reader.readAsText(file);
 }
 
 /* ------------------------------------------------------------------ */
