@@ -4055,14 +4055,12 @@ function renderPackDetail() {
           <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 8l3 3 7-7"/></svg>
         </div>` : ''}
       </div>
-      ${img.vendor ? `<div class="pack-product ${owned ? '' : 'locked'}">
-        <div class="pack-product-vendor">${owned ? img.vendor : 'Vendor Name Studio'}</div>
-        <div class="pack-product-name">${owned ? img.product : 'Curated product pick'}</div>
+      ${(owned && img.vendor) ? `<div class="pack-product">
+        <div class="pack-product-vendor">${img.vendor}</div>
+        <div class="pack-product-name">${img.product}</div>
         <div class="pack-product-foot">
-          <span class="pack-product-price">${owned ? img.price : '$000'}</span>
-          ${owned
-            ? `<span class="pack-product-link" title="Vendor, price &amp; website are saved onto your board card when you import this image">Saves to board <svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3v7M5 7l3 3 3-3M3 13h10"/></svg></span>`
-            : ''}
+          <span class="pack-product-price">${img.price}</span>
+          <span class="pack-product-link" title="Vendor, price &amp; website are saved onto your board card when you import this image">Saves to board <svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3v7M5 7l3 3 3-3M3 13h10"/></svg></span>
         </div>
       </div>` : ''}
     </div>`;
