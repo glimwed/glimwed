@@ -2144,27 +2144,6 @@ body.share-mode { background: var(--cream, #FBF8F5); }
     <button class="header-tab" onclick="switchMain('packs')">Wedding Plan Starters</button>
   </nav>
   <div class="header-right">
-    <div class="tools-menu-wrap" id="tools-wrap">
-      <button class="tools-btn" id="tools-btn" onclick="toggleToolsMenu()" aria-label="Open tools menu" title="Tools">
-        <span class="tools-bar"></span>
-        <span class="tools-bar"></span>
-        <span class="tools-bar"></span>
-      </button>
-      <div class="account-menu tools-menu" id="tools-menu">
-        <button class="account-menu-item" id="tools-packbuilder" style="display:none;" onclick="closeToolsMenu();switchMain('packbuilder')">
-          <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><path d="M11.5 9v5M9 11.5h5"/></svg>
-          Pack Builder
-        </button>
-        <button class="account-menu-item" onclick="closeToolsMenu();switchMain('export')">
-          <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 12h8M8 2v8M5 7l3 3 3-3"/></svg>
-          PDF Export
-        </button>
-        <button class="account-menu-item" onclick="closeToolsMenu();switchMain('share')">
-          <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="3" r="2"/><circle cx="4" cy="8" r="2"/><circle cx="12" cy="13" r="2"/><path d="M6 7l4-3M6 9l4 3"/></svg>
-          Shareable Links
-        </button>
-      </div>
-    </div>
     <div class="avatar-btn-wrap" id="avatar-wrap">
       <div class="header-avatar" id="avatar-btn" onclick="toggleAccountMenu()"></div>
       <div class="account-menu" id="account-menu">
@@ -2180,6 +2159,19 @@ body.share-mode { background: var(--cream, #FBF8F5); }
         <button class="account-menu-item" id="acct-menu-signin" onclick="closeAccountMenu();switchMain('accounts');setAccTab('signin')">
           <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="5" r="3"/><path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg>
           Sign in / Sign up
+        </button>
+        <div class="account-menu-divider"></div>
+        <button class="account-menu-item" onclick="closeAccountMenu();switchMain('export')">
+          <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 12h8M8 2v8M5 7l3 3 3-3"/></svg>
+          PDF Export
+        </button>
+        <button class="account-menu-item" onclick="closeAccountMenu();switchMain('share')">
+          <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="3" r="2"/><circle cx="4" cy="8" r="2"/><circle cx="12" cy="13" r="2"/><path d="M6 7l4-3M6 9l4 3"/></svg>
+          Shareable Links
+        </button>
+        <button class="account-menu-item" id="tools-packbuilder" style="display:none;" onclick="closeAccountMenu();switchMain('packbuilder')">
+          <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><path d="M11.5 9v5M9 11.5h5"/></svg>
+          Pack Builder
         </button>
         <div class="account-menu-divider" id="acct-menu-signout-divider"></div>
         <button class="account-menu-item" id="acct-menu-signout" style="color:#C03030;" onclick="closeAccountMenu();showModal('signout-modal')">
@@ -2216,7 +2208,6 @@ body.share-mode { background: var(--cream, #FBF8F5); }
     <div class="sidebar-sub" id="board-sub-nav"></div>
     <div class="sidebar-sub">
       <button class="sidebar-sub-item active" id="sb-colors" onclick="switchMain('colors');setSB('sb-colors')">Palettes</button>
-      <button class="sidebar-sub-item" id="sb-packs" onclick="switchMain('packs');setSB('sb-packs')">Wedding Plan Starters</button>
     </div>
     <button class="sb-item" id="sb-planner" onclick="switchMain('checklist');setSB('sb-checklist')">
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M2 8h8M2 12h10"/></svg>
@@ -2226,6 +2217,10 @@ body.share-mode { background: var(--cream, #FBF8F5); }
       <button class="sidebar-sub-item" id="sb-checklist" onclick="switchMain('checklist');setSB('sb-checklist')">Checklist</button>
       <button class="sidebar-sub-item" id="sb-budget" onclick="switchMain('budget');setSB('sb-budget')">Budget</button>
     </div>
+    <button class="sb-item" id="sb-packs" onclick="switchMain('packs');setSB('sb-packs')">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 1l6 3-6 3-6-3z"/><path d="M2 8l6 3 6-3"/><path d="M2 11.5l6 3 6-3"/></svg>
+      Wedding Plan Starters
+    </button>
   </div>
 
   <!-- Footer: signed-in user -->
@@ -5903,18 +5898,6 @@ function closeAccountMenu() {
 document.addEventListener('click', function(e) {
   const wrap = document.getElementById('avatar-wrap');
   if (wrap && !wrap.contains(e.target)) closeAccountMenu();
-});
-
-function toggleToolsMenu() {
-  document.getElementById('tools-menu').classList.toggle('open');
-}
-function closeToolsMenu() {
-  document.getElementById('tools-menu').classList.remove('open');
-}
-// Close tools menu when clicking outside
-document.addEventListener('click', function(e) {
-  const wrap = document.getElementById('tools-wrap');
-  if (wrap && !wrap.contains(e.target)) closeToolsMenu();
 });
 
 /* ------------------------------------------------------------------ */
