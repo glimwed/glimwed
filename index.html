@@ -274,6 +274,10 @@ button, input, select, textarea { font-family: inherit; }
 }
 @media (max-width: 860px) { .pack-grid { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 520px) { .pack-grid { grid-template-columns: 1fr; } }
+.pack-loading {
+  grid-column: 1 / -1; text-align: center; padding: 60px 20px;
+  color: var(--sub); font-size: 14px;
+}
 .pack-card {
   background: var(--white); border-radius: var(--radius);
   overflow: hidden; cursor: pointer; transition: transform .25s ease, box-shadow .25s ease;
@@ -494,7 +498,7 @@ textarea.pb-inp { resize: vertical; }
   font-size: 12px; color: var(--sub); font-weight: 400;
 }
 .pack-detail-grid {
-  display: grid; grid-template-columns: repeat(2, 1fr);
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px; margin-bottom: 28px;
 }
 .pack-detail-img {
@@ -584,7 +588,7 @@ textarea.pb-inp { resize: vertical; }
 @media (max-width: 600px) {
   .pack-detail-body { padding: 22px 20px 28px; }
   .pack-detail-name { font-size: 28px; }
-  .pack-detail-grid { grid-template-columns: repeat(2, 1fr); }
+  .pack-detail-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 /* Import flow Step 2 — tap-to-assign */
@@ -3062,6 +3066,9 @@ function packImageMeta(img) {
 /* page is never blank. Once you save real packs in the builder they    */
 /* live in the `packs` table and replace the demo set for everyone.     */
 let PACKS = MOODBOARD_PACKS.slice();
+/* True once loadPacks() has finished its first DB round-trip. Until then the */
+/* store shows a quiet loading state instead of flashing the demo set.       */
+let packsLoaded = false;
 
 /* Only this account sees the Pack Builder and can write packs. The DB   */
 /* enforces the same rule via RLS (auth.email() check) — the client     */
@@ -3096,6 +3103,7 @@ async function loadPacks() {
       PACKS = MOODBOARD_PACKS.slice();   // DB empty → keep demo set visible
     }
   } catch (e) { console.warn('packs load failed', e); }
+  finally { packsLoaded = true; }        // stop showing the loading state
   if (currentMain === 'packs') renderPacks();
   if (currentMain === 'packbuilder') renderPackBuilder();
 }
@@ -3975,6 +3983,12 @@ function renderPacks() {
   const soon  = document.querySelector('.packs-soon');
   if (store) store.style.display = '';
   if (soon)  soon.style.display  = 'none';
+  /* Until the first DB round-trip finishes, show a quiet loading state       */
+  /* rather than flashing the built-in demo packs, then getting replaced.     */
+  if (!packsLoaded && !isAdmin()) {
+    grid.innerHTML = '<div class="pack-loading">Loading packs…</div>';
+    return;
+  }
   /* Public store shows published packs only (demo-set entries have no      */
   /* _published flag, so they always show while the DB is still empty).     */
   const list = PACKS.filter(p => p._published !== false);
