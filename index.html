@@ -509,7 +509,7 @@ textarea.pb-inp { resize: vertical; }
 }
 .pack-detail-img img { width: 100%; height: 100%; object-fit: contain; transition: filter .2s; }
 .pack-detail-img.locked { cursor: default; }
-.pack-detail-img.locked img { filter: blur(3px) brightness(.7); }
+/* Images are visible to everyone; only the vendor/price details are gated. */
 .pack-detail-item.selected {
   outline: 2.5px solid var(--rose); outline-offset: 0;
   border-radius: var(--radius-sm);
@@ -4053,9 +4053,7 @@ function renderPackDetail() {
         <img src="${url}" alt="" loading="lazy">
         ${owned ? `<div class="pack-detail-check">
           <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 8l3 3 7-7"/></svg>
-        </div>` : `<div class="pack-detail-lock">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="5" y="11" width="14" height="9" rx="1.5"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>
-        </div>`}
+        </div>` : ''}
       </div>
       ${img.vendor ? `<div class="pack-product ${owned ? '' : 'locked'}">
         <div class="pack-product-vendor">${owned ? img.vendor : 'Vendor Name Studio'}</div>
