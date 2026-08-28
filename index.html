@@ -2303,7 +2303,7 @@ body.share-mode { background: var(--cream, #FBF8F5); }
     <div class="packs-hero">
       <div class="packs-hero-eyebrow">Curated by a NYC based Textile Designer</div>
       <h1 class="packs-hero-title">Wedding Plan Starters<br>By Themes</h1>
-      <p class="packs-hero-sub">These are not just aesthetic visuals. The images are curated by the themes and carefully selected and linked to the real products<br>or vendors — bouquets, dresses, venues, table settings. Explore and envision your perfect wedding day.</p>
+      <p class="packs-hero-sub">These are not just aesthetic visuals. The images are curated by the themes and carefully selected and linked to the real products.</p>
     </div>
 
     <!-- Pack grid -->
@@ -4062,14 +4062,14 @@ function renderPackDetail() {
           <span class="pack-product-price">${owned ? img.price : '$000'}</span>
           ${owned
             ? `<span class="pack-product-link" title="Vendor, price &amp; website are saved onto your board card when you import this image">Saves to board <svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3v7M5 7l3 3 3-3M3 13h10"/></svg></span>`
-            : `<span class="pack-product-link locked"><svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="7" width="8" height="6" rx="1"/><path d="M6 7V5a2 2 0 014 0v2"/></svg> Unlock details</span>`}
+            : ''}
         </div>
       </div>` : ''}
     </div>`;
   }).join('');
   const ctaHtml = owned
     ? `<button class="btn-full" onclick="importSelected()" id="pack-import-btn">${selectedImages.size === 0 ? 'Select images to import' : `Import ${selectedImages.size} image${selectedImages.size===1?'':'s'} to my board`}</button>`
-    : `<button class="btn-full" onclick="buyPack('${p.id}')">Get this pack — free</button>`;
+    : `<button class="btn-full" onclick="closePackDetail();switchMain('accounts');setAccTab('signin')">Unlock Details</button>`;
   document.getElementById('pack-detail-content').innerHTML = `
     <button class="pack-detail-close" onclick="closePackDetail()" aria-label="Close">
       <svg width="20" height="20" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3l10 10M13 3L3 13"/></svg>
@@ -4087,7 +4087,6 @@ function renderPackDetail() {
       </div>
       <div class="pack-detail-grid">${imageHtml}</div>
       <div class="pack-detail-cta-row">${ctaHtml}</div>
-      ${owned ? '' : '<div class="pack-detail-trust">Completely free — just make a free account to save it to your board.</div>'}
     </div>
   `;
 }
