@@ -1552,6 +1552,7 @@ body.share-mode { background: var(--cream, #FBF8F5); }
 .palette-insp-drop-title { font-size: 15px; }
 .palette-insp-drop-sub { font-size: 13px; }
 .palette-insp-drop-sub u { cursor: pointer; }
+.palette-insp-drop-types { font-size: 11.5px; opacity: .75; margin-top: 4px; letter-spacing: .02em; }
 /* Filled state: the uploaded photo */
 .palette-insp-img {
   display: block;
@@ -3622,6 +3623,7 @@ function renderColorsPage() {
            <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
            <div class="palette-insp-drop-title">Drop an inspiration photo in this palette</div>
            <div class="palette-insp-drop-sub">or <u>browse files</u></div>
+           <div class="palette-insp-drop-types">PNG or JPG</div>
          </div>`;
     const isPlaceholder = (p.name === PALETTE_NAME_PLACEHOLDER);
     return `<div class="palette-page-card">
@@ -3755,6 +3757,14 @@ function palInspDrop(e, pi, el) {
 async function setPalInsp(pi, file) {
   const p = PALETTES[pi];
   if (!p) return;
+  // HEIC/HEIF can't be decoded by Chrome/Firefox canvas, so it would otherwise
+  // fail silently (broken image + no chips). Catch it early with a clear message.
+  // Covers both entry paths (drop + browse) since both funnel through here.
+  const fname = (file && file.name || '').toLowerCase();
+  if (/^image\/hei[cf]/.test(file && file.type || '') || /\.(heic|heif)$/.test(fname)) {
+    showToast('HEIC photos aren’t supported here — please use JPG or PNG', 'error');
+    return;
+  }
   try {
     const dataUrl = await compressImage(file);
     let src;
