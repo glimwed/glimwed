@@ -2793,6 +2793,16 @@ body.share-mode { background: var(--cream, #FBF8F5); }
   </div>
 </div>
 
+<!-- Sign-up success -->
+<div class="modal-overlay" id="signup-success-modal" onclick="if(event.target===this)closeModal('signup-success-modal')">
+  <div class="modal" style="text-align:center;max-width:420px;">
+    <button class="modal-x" onclick="closeModal('signup-success-modal')" aria-label="Close">×</button>
+    <h3 style="margin-bottom:8px;margin-top:8px;">Account created!</h3>
+    <p id="signup-success-msg" style="color:var(--sub);font-size:14px;line-height:1.5;margin:0 auto 22px;max-width:320px;"></p>
+    <button class="btn-full" onclick="closeModal('signup-success-modal')">Got it</button>
+  </div>
+</div>
+
 <!-- Pack Detail Modal -->
 <div class="pack-modal-overlay" id="pack-detail-modal" onclick="if(event.target===this)closePackDetail()">
   <div class="pack-modal" id="pack-detail-content"></div>
@@ -6388,13 +6398,17 @@ async function doSignUp() {
   if (!email || !pass) { showToast('Enter an email and password', 'error'); return; }
   const { data, error } = await sb.auth.signUp({ email, password: pass, options: { data: { first_name: first } } });
   if (error) { showToast(error.message, 'error'); return; }
+  // Success — wording matches reality: an active session means no email
+  // confirmation is required; no session means Supabase sent a confirm email.
+  const msgEl = document.getElementById('signup-success-msg');
   if (data.session) {                       // email confirmation is OFF → signed in now
-    showToast('Account created — you are signed in!', 'success');
     switchMain('colors');
+    if (msgEl) msgEl.textContent = "You're all set — welcome to Glimwed!";
   } else {                                  // email confirmation is ON → must confirm first
-    showToast('Account created! Check your email to confirm, then sign in.', 'success');
     setAccTab('signin');
+    if (msgEl) msgEl.textContent = 'Check your email to confirm your address before signing in.';
   }
+  showModal('signup-success-modal');
 }
 
 async function doReset() {
@@ -6421,6 +6435,7 @@ async function doSetNewPassword() {
 async function doSignOut() {
   await sb.auth.signOut();
   showToast('Signed out', 'success');
+  switchMain('colors');   // always land back on the main page (Palettes), whatever tab they were on
 }
 
 /* Fires on load (restores a saved session) and on every login/logout. */
