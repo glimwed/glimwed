@@ -3755,12 +3755,101 @@ async function setPalInsp(pi, file) {
       showToast('Photo couldn’t be uploaded — kept for this session only', 'error');
     }
     p.image = src;
+    // Auto-generate colour chips from the inspiration photo. We read pixels from
+    // the local dataUrl (same-origin → never CORS-tainted), so this works even
+    // when `src` is a remote Supabase URL. Failures are swallowed inside.
+    try {
+      if (!Array.isArray(p.colors)) p.colors = [];
+      const chips = await extractPaletteColors(dataUrl, 5);
+      if (chips.length) {
+        // Drop the chips we auto-generated from a *previous* image on this palette
+        // (if the user hasn't already changed them), so re-dropping photos doesn't
+        // pile up stale chips. Manually-added/edited chips are left untouched.
+        const prev = Array.isArray(p._autoChips) ? p._autoChips.slice() : [];
+        for (const old of prev) {
+          const idx = p.colors.indexOf(old);
+          if (idx !== -1) p.colors.splice(idx, 1);
+        }
+        p.colors.push(...chips);
+        p._autoChips = chips.slice();          // remember this set for next time
+        showToast('Added 5 colours from your photo', 'success');
+      }
+    } catch (exErr) {
+      console.error('colour extraction failed', exErr);   // never block the image on this
+    }
     render();            // wrapped render() also schedules the autosave
     renderColorsPage();
   } catch (err) {
     console.error('palette image read failed', err);
     showToast('Could not read that image — try another file', 'error');
   }
+}
+
+/* --- Pull the 5 dominant colours out of an image ---
+   Draws the image to a small offscreen canvas, buckets pixels by colour
+   (4 bits per channel), then greedily picks the most-used buckets that are
+   visually distinct from each other. Returns a Promise<string[]> of hex
+   colours — resolves to [] on any failure (bad decode, CORS-tainted canvas)
+   so the caller can carry on without the app crashing. */
+function extractPaletteColors(src, count = 5) {
+  return new Promise(resolve => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';                  // needed if `src` is ever a remote URL
+    img.onerror = () => resolve([]);
+    img.onload = () => {
+      try {
+        let { width: w, height: h } = img;
+        if (!w || !h) { resolve([]); return; }
+        const S = 96, scale = Math.min(1, S / Math.max(w, h));   // sample small — enough for stats
+        w = Math.max(1, Math.round(w * scale));
+        h = Math.max(1, Math.round(h * scale));
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        let data;
+        try {
+          data = ctx.getImageData(0, 0, w, h).data;   // throws SecurityError on a tainted canvas
+        } catch (secErr) {
+          resolve([]); return;                        // give up quietly, don't crash
+        }
+        const buckets = new Map();                    // key → { n, r, g, b } (summed)
+        for (let i = 0; i < data.length; i += 4) {
+          if (data[i + 3] < 125) continue;            // skip transparent pixels
+          const r = data[i], g = data[i + 1], b = data[i + 2];
+          const key = ((r >> 4) << 8) | ((g >> 4) << 4) | (b >> 4);   // 4 bits/channel bucket
+          let bk = buckets.get(key);
+          if (!bk) { bk = { n: 0, r: 0, g: 0, b: 0 }; buckets.set(key, bk); }
+          bk.n++; bk.r += r; bk.g += g; bk.b += b;
+        }
+        const sorted = [...buckets.values()]
+          .map(bk => ({ n: bk.n, r: Math.round(bk.r / bk.n), g: Math.round(bk.g / bk.n), b: Math.round(bk.b / bk.n) }))
+          .sort((a, b) => b.n - a.n);
+        if (!sorted.length) { resolve([]); return; }
+        const picked = [];
+        const MIN_DIST = 60;                          // Manhattan gap so chips stay distinct
+        for (const c of sorted) {                     // pass 1: most-used but distinct colours
+          if (picked.length >= count) break;
+          const tooClose = picked.some(p =>
+            Math.abs(p.r - c.r) + Math.abs(p.g - c.g) + Math.abs(p.b - c.b) < MIN_DIST);
+          if (!tooClose) picked.push(c);
+        }
+        for (const c of sorted) {                     // pass 2: flat image → top up from remainder
+          if (picked.length >= count) break;
+          if (!picked.includes(c)) picked.push(c);
+        }
+        resolve(picked.slice(0, count).map(c => rgbToHex(c.r, c.g, c.b)));
+      } catch (err) {
+        resolve([]);
+      }
+    };
+    img.src = src;
+  });
+}
+function rgbToHex(r, g, b) {
+  return '#' + [r, g, b]
+    .map(v => Math.max(0, Math.min(255, v | 0)).toString(16).padStart(2, '0'))
+    .join('');
 }
 function removePalInsp(pi) {
   const p = PALETTES[pi];
