@@ -6099,6 +6099,15 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 const STORAGE_BUCKET = 'board-images';
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+/* True only on the fresh load that returns from a Google OAuth redirect — the
+   URL still carries Supabase's one-time callback params (access_token / code)
+   at this point; Supabase strips them right after processing, so an ordinary
+   reload of a restored session never sets this. Password-recovery links also
+   carry access_token, so those are excluded (they run their own flow). Consumed
+   once in onAuthStateChange to toast "Signed in" exactly once for Google login. */
+let _oauthRedirect = /[#?&](access_token|code)=/.test(location.hash + '&' + location.search)
+                     && !/type=recovery/.test(location.hash);
+
 let currentUser  = null;
 let currentAccessToken = null;   // cached from the auth session for exit-time saves
 let lastSavedJson = null;
@@ -6378,7 +6387,7 @@ async function doSignIn() {
   if (!email || !pass) { showToast('Enter your email and password', 'error'); return; }
   const { error } = await sb.auth.signInWithPassword({ email, password: pass });
   if (error) { showToast(error.message, 'error'); return; }
-  showToast('Signed in — welcome back!', 'success');
+  showToast('Signed in', 'success');   // mirrors the 'Signed out' toast; email path runs only on real login
   switchMain('colors');
 }
 
@@ -6445,6 +6454,13 @@ sb.auth.onAuthStateChange((event, session) => {
   currentUser = (session && session.user) || null;
   currentAccessToken = (session && session.access_token) || null;
   updateAccountUI();
+  // "Signed in" toast for Google OAuth: fires once on the redirect-back load only.
+  // (Email/password sign-in toasts directly in doSignIn().) The _oauthRedirect flag
+  // is false on any ordinary reload, so a restored session never re-triggers this.
+  if (_oauthRedirect && currentUser && event === 'SIGNED_IN') {
+    _oauthRedirect = false;                       // consume once
+    showToast('Signed in', 'success');
+  }
   if (event === 'PASSWORD_RECOVERY') showModal('newpass-modal');
   if (currentUser && (!prev || prev.id !== currentUser.id)) loadBoards();
   // Refresh packs when the admin signs in (so drafts appear) or out.
