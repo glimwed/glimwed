@@ -3876,6 +3876,17 @@ function removePalInsp(pi) {
   if (!p) return;
   const old = p.image;
   delete p.image;
+  // Remove the chips we auto-generated from this photo (same logic setPalInsp uses
+  // when replacing an image). Manually-added/edited chips aren't in _autoChips, so
+  // they're preserved. Palettes with no tracked auto chips are left untouched.
+  const auto = Array.isArray(p._autoChips) ? p._autoChips.slice() : [];
+  if (auto.length && Array.isArray(p.colors)) {
+    for (const hex of auto) {
+      const idx = p.colors.indexOf(hex);
+      if (idx !== -1) p.colors.splice(idx, 1);
+    }
+  }
+  p._autoChips = [];
   render();
   renderColorsPage();
   if (old) deleteStorageImages([old]);   // fire-and-forget cleanup of our own bucket
